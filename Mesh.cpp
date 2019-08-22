@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.cpp 2019.08.18
+﻿// src/manifem/Mesh.cpp 2019.08.21
 
 #include <list>
 #include <map>
@@ -119,13 +119,13 @@ Mesh::Mesh ( const tag::ReverseOf &, Mesh & direct_mesh )
 	// the iterator assumes the reverse cells exist (uses 'hidden_reverse').
 	// Instead, we use an iterator over the direct_mesh and then
 	// we call the 'reverse' method on each cell.
-	CellIterator it = direct_mesh.iter_over ( tag::cells_of_max_dim, tag::oriented );
+	CellIterator it = direct_mesh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 	for ( it.reset(); it.in_range(); it++ )
 	{	Cell & rev_cll = (*it).reverse();
 		// now we are sure the reverse cell exists
 		if (this->dim == 0) continue;
 		CellIterator itt = rev_cll.boundary().iter_over
-			( tag::cells_of_max_dim, tag::oriented );
+			( tag::cells, tag::of_max_dim, tag::oriented );
 		// is this really necessary ?
 		for ( itt.reset(); itt.in_range(); itt++ )
 		{	// optimizar !
@@ -366,7 +366,8 @@ void Cell::glue_on_bdry_of ( Cell & cll )
 	assert ( cll.dim == this->dim + 1 );
 
 	this->add_to ( cll.boundary() );
-	
+
+	// perhaps we should do this only to 'this->positive'
 	this->glue_on_bdry_core ( cll );
 	if ( cll.hidden_reverse != NULL )
 		this->reverse().glue_on_bdry_core ( * ( cll.hidden_reverse ) );   }
@@ -377,36 +378,36 @@ void Cell::glue_on_bdry_core ( Cell & cll )
 // used only in Cell::glue_on_bdry_of
 
 {	short int cll_d = cll.dim;
-	bool cll_pos = ( cll.is_positive() );
-	std::map <Mesh*, Cell::field_to_meshes> *cmd;
+	bool cll_pos = cll.is_positive();
+	std::map <Mesh*, Cell::field_to_meshes> * cmd;
 	if ( cll_pos ) cmd = cll.meshes[cll_d];
 	else // when cll is negative
 	{	assert ( cll.hidden_reverse != NULL );
 		cmd = cll.hidden_reverse->meshes[cll_d];  }
 	std::map <Mesh*, Cell::field_to_meshes> :: iterator it = cmd->begin(), e = cmd->end();
 	for ( ; it != e; ++it)
-	{	Mesh *msh = it->first;
-		assert ( msh->is_positive() );
+	{	Mesh * msh_p = it->first;
+		assert ( msh_p->is_positive() );
 		Cell::field_to_meshes & field = it->second;
 		bool reverse;
 		if ( field.counter_pos != 0 )
 		{	assert ( field.counter_pos == 1 );
 			assert ( field.counter_neg == 0 );
-			reverse = !cll_pos;                 }
+			reverse = not cll_pos;              }
 		else
 		{	assert ( field.counter_pos == 0 );
 			assert ( field.counter_neg == 1 );
-			reverse = cll_pos;                 }
+			reverse = cll_pos;                  }
 		if ( reverse )
 		{	assert ( this->hidden_reverse != NULL );
 			assert ( cll.hidden_reverse != NULL );
-			assert ( this->hidden_reverse->cell_behind_within.find(msh) ==
+			assert ( this->hidden_reverse->cell_behind_within.find(msh_p) ==
 		           this->hidden_reverse->cell_behind_within.end()         );
-			this->hidden_reverse->cell_behind_within[msh] = cll.hidden_reverse;  }
+			this->hidden_reverse->cell_behind_within[msh_p] = cll.hidden_reverse;  }
 		else
-		{	assert ( this->cell_behind_within.find(msh) ==
+		{	assert ( this->cell_behind_within.find(msh_p) ==
 		           this->cell_behind_within.end()         );
-			this->cell_behind_within[msh] = & cll;              }
+			this->cell_behind_within[msh_p] = & cll;              }
 	} // end of for
 	
 	// special treatment is given to segments :
@@ -437,10 +438,9 @@ void Cell::cut_from_bdry_core ( Cell & cll )
 // used only in Cell::cut_from_bdry_of
 
 {	short int cll_d = cll.dim;
-	bool cll_pos = ( cll.is_positive() );
+	bool cll_pos = cll.is_positive();
 	std::map <Mesh*, Cell::field_to_meshes> *cmd;
-	if ( cll_pos )
-		cmd = cll.meshes[cll_d];
+	if ( cll_pos ) cmd = cll.meshes[cll_d];
 	else // when cll is negative
 	{	assert ( cll.hidden_reverse != NULL );
 		cmd = cll.hidden_reverse->meshes[cll_d];  }
@@ -505,7 +505,7 @@ void Cell::add_to ( Mesh & msh )
 	if ( this->dim > 0 )
 	{	Mesh & bdry = this->boundary();
 		// 'bdry' may be a negative mesh, so we use a MeshIterator.
-		CellIterator it = bdry.iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator it = bdry.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( it.reset(); it.in_range(); it.advance() )
 		{	Cell & face = *it;
 			assert ( face.cell_behind_within.find(&msh) == face.cell_behind_within.end() );
@@ -515,11 +515,12 @@ void Cell::add_to ( Mesh & msh )
 
 
 void Cell::remove_from (Mesh & msh)
+
 // remove 'this' cell from the mesh 'msh'
 // four possible orientation combinations are taken into account
 // (two directly and two through recursivity)
-{
-	assert ( this->dim == msh.dim );
+
+{	assert ( this->dim == msh.dim );
 	if ( ! ( msh.is_positive() ) )
 	{	assert ( msh.hidden_reverse != NULL );
 		this->reverse().remove_from ( * ( msh.hidden_reverse ) );
@@ -549,7 +550,7 @@ void Cell::remove_from (Mesh & msh)
 	if ( this->dim != 0 )
 	{	Mesh & bdry = this->boundary();
 		// 'bdry' may be a negative mesh, so we use a CellIterator.
-		CellIterator it = bdry.iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator it = bdry.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( it.reset(); it.in_range(); it.advance() )
 		{	Cell & face = *it;
 			assert ( face.cell_behind_within.find(&msh) != face.cell_behind_within.end() );
@@ -558,7 +559,7 @@ void Cell::remove_from (Mesh & msh)
 } // end of Cell::remove_from
 
 
-void Mesh::action_add ( Cell & cll, Mesh & msh, short int cp, short int cn )
+void Mesh::action_add ( Cell & cll, Mesh & msh, short int cp, short int cn ) // static
 
 // This function "makes the link" between a cell and a mesh.
 // This "link" asserts that the cell belongs to the mesh.
@@ -574,11 +575,11 @@ void Mesh::action_add ( Cell & cll, Mesh & msh, short int cp, short int cn )
 {	assert ( cll.is_positive() ); assert ( msh.is_positive() );
 //////////////////////////////////////////////////////////////////////////
 	// inspired in item 24 of the book : Scott Meyers, Effective STL      //
-	typedef std::map <Mesh*, Cell::field_to_meshes> maptype;                   //
+	typedef std::map <Mesh*, Cell::field_to_meshes> maptype;              //
 	maptype* cmd = cll.meshes[msh.dim];                                   //
 	maptype::iterator lb = cmd->lower_bound(&msh);                        //
 	if ( ( lb == cmd->end() ) || ( cmd->key_comp()(&msh,lb->first) ) )    //
-	{	std::list <Cell*>* mcd = msh.cells[cll.dim];                             //
+	{	std::list <Cell*>* mcd = msh.cells[cll.dim];                        //
 		mcd->push_front ( & cll );                                          //
 		Cell::field_to_meshes field;                                        //
 		field.counter_pos = cp;                                             //
@@ -605,12 +606,7 @@ void Mesh::action_add ( Cell & cll, Mesh & msh, short int cp, short int cn )
 } // end of Mesh::action_add
 
 
-void Mesh::action_add_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
-// we just switch the two counters
-{	Mesh::action_add ( cll, msh, cn, cp );  }
-
-
-void Mesh::action_remove ( Cell & cll, Mesh & msh, short int cp, short int cn )
+void Mesh::action_remove ( Cell & cll, Mesh & msh, short int cp, short int cn ) // static
 // used only in remove_cell, passed to deep_connections
 
 {	typedef std::map <Mesh*, Cell::field_to_meshes> maptype;
@@ -624,13 +620,7 @@ void Mesh::action_remove ( Cell & cll, Mesh & msh, short int cp, short int cn )
 	{	std::list <Cell*>::iterator w = cmdm->second.where;
 		msh.cells[cll.dim]->erase(w);
 		cmd->erase(&msh);                                }
-
 } // end of Mesh::action_remove
-
-
-void Mesh::action_remove_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
-// we switch the two counters
-{	Mesh::action_remove ( cll, msh, cn, cp );    }
 
 
 void Mesh::deep_connections ( Cell & cell,
@@ -756,22 +746,30 @@ void Mesh::deep_connections ( Cell & cell,
 // e.g. over all cells of given dimension belonging to a given mesh,
 // or over all cells of given dimension "above" another, given, cell.
 
-	
+// eliminar tudo com min_dim ?
+
+
 void Cell::reset_mesh_iter_min_dim ( MeshIterator *it )  // static
+
 {	Cell::data_for_iter_min_dim *data = (Cell::data_for_iter_min_dim*) it->data;
 	Cell *cll = (Cell*) it->base;
 	data->mesh_map = cll->meshes [cll->dim];
 	data->iter = data->mesh_map->begin();
 	it->skip_null ();                                                              }
 
+
 void Cell::advance_mesh_iter_min_dim ( MeshIterator *it )  // static
+
 {	Cell::data_for_iter_min_dim *data = (Cell::data_for_iter_min_dim*) it->data;
 	data->iter++;
 	it->skip_null ();                                                              }
 
+
 bool Cell::valid_mesh_iter_min_dim ( MeshIterator *it )  // static
+
 {	Cell::data_for_iter_min_dim *data = (Cell::data_for_iter_min_dim*) it->data;
 	return ( data->iter != data->mesh_map->end() );                                 }
+
 
 Mesh * Cell::deref_iter_pos_min_dim ( MeshIterator* it )  // static
 
@@ -789,6 +787,7 @@ Mesh * Cell::deref_iter_pos_min_dim ( MeshIterator* it )  // static
 		assert ( field.counter_neg == 1 );
 		return msh->hidden_reverse;         }                                       }
 
+
 Mesh * Cell::deref_iter_neg_min_dim ( MeshIterator* it )  // static
 
 {	Cell::data_for_iter_min_dim *data = (Cell::data_for_iter_min_dim*) it->data;
@@ -805,17 +804,25 @@ Mesh * Cell::deref_iter_neg_min_dim ( MeshIterator* it )  // static
 		assert ( field.counter_neg == 1 );
 		return msh;                          }                                         }
 
+
 void Cell::reset_cell_iter_min_dim ( CellIterator *it, Cell * p )  // static
+
 {	assert ( p == NULL );
 	Cell::reset_mesh_iter_min_dim ( (MeshIterator*) it->data );  }
 
+
 void Cell::advance_cell_iter_min_dim ( CellIterator *it )  // static
+
 {	Cell::advance_mesh_iter_min_dim ( (MeshIterator*) it->data );  };
 
+
 bool Cell::valid_cell_iter_min_dim ( CellIterator *it )  // static
+
 {	return Cell::valid_mesh_iter_min_dim ( (MeshIterator*) it->data );  };
 
+
 Cell * Cell::deref_cell_iter_min_dim ( CellIterator *it )  // static
+
 {	MeshIterator *iter = (MeshIterator*) it->data;
 	Cell *cll = (**iter).cell_enclosed;
 	assert ( cll != NULL );
@@ -823,21 +830,25 @@ Cell * Cell::deref_cell_iter_min_dim ( CellIterator *it )  // static
 
 
 void Mesh::reset_iter_max_dim ( CellIterator *it, Cell *p )  // static
+
 {	assert ( p == NULL );
 	Mesh::data_for_iter_max_dim *data = (Mesh::data_for_iter_max_dim*) it->data;
 	Mesh *msh = (Mesh*) it->base;
-	assert ( msh->cells[msh->dim]->size() > 0 );
-	// the case of a void mesh is not contemplated
 	data->cell_list = msh->cells [msh->dim];
 	data->iter = data->cell_list->begin();                                         }
 
+
 void Mesh::advance_iter_max_dim ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_max_dim *data = (Mesh::data_for_iter_max_dim*) it->data;
 	data->iter++;                                                                  }
 
+
 bool Mesh::valid_iter_max_dim ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_max_dim *data = (Mesh::data_for_iter_max_dim*) it->data;
 	return ( data->iter != data->cell_list->end() );                               }
+
 
 Cell * Mesh::deref_iter_pos_max_dim ( CellIterator *it )  // static
 	
@@ -855,7 +866,8 @@ Cell * Mesh::deref_iter_pos_max_dim ( CellIterator *it )  // static
 	{	assert ( field.counter_pos == 0 );
 		assert ( field.counter_neg == 1 );
 		assert ( cll->hidden_reverse != NULL );
-		return cll->hidden_reverse;              }                                  }
+		return cll->hidden_reverse;              }                                   }
+
 
 Cell * Mesh::deref_iter_neg_max_dim ( CellIterator *it )  // static
 
@@ -876,24 +888,31 @@ Cell * Mesh::deref_iter_neg_max_dim ( CellIterator *it )  // static
 		assert ( field.counter_neg == 1 );
 		return cll;                         }                                          }
 
+////////////////////////////////////////////////////////////////////////////////////
+
 
 void Mesh::reset_iter_along_ver ( CellIterator *it, Cell * p )  // static
+
+// fazer ao contrario : chamar reset_ver do reset_seg
+// e aqui, no reset_ver, procurar first point
+	
 {	Mesh::reset_iter_along_seg ( it, p );
-	Mesh::data_for_iter_contour *data =
-		(Mesh::data_for_iter_contour*) it->data;
- 	data->seg_got_out = ( data->current_seg == NULL );  }
+	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
+ 	data->seg_got_out = ( data->current_seg == NULL );                             }
+
 
 void Mesh::reset_iter_along_ver_rev ( CellIterator *it, Cell * p )  // static
+
 {	Mesh::reset_iter_along_seg_rev ( it, p );
-	Mesh::data_for_iter_contour *data =
-		(Mesh::data_for_iter_contour*) it->data;
-	data->seg_got_out = ( data->current_seg == NULL );  }
+	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
+	data->seg_got_out = ( data->current_seg == NULL );                             }
+
 
 void Mesh::reset_iter_along_seg ( CellIterator *it, Cell *p )  // static
 
 // if p is null, initialize the iterator at the beginning of the curve
-{	Mesh::data_for_iter_contour *data =
-		(Mesh::data_for_iter_contour*) it->data;
+	
+{	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	Mesh *msh = (Mesh*) it->base;
 	assert ( msh->cells[msh->dim]->size() > 0 );
 	// the case of a void mesh is not contemplated
@@ -905,7 +924,7 @@ void Mesh::reset_iter_along_seg ( CellIterator *it, Cell *p )  // static
 		else key = "last point";
 		std::map<std::string,void*>::iterator it = msh->hook.find(key);
 		if ( it != msh->hook.end() )     // found
-			p = (Cell*) it->second;                               }
+			p = (Cell*) it->second;                                        }
 	if ( p == NULL )
 	// p is still NULL, which means that the mesh has no "first point" attribute
 	// (or "last point") thus we need to search for it
@@ -915,9 +934,10 @@ void Mesh::reset_iter_along_seg ( CellIterator *it, Cell *p )  // static
 	 	while ( s )
 	 	{	p = s->base().hidden_reverse;
 	 		assert ( p != NULL );
-	 		s = omsh->cell_behind( p, tag::may_not_exist );        }
-		msh->hook[key] = (void*) p;                                    }
-	Mesh::reset_iter_around ( it, p );                                    }
+	 		s = omsh->cell_behind( p, tag::may_not_exist );  }
+		msh->hook[key] = (void*) p;                             }
+	Mesh::reset_iter_around ( it, p );                                             }
+
 
 void Mesh::reset_iter_along_seg_rev ( CellIterator *it, Cell *p )  // static
 
@@ -948,6 +968,7 @@ void Mesh::reset_iter_along_seg_rev ( CellIterator *it, Cell *p )  // static
 		msh->hook[key] = (void*) p;                                        }
 	Mesh::reset_iter_around_rev ( it, p );                                   }
 
+
 void Mesh::reset_iter_around ( CellIterator *it, Cell * p )  // static
 	
 // if p is null, initialize the iterator at the beginning of the list of segments
@@ -972,6 +993,7 @@ void Mesh::reset_iter_around ( CellIterator *it, Cell * p )  // static
 	// data->first_try might be false if we come from reset_iter_along
 	data->seg_got_out = false;                                                }
 
+
 void Mesh::reset_iter_around_rev ( CellIterator *it, Cell * p )  // static
 	
 // if p is null, initialize the iterator at the beginning of the list of segments
@@ -994,7 +1016,9 @@ void Mesh::reset_iter_around_rev ( CellIterator *it, Cell * p )  // static
 	// data->first_try might be false if we come from reset_iter_along
 	data->seg_got_out = false;                                             }
 
+
 void Mesh::advance_iter_contour ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	if ( data->seg_got_out ) // only meaningful for "vertices along"
 	{	data->seg_got_out = false; return;  }
@@ -1005,7 +1029,9 @@ void Mesh::advance_iter_contour ( CellIterator *it )  // static
 		( data->current_vertex, tag::may_not_exist );
 	if ( data->current_seg == NULL ) data->seg_got_out = 1;                        }
 
+
 void Mesh::advance_iter_contour_rev ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	if ( data->seg_got_out ) // only meaningful for "vertices along"
 	{	data->seg_got_out = false; return;  }
@@ -1016,50 +1042,67 @@ void Mesh::advance_iter_contour_rev ( CellIterator *it )  // static
 		( data->current_vertex, tag::may_not_exist );
 	if ( data->current_seg == NULL ) data->seg_got_out = 1;                          }
 
+
 bool Mesh::valid_iter_around ( CellIterator *it )  // static
-// the case when 'this' is a void mesh is not contemplated - not important
+
+// the case when 'this' is a void mesh is not contemplated 
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	if ( data->first_try ) return 1;
 	return ( data->current_seg != data->first_seg );                             }
 
+
 bool Mesh::valid_iter_segs_along ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	return ( data->current_seg != NULL );                                        }
 
+
 bool Mesh::valid_iter_vertices_along ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	if ( data->current_seg == NULL )  return ( data->seg_got_out );
 	return 1;                                                                     }
 
+
 Cell *Mesh::deref_iter_segs_contour ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	return data->current_seg;                                                     }
 
+
 Cell *Mesh::deref_iter_vertices_contour ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	return data->current_vertex;                                                  }
 
+
 void Mesh::reset_iter_given_dim ( CellIterator *it, Cell *p )  // static
+
 {	assert ( p == NULL );
 	Mesh::data_for_iter_given_dim *data =
 		(Mesh::data_for_iter_given_dim*) it->data;
 	Mesh *msh = (Mesh*) it->base;
-	assert ( msh->cells[msh->dim]->size() > 0 );
-	// the case of a void mesh is not contemplated
 	data->cell_list = msh->cells [data->dim];
 	data->iter = data->cell_list->begin();        }
 
+
 void Mesh::advance_iter_given_dim (CellIterator *it)  // static
+
 {	Mesh::data_for_iter_given_dim *data =
 		(Mesh::data_for_iter_given_dim*) it->data;
 	data->iter++;                                 }
 
+
 bool Mesh::valid_iter_given_dim (CellIterator *it)  // static
+
 {	Mesh::data_for_iter_given_dim *data =
 		(Mesh::data_for_iter_given_dim*) it->data;
 	return ( data->iter != data->cell_list->end() ); }
 
+
 Cell *Mesh::deref_iter_given_dim (CellIterator* it)  // static
+
 {	Mesh::data_for_iter_given_dim *data =
 		(Mesh::data_for_iter_given_dim*) it->data;
 	Cell *cll = *data->iter;
@@ -1069,6 +1112,7 @@ Cell *Mesh::deref_iter_given_dim (CellIterator* it)  // static
 void Mesh::reset_iter_along_dual ( CellIterator *it, Cell *seg )  // static
 
 // if 'seg' is NULL, initialize the iterator at the beginning of the chain
+
 {	Mesh::data_for_iter_contour *data =
 		(Mesh::data_for_iter_contour*) it->data;
 	Mesh *msh = (Mesh*) it->base;
@@ -1100,9 +1144,11 @@ void Mesh::reset_iter_along_dual ( CellIterator *it, Cell *seg )  // static
 	Mesh::reset_iter_around_dual ( it, seg );
 }	// end of Mesh::reset_iter_along_dual
 
+
 void Mesh::reset_iter_along_dual_rev ( CellIterator *it, Cell *seg )  // static
 
 // if 'seg' is NULL, initialize the iterator at the beginning of the chain
+
 {	Mesh::data_for_iter_contour *data =
 		(Mesh::data_for_iter_contour*) it->data;
 	Mesh *msh = (Mesh*) it->base;
@@ -1133,9 +1179,11 @@ void Mesh::reset_iter_along_dual_rev ( CellIterator *it, Cell *seg )  // static
 	Mesh::reset_iter_around_dual ( it, seg );
 }	// end of Mesh::reset_iter_along_dual_rev
 
+
 void Mesh::reset_iter_around_dual ( CellIterator *it, Cell * seg )  // static
 
 // if p is null, initialize the iterator at the beginning of the list of segments
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	Mesh *msh = (Mesh*) it->base;
 	Mesh *ambient_mesh = data->oriented_base;
@@ -1162,7 +1210,9 @@ void Mesh::reset_iter_around_dual ( CellIterator *it, Cell * seg )  // static
 	data->first_try = true;
 } // end of Mesh::reset_iter_around_dual
 
+
 void Mesh::advance_iter_dual ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	Mesh *ambient_mesh = data->oriented_base;
 	data->first_try = false;
@@ -1178,7 +1228,9 @@ void Mesh::advance_iter_dual ( CellIterator *it )  // static
 		( data->center, tag::may_not_exist );
 	assert ( data->current_vertex != NULL );	                                }
 
+
 void Mesh::advance_iter_dual_rev ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	Mesh *ambient_mesh = data->oriented_base;
 	data->first_try = false;
@@ -1190,18 +1242,21 @@ void Mesh::advance_iter_dual_rev ( CellIterator *it )  // static
 		( data->center, tag::may_not_exist );
 	assert ( seg != NULL );
 	Cell * rev_seg = seg->hidden_reverse;
-	if ( rev_seg == NULL )  // stuck
-	{	data->current_seg = NULL;
-		return;                    } 
+	if ( rev_seg == NULL )  // we're stuck
+	{	data->current_seg = NULL;  return;  } 
 	data->current_vertex = rev_seg;
 	data->current_seg = ambient_mesh->cell_behind ( rev_seg, tag::may_not_exist );  }
 	// if ( data->current_seg == NULL ) data->seg_got_out = 1;
 
+
 bool Mesh::valid_iter_along_dual ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	return ( data->current_seg != NULL );                                         }
 
+
 bool Mesh::valid_iter_around_dual ( CellIterator *it )  // static
+
 {	Mesh::data_for_iter_contour *data = (Mesh::data_for_iter_contour*) it->data;
 	if ( data->first_try ) return true;
 	return ( data->current_seg != data->first_seg );                                 }
@@ -1490,7 +1545,7 @@ void VariationalProblem::discretize ( )
 	for ( it_integr = left->terms.begin(); it_integr != left->terms.end(); it_integr++ )
 	{	FunctionOnMesh::Integral * integr = it_integr->second;
 		Mesh * domain = integr->domain;
-		CellIterator it = domain->iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator it = domain->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( it.reset(); it.in_range(); it++ )
 		{	Cell & cll = *it;
 			this->finite_element->dock_on ( cll );
@@ -1500,7 +1555,7 @@ void VariationalProblem::discretize ( )
 //	for ( it_integr = right->terms.begin(); it_integr != right->terms.end(); it_integr++ )
 //	{	FunctionOnMesh::Integral * integr = it_integr->second;
 //		Mesh * domain = integr->domain;
-//		CellIterator it = domain->iter_over ( tag::cells_of_max_dim, tag::oriented );
+//		CellIterator it = domain->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 
 } // end of VariationalProblem::discretize
 
@@ -1682,7 +1737,7 @@ FiniteElement::Lagrange & FiniteElement::lagrange ( std::string s, Mesh & msh )
 	{	// apparently a mesh already exists, we enumerate its vertices
 		FiniteElement::Lagrange::degree_1 * f_e =
 			( FiniteElement::Lagrange::degree_1 * ) (&fe);
-		CellIterator it = msh.iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+		CellIterator it = msh.iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 		for ( it.reset(); it.in_range(); it++ )
 		{	Cell & p = *it;
 			assert ( p.size_t_heap.size() <= f_e->pointer_into_heap );
@@ -1693,14 +1748,14 @@ FiniteElement::Lagrange & FiniteElement::lagrange ( std::string s, Mesh & msh )
 	{	// apparently a mesh already exists, we enumerate its vertices and segments
 		FiniteElement::Lagrange::degree_2 * f_e =
 			( FiniteElement::Lagrange::degree_2 * ) (&fe);
-		CellIterator it0 = msh.iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+		CellIterator it0 = msh.iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 		for ( it0.reset(); it0.in_range(); it0++ )
 		{	Cell & p = *it0;
 			assert ( p.size_t_heap.size() <= f_e->pointer_into_heap[0] );
 			p.size_t_heap.resize(f_e->pointer_into_heap[0]+1);
 			p.size_t_heap[f_e->pointer_into_heap[0]] = f_e->max_dof;
 			f_e->max_dof++;                                                    }
-		CellIterator it1 = msh.iter_over ( tag::cells_of_dim, 1, tag::not_oriented );
+		CellIterator it1 = msh.iter_over ( tag::cells, tag::of_dim, 1, tag::not_oriented );
 		for ( it1.reset(); it1.in_range(); it1++ )
 		{	Cell & s = *it1;
 			assert ( s.size_t_heap.size() <= f_e->pointer_into_heap[1] );
@@ -1708,7 +1763,7 @@ FiniteElement::Lagrange & FiniteElement::lagrange ( std::string s, Mesh & msh )
 			s.size_t_heap[f_e->pointer_into_heap[1]] = f_e->max_dof;
 			f_e->max_dof++;                                                    }
 		if ( ( s == "Q2" ) ) // we also enumerate quadrilaterals
-		{	CellIterator it2 = msh.iter_over ( tag::cells_of_dim, 2, tag::not_oriented );
+		{	CellIterator it2 = msh.iter_over ( tag::cells, tag::of_dim, 2, tag::not_oriented );
 			for ( it2.reset(); it2.in_range(); it2++ )
 			{	Cell & q = *it2;
 				assert ( q.size_t_heap.size() <= f_e->pointer_into_heap[2] );

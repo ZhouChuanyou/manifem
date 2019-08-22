@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.h 2019.08.18
+﻿// src/manifem/Mesh.h 2019.08.20
 
 #include <list>
 #include <map>
@@ -200,18 +200,19 @@ class ManiFEM::Cell
 	{	assert ( hidden_boundary != NULL );
 		return *hidden_boundary;               }
 	
-	inline Cell & reverse ();
-	// if 'hidden_reverse' is not NULL, return it
-	// if 'hidden_reverse' is NULL, a reverse mesh is created "on the fly" and returned
+	inline Cell & reverse ( const tag::OnTheFly & otf = tag::on_the_fly );
+	// usually called without any arguments
+	// if 'hidden_reverse' is not NULL, return it (de-referenced)
+	// if 'hidden_reverse' is NULL, a reverse cell is created "on the fly" and returned
 	// defined after class ManiFEM::Segment
 
 	// in the version below, 'reverse' returns a pointer which may be NULL
-	inline Cell * reverse ( const tag::MayNotExist & )
+	inline Cell * reverse ( const tag::MayNotExist & ) const
 	{	return hidden_reverse;  }
 	
-	inline bool is_positive ()	{	return this == positive;  }
+	inline bool is_positive () const {	return this == positive;  }
 
-	inline bool belongs_to ( Mesh & msh );
+	inline bool belongs_to ( Mesh & msh ) const;
 
 	// Method 'glue_on_bdry_of' is intensively used when building a mesh,
 	// e.g. within factory functions in Cell class.
@@ -238,14 +239,15 @@ class ManiFEM::Cell
 	void print_everything ();
 #endif
 
-	Cell & cut ( const tag::At &, Cell & ver, const tag::CellIsARectangle & );
+	Cell & cut ( const tag::InTwoTriangles &, const tag::At &,
+	             Cell & ver, const tag::CellIsARectangle &     );
 	// cut 'this' rectangle along a diagonal
 	// returns the newly created segment, beginning at 'ver'
 
-	void cut ( const tag::InFour &, const tag::CellIsARectangle &,
-             const tag::WithIn &, Mesh & ambient_mesh, double epsi = 0. );
+	void cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
+             const tag::WithIn &, Mesh & ambient_mesh, double epsi = 0.    );
 	// cut 'this' rectangle in four smaller rectangles, creating hanging nodes
-	// degenerated triangles appear to make the transition towards bigger rectangles
+	// degenerated triangles make the transition towards bigger rectangles
 
 	static Cell & cartesian_product_orient ( Cell & cell1, Cell & cell2,
 		std::map < Cell*, std::map < Cell*, std::pair < Cell*, bool > > > & cartesian, bool revert );
@@ -255,9 +257,9 @@ class ManiFEM::Cell
 	void glue_on_bdry_core ( Cell & cll );
 	void cut_from_bdry_core ( Cell & cll );
 
-	inline MeshIterator iter_over ( const tag::MeshesAbove &, const tag::Oriented & );
+	inline MeshIterator iter_over ( const tag::Meshes &, const tag::Above &, const tag::Oriented & );
 	// defined after class ManiFEM::MeshIterator
-	inline CellIterator iter_over ( const tag::CellsAbove &, const tag::Oriented & );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &, const tag::Oriented & );
 	// defined after class ManiFEM::CellIterator
 	
 	// (we are still in class Cell)  data for iterators :
@@ -327,9 +329,13 @@ inline Cell & Cell::base ()
 {	assert ( dim == 1 );
 	return * ( ((Segment*)this)->hidden_base );  }
 
-inline Cell & Cell::reverse ()
-// If the cell has already a reverse, return it.
-// Otherwise, create on-the-fly the reverse cell, and return it.
+
+inline Cell & Cell::reverse ( const tag::OnTheFly & otf )
+
+// usually called without any arguments ('otf' defaults to tag::on_the_fly)
+// if the cell has already a reverse, return it
+// otherwise, create on-the-fly the reverse cell, and return it
+
 {	if ( this->hidden_reverse == NULL ) 
 	{	// a negative cell has always a reverse,
 		// so this must be a positive cell
@@ -338,9 +344,9 @@ inline Cell & Cell::reverse ()
 		if ( this->dim == 1 )
 			rev = (Cell*) new Segment ( tag::reverse_of, * ( (Segment*) this ) );
 		else rev = new Cell( tag::reverse_of, *this );
-		return *rev;                                            }
+		return *rev;                                                             }
 	// else :
-	return * ( this->hidden_reverse );                                 }
+	return * ( this->hidden_reverse );                                             }
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -434,9 +440,9 @@ class ManiFEM::Mesh
 	// The 'IndexedList' type is defined in the file 'IndexedPointer.h'.
 	// Empty if 'this' mesh is negative.
 	hidden::IndexedList < Cell* > cells;
-	// podemos experimentar usar aqui uma                                       //
+	// podemos experimentar usar aqui uma                       //
 	// map<Cell*,map<Mesh*,Cell:field_to_meshes>::iterator>     //
-	// e ver se a velocidade aumenta significativamente                         //
+	// e ver se a velocidade aumenta significativamente         //
 
 	// 'hook' is a map where we keep miscelaneous (typeless) properties.
 	// we make heavy use of explicit casting here
@@ -461,21 +467,21 @@ class ManiFEM::Mesh
 	Mesh ( const Mesh & ) = delete;
 	Mesh& operator= ( const Mesh & ) = delete;
 
-	inline Mesh & reverse ();
+	inline Mesh & reverse ( const tag::OnTheFly & otf = tag::on_the_fly );
+	// usually called without any arguments
 	// if 'hidden_reverse' is not NULL, return it
 	// if 'hidden_reverse' is NULL, a reverse mesh is created "on the fly" and returned
 
 	// in the version below, 'reverse' returns a pointer which may be NULL
-	inline Mesh * reverse ( const tag::MayNotExist & )
+	inline Mesh * reverse ( const tag::MayNotExist & ) const
 	{	return hidden_reverse;  }
 	
-	inline bool is_positive ()
-	{	return this == positive;  }
+	inline bool is_positive () const {	return this == positive;  }
 
-	inline size_t number_of ( const tag::CellsOfMaxDim & )
-	{	return number_of ( tag::cells_of_dim, dim );  }
+	inline size_t number_of ( const tag::Cells &, const tag::OfMaxDim & )
+	{	return number_of ( tag::cells, tag::of_dim, dim );  }
 	
-	inline size_t number_of ( const tag::CellsOfDim, short int d )
+	inline size_t number_of ( const tag::Cells &, const tag::OfDim &, short int d )
 	{	if ( is_positive() ) return cells[d]->size();
 		else return hidden_reverse->cells[d]->size();  }
 
@@ -520,8 +526,8 @@ class ManiFEM::Mesh
 	inline Cell * cell_in_front_of ( Cell *, const tag::MayNotExist & );
 	inline Cell * cell_behind ( Cell *, const tag::MayNotExist & );
 	// return nullpointer if there is no cell (we are on the boundary of the mesh)
-	inline Cell & cell_in_front_of ( Cell &, const tag::SurelyExists & t = tag::surely_exists );
-	inline Cell & cell_behind ( Cell&, const tag::SurelyExists & t = tag::surely_exists );
+	inline Cell & cell_in_front_of ( Cell &, const tag::SurelyExists & se = tag::surely_exists );
+	inline Cell & cell_behind ( Cell&, const tag::SurelyExists & se = tag::surely_exists );
 
 	// for a cell of maximum dimension,
 	// returns a cell with orientation compatible with 'this' orientation
@@ -543,8 +549,14 @@ class ManiFEM::Mesh
 	// they are passed to 'deep_connections' from  Cell::add_to and Cell::remove_from
 	static void action_add ( Cell&, Mesh&, short int, short int );
 	static void action_remove ( Cell&, Mesh&, short int, short int );
-	static void action_add_rev ( Cell&, Mesh&, short int, short int );
-	static void action_remove_rev ( Cell&, Mesh&, short int, short int );
+
+	static inline void action_add_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
+	// we just switch the two counters
+	{	Mesh::action_add ( cll, msh, cn, cp );  }
+	
+	static inline void action_remove_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
+	// we just switch the two counters
+	{	Mesh::action_remove ( cll, msh, cn, cp );    }
 
 	// here is the core linking between cells and meshes
 	// do not use directly; this is called from add_to and remove_from
@@ -560,31 +572,31 @@ class ManiFEM::Mesh
 	static Mesh & cartesian_product ( Mesh & mesh1, Mesh & mesh2 );
 
 	// iterator over Cells belonging to 'this'
-	inline CellIterator iter_over ( const tag::CellsOfMaxDim &, const tag::Oriented & );
-	// code example :  auto it = msh.iter_over ( tag::cells_of_max_dim, tag::oriented );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::OfMaxDim &, const tag::Oriented & );
+	// code example :  auto it = msh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 	//                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
 	inline CellIterator iter_over
-		( const tag::CellsOfDim &, const short int, const tag::NotOriented & );
-	// code example :  auto it = msh.iter_over ( tag::cells_of_dim, d, tag::not_oriented );
+		( const tag::Cells &, const tag::OfDim &, const short int, const tag::NotOriented & );
+	// code example :  auto it = msh.iter_over ( tag::cells, tag::of_dim, d, tag::not_oriented );
 	//                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
 
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusOne &, const tag::Along &                     );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusOne &, const tag::Along &, const tag::Reverse & );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusOne &, const tag::Around &                    );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusOne &, const tag::Around &, const tag::Reverse & );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusTwo &, const tag::Along &                     );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusTwo &, const tag::Along &, const tag::Reverse & );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusTwo &, const tag::Around &                    );
-	inline CellIterator iter_over ( const tag::CellsAbove &, Cell & cll,
-		const tag::OfDimPlusTwo &, const tag::Around &, const tag::Reverse & );
-	// code example :  auto it = msh.iter_over ( tag::cells_above, cll,
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusOne &, const tag::Along &             );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusOne &, const tag::Along &, const tag::Reverse & );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusOne &, const tag::Around &            );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusOne &, const tag::Around &, const tag::Reverse & );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusTwo &, const tag::Along &             );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusTwo &, const tag::Along &, const tag::Reverse & );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusTwo &, const tag::Around &            );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &,
+		Cell & cll, const tag::OfDimPlusTwo &, const tag::Around &, const tag::Reverse & );
+	// code example :  auto it = msh.iter_over ( tag::cells, tag::above, cll,
 	//                                           tag::of_dim_plus_two, tag::along );
 	//                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
 	// only for one-dimensional meshes :
@@ -658,25 +670,35 @@ class ManiFEM::Mesh
 
 }; // end of class ManiFEM::Mesh
 
+
 inline void Mesh::build_boundary ( Cell & cll )
+
 // builds (an empty mesh which will be) the boundary of cll
+
 {	Mesh *msh = new Mesh ( cll.dim - 1 );
 	msh->cell_enclosed = & cll;
 	cll.hidden_boundary = msh;             }
 
-inline Mesh & Mesh::reverse ()
-// If 'this' mesh has already a reverse, return it.
-// Otherwise, create on-the-fly the reverse mesh, and return it.
+
+inline Mesh & Mesh::reverse ( const tag::OnTheFly & otf )
+
+// usually called without any arguments ('otf' defaults to tag::on_the_fly)
+// if 'this' mesh has already a reverse, return it
+// otherwise, create on-the-fly the reverse mesh, and return it
+
 {	if ( this->hidden_reverse == NULL )
 	{	// a negative mesh has always a reverse,
 		// so this must be a positive mesh
 		assert ( this->is_positive() );
-		return * ( new Mesh ( tag::reverse_of, *this ) );      }
-	else return * ( this->hidden_reverse );            }
+		return * ( new Mesh ( tag::reverse_of, *this ) );  }
+	else return * ( this->hidden_reverse );                 }
+
 
 inline Cell * Mesh::cell_behind ( Cell * face, const tag::MayNotExist & )
+
 // return the cell behind 'face'
 // recall that the faces of a cell are looking outwards
+
 {	short int d = this->dim, dm1 = d - 1;
 	assert ( dm1 == face->dim );
 	if ( this->is_positive() )
@@ -691,37 +713,50 @@ inline Cell * Mesh::cell_behind ( Cell * face, const tag::MayNotExist & )
 		else return NULL;                                                                 }
 } // end of *Mesh::cell_behind
 
-inline Cell & Mesh::cell_behind ( Cell & face, const tag::SurelyExists & t )
-// 't' defaults to tag::surely_exists
+
+inline Cell & Mesh::cell_behind ( Cell & face, const tag::SurelyExists & se )
+
+// usually called with one argument only ('se' defaults to tag::surely_exists)
+
 {	Cell * cll = this->cell_behind ( & face, tag::may_not_exist );
 	assert ( cll != NULL );
 	return *cll;                                                    }
 
+
 inline Cell * Mesh::cell_in_front_of ( Cell * face, const tag::MayNotExist & )
+
 // return the cell towards which 'face' is looking
 // recall that the faces of a cell are looking outwards
+
 {	Cell *fr = face->hidden_reverse;
 	if ( fr == NULL ) return NULL;
 	else return this->cell_behind ( fr, tag::may_not_exist );
 } // end of *Mesh::cell_in_front_of
 
-inline Cell & Mesh::cell_in_front_of ( Cell & face, const tag::SurelyExists & t )
-// 't' defaults to tag::surely_exists
+
+inline Cell & Mesh::cell_in_front_of ( Cell & face, const tag::SurelyExists & se )
+
+// usually called with one argument only ('se' defaults to tag::surely_exists)
+
 {	Cell * cll = this->cell_in_front_of ( & face, tag::may_not_exist );
 	assert ( cll != NULL );
 	return *cll;                                                         }
 
+
 inline Cell & Mesh::orient_cell ( Cell & c )
+
 // for a cell of maximum dimension inside 'this' mesh,
 // returns a cell with orientation compatible with 'this' orientation
-{	bool ok = true;
+
+{	assert ( c.dim == this->dim );
+	bool ok = true;
 	Mesh * msh = this;
 	if ( ! ( msh->is_positive() ) )
 	{	ok = false; msh = msh->hidden_reverse;  }
 	assert ( msh != NULL );
 	assert ( msh->is_positive() );
 	Cell *cll = &c;
-	if ( ! (cll->is_positive() ) ) cll = cll->hidden_reverse;
+	if ( ! ( cll->is_positive() ) ) cll = cll->hidden_reverse; // ok = not ok ?
 	assert ( cll != NULL );
 	assert ( cll->is_positive() );
 	Cell::field_to_meshes & field = (*(cll->meshes[msh->dim]))[msh];
@@ -737,6 +772,7 @@ inline Cell & Mesh::orient_cell ( Cell & c )
 	assert (cll->hidden_reverse != NULL);
 	return * ( cll->hidden_reverse );                                      }
 
+
 inline Mesh & Mesh::join ( Mesh & a, Mesh & b ) // static
 {	std::list < Mesh * > l {&a,&b};
 	return Mesh::join (l);           }
@@ -750,7 +786,7 @@ inline Mesh & Mesh::join ( Mesh & a, Mesh & b, Mesh & c, Mesh & d )  // static
 	return Mesh::join (l);                 }
 
 
-inline bool Cell::belongs_to ( Mesh & msh )
+inline bool Cell::belongs_to ( Mesh & msh ) const
 
 // important : if this->dim < msh.dim then the orientations do not matter
 // (in this case, usually the cell appears more than once in the mesh,
@@ -773,13 +809,15 @@ inline bool Cell::belongs_to ( Mesh & msh )
 	
 
 inline Cell * Mesh::get_tri_for_iter_dual ( Cell * center )
+
 // returns a triangle having 'center' as vertex, within 'this' mesh
 // well, not necessarily a triangle, just any two-dimensional cell
+
 {	center = center->positive;
 	assert ( this->dim == center->dim + 2 );
+	std::map<Mesh*,Cell::field_to_meshes> * cmd = center->meshes[this->dim-1];
 	std::map<Mesh*,Cell::field_to_meshes>::iterator
-	  it = center->meshes[this->dim-1]->begin(),
-	  it_e = center->meshes[this->dim-1]->end();
+	  it = cmd->begin(),  it_e = cmd->end();
 	for ( ; it != it_e; it++ )
 	{	Mesh * tri_bdry = it->first;
 		Cell * tri = tri_bdry->cell_enclosed;
@@ -787,8 +825,7 @@ inline Cell * Mesh::get_tri_for_iter_dual ( Cell * center )
 		// we must check that tri actually belongs to 'this' mesh
 		std::map<Mesh*,Cell::field_to_meshes> * tmd = tri->meshes[this->dim];
 		if ( tmd->find(this) == tmd->end() ) continue;
-		// what if 'tri' is negative ?
-		// I believe 'tri' must be positive because 'tri_bdry' is
+		// 'tri' must be positive because 'tri_bdry' is
 		return tri;                                                            }
 	assert ( false );                                                          }
 
@@ -816,6 +853,7 @@ inline Cell * Mesh::get_tri_for_iter_dual ( Cell * center )
 
 
 class ManiFEM::MeshIterator
+
 {	public :
 	void *base;
 	void *data;
@@ -829,35 +867,32 @@ class ManiFEM::MeshIterator
 
 	// constructors
 	
-	inline MeshIterator () { };
+	MeshIterator () = delete;
 	
 	// iterates over Meshes "above" 'cll'
 	inline MeshIterator
-		( Cell *cll, const tag::MeshesAbove &, const tag::OfMinDim &, const tag::Oriented & );
+		( const Cell & cll, const tag::Meshes &, const tag::Above &, const tag::OfMinDim &, const tag::Oriented & )
+		: base ( (void*) cll.positive )
+	{ };
 	
 	inline void reset()          {  re_set   (this);  }
-	inline void advance()        {  ad_vance (this);  }
-	inline void operator++()     {  ad_vance (this);  }
-	inline void operator++(int)  {  ad_vance (this);  }
-	inline Mesh & operator*()    {  return * ( dereference (this) );  }
+	inline void advance()        {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline void operator++()     {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline void operator++(int)  {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline Mesh & operator*()
+	{	assert ( va_lid (this) );
+		Mesh * msh = dereference (this);
+		assert ( msh ); // msh not NULL
+		return * msh;                     }
 	inline bool in_range()       {  return va_lid (this);  }
-	inline void skip_null();
-};
+	inline void skip_null();  // useless
+
+}; // end of class ManiFEM::MeshIterator
 
 
-inline MeshIterator::MeshIterator
-	( Cell *cll, const tag::MeshesAbove &, const tag::OfMinDim &, const tag::Oriented & )
-// iterates over Meshes "above" 'cll'
-	: MeshIterator ()
-{	if ( cll->is_positive() )     // merely this->base = cll->positive
-	 	this->base = (void*) cll;
-	else
-	{	assert ( cll->hidden_reverse != NULL );
-		this->base = (void*) cll->hidden_reverse;   }  }
+inline MeshIterator Cell::iter_over ( const tag::Meshes &, const tag::Above &, const tag::Oriented & )
 
-
-inline MeshIterator Cell::iter_over ( const tag::MeshesAbove &, const tag::Oriented & )
-{	MeshIterator it ( this, tag::meshes_above, tag::of_min_dim, tag::oriented );
+{	MeshIterator it ( *this, tag::meshes, tag::above, tag::of_min_dim, tag::oriented );
 	it.data = (void*) new Cell::data_for_iter_min_dim;
 	it.re_set = Cell::reset_mesh_iter_min_dim;
 	it.ad_vance = Cell::advance_mesh_iter_min_dim;
@@ -869,10 +904,12 @@ inline MeshIterator Cell::iter_over ( const tag::MeshesAbove &, const tag::Orien
 	return it;                                                                        }
 	
 
-inline void MeshIterator::skip_null ()
+inline void MeshIterator::skip_null ()  // should be eliminated
+
 {	while ( this->in_range() )
 	{	this->value = this->dereference (this);
 		if ( this->value != NULL ) break;
+		assert ( false );
 		this->advance ();                         }  }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -893,52 +930,45 @@ class ManiFEM::CellIterator
 	// constructors (do not use directly)
 	// use instead pseudo-constructor Mesh::iter_over
 	
-	inline CellIterator () { };
+	CellIterator () = delete;
 	
 	// iterate over Cells belonging to 'msh'
-	inline CellIterator ( Mesh *msh );
+	// used in  Mesh::iter_over ( 18 possibilities )
+	inline CellIterator ( const Mesh & msh ) : base ( (void*) msh.positive )
+	{ };
 
 	// iterates over Cells "above" 'cll'
-	inline CellIterator ( Cell *cll );
+	inline CellIterator ( const Cell & cll ) : base ( (void*) cll.positive )
+	// anyway, 'base' is irrelevant here (never used),
+	// see Cell::iter_over ( tag::Cells &, const tag::Above &, tag::Oriented & )
+	{ };
 	
 	inline void reset ()  {  re_set ( this, NULL );  }
-	inline void reset ( Cell & p )  {  re_set ( this, &p );  };
-	inline void advance()        {  ad_vance (this);  };
-	inline void operator++()     {  ad_vance (this);  };
-	inline void operator++(int)  {  ad_vance (this);  };
-	inline Cell & operator*()    {  return * ( dereference (this) );  };
-	inline bool in_range()       {  return va_lid (this);  };
+	inline void reset ( Cell & p )  {  re_set ( this, & p );  }
+	inline void advance()        {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline void operator++()     {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline void operator++(int)  {  assert ( va_lid (this) );  ad_vance (this);  }
+	inline Cell & operator*()
+	{	assert ( va_lid (this) );
+		Cell * cll = dereference (this);
+		assert ( cll ); // cll not NULL
+		return * cll;                     }
+	inline bool in_range()       {  return va_lid (this);  }
 	inline void skip_null();
 	
 }; // end of class ManiFEM::CellIterator
 
 
-inline CellIterator::CellIterator ( Cell *cll ) : CellIterator ()
-// iterates over Cells "above" 'cll'
-{	if ( cll->is_positive() ) this->base = (void*) cll;
-	else     // merely this->base = cll->positive
-	{	assert ( cll->hidden_reverse != NULL );
-		this->base = (void*) cll->hidden_reverse;   }    }
-// anyway, 'base' is irrelevant here (never used),
-// see Cell::iter_over ( tag::CellsAbove, tag::Oriented )
 
+inline CellIterator Cell::iter_over ( const tag::Cells &, const tag::Above &, const tag::Oriented & )
 
-inline CellIterator::CellIterator ( Mesh *msh ) : CellIterator ()
-// iterates over Cells belonging to 'msh'
-// used in  Mesh::iter_over ( 18 possibilities )
-{	assert ( msh != NULL );
-	if ( msh->is_positive() ) this->base = (void*) msh;
-	else     // merely this->base = msh->positive
-	{	assert ( msh->hidden_reverse != NULL );
-		this->base = (void*) msh->hidden_reverse;   }         }
-
-inline CellIterator Cell::iter_over ( const tag::CellsAbove &, const tag::Oriented & )
 // iterator over Cells "above" 'this' cell
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 //	      ( this, "cells above, of minimum dimension, oriented") );  }
 	// the only relevant datum is another iterator, over meshes "above" cll
 	MeshIterator * it_m = new MeshIterator  // !
-		( this, tag::meshes_above, tag::of_min_dim, tag::oriented );
+		( *this, tag::meshes, tag::above, tag::of_min_dim, tag::oriented );
 	it_m->data = (void*) new Cell::data_for_iter_min_dim;
 	it_m->re_set = Cell::reset_mesh_iter_min_dim;
 	it_m->ad_vance = Cell::advance_mesh_iter_min_dim;
@@ -955,10 +985,10 @@ inline CellIterator Cell::iter_over ( const tag::CellsAbove &, const tag::Orient
 	return it;                                                                      }
 
 
-inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
-	  const tag::OfDimPlusOne &, const tag::Along & )
-{	CellIterator it ( this );
+inline CellIterator Mesh::iter_over	( const tag::Cells &, const tag::Above &,
+	Cell & cll, const tag::OfDimPlusOne &, const tag::Along &    )
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -970,10 +1000,11 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                          }
 
-inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
-	  const tag::OfDimPlusOne &, const tag::Along &, const tag::Reverse & )
-{	CellIterator it ( this );
+
+inline CellIterator Mesh::iter_over ( const tag::Cells &, const tag::Above &, Cell & cll,
+	  const tag::OfDimPlusOne &, const tag::Along &, const tag::Reverse &    )
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -985,10 +1016,11 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
-	  const tag::OfDimPlusOne &, const tag::Around & )
-{	CellIterator it ( this );
+	( const tag::Cells &, const tag::Above &, Cell & cll, const tag::OfDimPlusOne &, const tag::Around & )
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1000,10 +1032,12 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
+	( const tag::Cells &, const tag::Above &, Cell & cll,
 	  const tag::OfDimPlusOne &, const tag::Around &, const tag::Reverse & )
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1015,10 +1049,11 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
-	  const tag::OfDimPlusTwo &, const tag::Along & )
-{	CellIterator it ( this );
+	( const tag::Cells &, const tag::Above &, Cell & cll, const tag::OfDimPlusTwo &, const tag::Along & )
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1030,10 +1065,12 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
+	( const tag::Cells &, const tag::Above &, Cell & cll,
 	  const tag::OfDimPlusTwo &, const tag::Along &, const tag::Reverse & )
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1045,10 +1082,11 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
-	  const tag::OfDimPlusTwo &, const tag::Around & )
-{	CellIterator it ( this );
+	( const tag::Cells &, const tag::Above &, Cell & cll, const tag::OfDimPlusTwo &, const tag::Around & )
+		
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1060,10 +1098,12 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsAbove &, Cell & cll,
+	( const tag::Cells &, const tag::Above &, Cell & cll,
 	  const tag::OfDimPlusTwo &, const tag::Around &, const tag::Reverse & )
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 	assert ( this->dim == cll.dim + 2 );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
@@ -1076,11 +1116,13 @@ inline CellIterator Mesh::iter_over
 	return it;                                                          }
 
 
-inline CellIterator Mesh::iter_over ( const tag::CellsOfMaxDim &, const tag::Oriented & )
+inline CellIterator Mesh::iter_over ( const tag::Cells &, const tag::OfMaxDim &, const tag::Oriented & )
+
 // iterator over Cells belonging to 'this' mesh
-// code example :  auto it = msh.iter_over ( tag::cells_of_max_dim, tag::oriented );
+// code example :  auto it = msh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 	it.data = (void*) new Mesh::data_for_iter_max_dim; // !
 	it.re_set = Mesh::reset_iter_max_dim;
 	it.ad_vance = Mesh::advance_iter_max_dim;
@@ -1092,12 +1134,15 @@ inline CellIterator Mesh::iter_over ( const tag::CellsOfMaxDim &, const tag::Ori
 		it.dereference = Mesh::deref_iter_neg_max_dim;    }
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
-	( const tag::CellsOfDim &, const short int d, const tag::NotOriented & )
+	( const tag::Cells &, const tag::OfDim &, const short int d, const tag::NotOriented & )
+
 // iterator over Cells belonging to 'this' mesh
-// code example :  auto it = msh.iter_over ( tag::cells_of_max_dim, tag::oriented );
+// code example :  auto it = msh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
-{	CellIterator it ( this );
+
+{	CellIterator it ( *this );
 	Mesh::data_for_iter_given_dim *dat = new Mesh::data_for_iter_given_dim; // !
 	dat->dim = d;
 	it.data = (void*) dat;
@@ -1107,13 +1152,16 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_given_dim;
 	return it;                                                }
 
+
 inline CellIterator Mesh::iter_over ( const tag::Segments &, const tag::Along & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over segments of 'this' mesh
 // beware : 'this' mesh should be open (a polygonal line)
 // code example :  auto it = msh.iter_over ( tag::segments, tag::along );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1123,13 +1171,16 @@ inline CellIterator Mesh::iter_over ( const tag::Segments &, const tag::Along & 
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                            }
 
+
 inline CellIterator Mesh::iter_over ( const tag::Segments &, const tag::Around & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over segments of 'this' mesh
 // beware : 'this' mesh should be a closed loop (a polygon)
 // code example :  auto it = msh.iter_over ( tag::segments, tag::around );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1139,13 +1190,16 @@ inline CellIterator Mesh::iter_over ( const tag::Segments &, const tag::Around &
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                  }
 
+
 inline CellIterator Mesh::iter_over ( const tag::Vertices &, const tag::Along & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over vertices of 'this' mesh
 // beware : 'this' mesh should be open (a polygonal line)
 // code example :  auto it = msh.iter_over ( tag::vertices, tag::along );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1155,13 +1209,16 @@ inline CellIterator Mesh::iter_over ( const tag::Vertices &, const tag::Along & 
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                           }
 
+
 inline CellIterator Mesh::iter_over ( const tag::Vertices &, const tag::Around & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over vertices of 'this' mesh
 // beware : 'this' mesh should be a closed loop (a polygon)
 // code example :  auto it = msh.iter_over ( tag::vertices, tag::around );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1174,13 +1231,14 @@ inline CellIterator Mesh::iter_over ( const tag::Vertices &, const tag::Around &
 
 inline CellIterator Mesh::iter_over
 	( const tag::Segments &, const tag::Along &, const tag::Reverse & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over segments of to 'this' mesh
 // beware : 'this' mesh should be open (a polygonal line)
-// code example :  auto it = msh.iter_over
-//                      ( tag::segments, tag::along, tag::reverse );
+// code example :  auto it = msh.iter_over ( tag::segments, tag::along, tag::reverse );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1190,15 +1248,17 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                          }
 
+
 inline CellIterator Mesh::iter_over
 	( const tag::Segments &, const tag::Around &, const tag::Reverse & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over segments of 'this' mesh
 // beware : 'this' mesh should be a closed loop (a polygon)
-// code example :  auto it = msh.iter_over
-//                      ( tag::segments, tag::around, tag::reverse );
+// code example :  auto it = msh.iter_over ( tag::segments, tag::around, tag::reverse );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1208,15 +1268,17 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_segs_contour;
 	return it;                                                            }
 
+
 inline CellIterator Mesh::iter_over
 	( const tag::Vertices &, const tag::Along &, const tag::Reverse & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over vertices of 'this' mesh
 // beware : 'this' mesh should be open (a polygonal line)
-// code example :  auto it = msh.iter_over
-//                      ( tag::vertices, tag::along, tag::reverse );
+// code example :  auto it = msh.iter_over ( tag::vertices, tag::along, tag::reverse );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -1226,15 +1288,17 @@ inline CellIterator Mesh::iter_over
 	it.dereference = Mesh::deref_iter_vertices_contour;
 	return it;                                                            }
 
+
 inline CellIterator Mesh::iter_over
 	( const tag::Vertices &, const tag::Around &, const tag::Reverse & )
-// iterator over Cells belonging to 'this' mesh
+
+// iterator over vertices of 'this' mesh
 // beware : 'this' mesh should be a closed loop (a polygon)
-// code example :  auto it = msh.iter_over
-//                      ( tag::vertices, tag::around, tag::reverse );
+// code example :  auto it = msh.iter_over ( tag::vertices, tag::around, tag::reverse );
 //                 for ( it.reset(); it.in_range(); it++ ) { do something with *it; }
+
 {	assert ( this->dim == 1 );
-	CellIterator it ( this );
+	CellIterator it ( *this );
 	Mesh::data_for_iter_contour *d = new Mesh::data_for_iter_contour; // !
 	d->oriented_base = this;
 	it.data = (void*) d;
@@ -3472,7 +3536,7 @@ inline double FunctionOnMesh::baseFunction::integrate
 
 {	double res;
 	FiniteElement & fe = * ( integ.finite_element );
-	CellIterator it = msh.iter_over ( tag::cells_of_max_dim, tag::oriented );
+	CellIterator it = msh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 	for ( it.reset(); it.in_range(); it++ )
 	// we add to 'res' the contribution of the cell '*it'
 	{	Cell & cll = *it;

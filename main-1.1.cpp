@@ -23,9 +23,6 @@ int main () {
 	y.components[0]->name = "y";
 	z.components[0]->name = "z";
 
-	Cell test (1);
-	exit(0);
-	
 	// Let's build a rectangular mesh. First, the four corners :
 	auto & SW = Cell::point ("SW");  x ==  0.;  y ==  0.;  z ==  0.;
 	auto & SE = Cell::point ("SE");  x ==  1.;  y ==  0.;  z ==  0.;

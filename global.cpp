@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.08.17
+// manifem/global.cpp 2019.08.20
 
 #include <list>
 #include <map>
@@ -64,37 +64,25 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 	it1.reset(); SW = &(*it1);
 	CellIterator it2 = south.iter_over ( tag::vertices, tag::along, tag::reverse );
 	it2.reset(); SE = &(*it2);
-	if ( south.is_positive() )
-		N_horiz = south.cells[1]->size();
-	else
-		N_horiz = south.reverse().cells[1]->size();
+	N_horiz = south.number_of ( tag::cells, tag::of_max_dim );
 	} { // just to keep it1 and it2 local
 	CellIterator it1 = north.iter_over ( tag::vertices, tag::along);
 	it1.reset(); NE = &(*it1);
 	CellIterator it2 = north.iter_over ( tag::vertices, tag::along, tag::reverse );
 	it2.reset(); NW = &(*it2);
-	if ( north.is_positive() )
-		assert ( N_horiz == north.cells[1]->size() );
-	else
-		assert ( N_horiz == north.reverse().cells[1]->size() );
+	assert ( N_horiz == north.number_of ( tag::cells, tag::of_max_dim ) );
 	} { // just to keep it1 and it2 local
 	CellIterator it1 = east.iter_over ( tag::vertices, tag::along );
 	it1.reset(); assert ( SE == &(*it1) );
 	CellIterator it2 = east.iter_over ( tag::vertices, tag::along, tag::reverse );
 	it2.reset(); assert ( NE == &(*it2) );
-	if ( east.is_positive() )
-		N_vert = east.cells[1]->size();
-	else
-		N_vert = east.reverse().cells[1]->size();
+	N_vert = east.number_of ( tag::cells, tag::of_max_dim );
 	} { // just to keep it1 and it2 local
 	CellIterator it1 = west.iter_over ( tag::vertices, tag::along );
 	it1.reset(); assert ( NW == &(*it1) );
 	CellIterator it2 = west.iter_over ( tag::vertices, tag::along, tag::reverse);
 	it2.reset(); assert ( SW == &(*it2) );
-	if ( west.is_positive() )
-		assert ( N_vert == west.cells[1]->size() );
-	else
-		assert ( N_vert == west.reverse().cells[1]->size() );
+	assert ( N_vert == west.number_of ( tag::cells, tag::of_max_dim ) );
 	} // just to keep it1 and it2 local
 		
 	// prepare the mesh
@@ -234,7 +222,7 @@ Mesh & Mesh::join ( const std::list<Mesh*> & l ) // static
 	for ( it = l.begin(); it != l.end(); it++ )
 	{	Mesh & m = *(*it);
 		// sweep all cells of m
-		CellIterator itt = m.iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator itt = m.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( itt.reset(); itt.in_range(); itt++ )
 		{	Cell & cll = *itt;
 			cll.add_to ( result );  }
@@ -341,7 +329,7 @@ Cell & Cell::cartesian_product_orient ( Cell & cell1, Cell & cell2,  // static
 	// now we add faces to the boundary, one by one
 	// "vertical" faces : faces of cell1 multiplied by cell2 itself
 	if ( cell1.dim > 0 )
-	{	CellIterator it1 = cell1_pos->boundary().iter_over ( tag::cells_of_max_dim, tag::oriented );
+	{	CellIterator it1 = cell1_pos->boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( it1.reset(); it1.in_range(); it1++ )
 		{	Cell & face = Cell::cartesian_product_orient ( *it1, *cell2_pos, cartesian, revert );
 			assert ( face.dim == prod_cell.dim - 1 );
@@ -352,7 +340,7 @@ Cell & Cell::cartesian_product_orient ( Cell & cell1, Cell & cell2,  // static
 		if ( cell1.dim %2 ) local_revert = not local_revert;
 		// the above works (for the cases I've tested), although I'm not sure why;
 		// I could use some help from experts in algebraic topology or similar domains
-		CellIterator it2 = cell2_pos->boundary().iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator it2 = cell2_pos->boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		for ( it2.reset(); it2.in_range(); it2++ )
 		{	Cell & face = Cell::cartesian_product_orient ( *cell1_pos, *it2, cartesian, local_revert );
 			assert ( face.dim == prod_cell.dim - 1 );
@@ -377,8 +365,8 @@ Mesh & Mesh::cartesian_product ( Mesh & mesh1, Mesh & mesh2 ) // static
 
 	std::map < Cell*, std::map < Cell*, std::pair < Cell*, bool > > >  cartesian;
 
-	CellIterator it1 = mesh1.iter_over ( tag::cells_of_max_dim, tag::oriented );	
-	CellIterator it2 = mesh2.iter_over ( tag::cells_of_max_dim, tag::oriented );
+	CellIterator it1 = mesh1.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );	
+	CellIterator it2 = mesh2.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 
 	for(it1.reset(); it1.in_range(); it1++)
 	for(it2.reset(); it2.in_range(); it2++)
@@ -406,7 +394,7 @@ void Mesh::draw_ps ( std::string f )
 	double xmin, xmax, ymin, ymax, maxside;
 	
 	{ // just a block for hiding variables
-	CellIterator it = this->iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 	it.reset(); assert(it.in_range());
 	Cell & Vfirst = *it;
 	xmin = xmax = x(Vfirst);
@@ -444,7 +432,7 @@ void Mesh::draw_ps ( std::string f )
 	file_ps << "gsave 0.003 setlinewidth" << std::endl;
 	
 	{ // just a block for hiding variables
-	CellIterator it = this->iter_over ( tag::cells_of_dim, 1, tag::not_oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 1, tag::not_oriented );
 	for ( it.reset() ; it.in_range(); it++ )
 	{	Cell & seg = *it;
 		Cell & base = seg.base().reverse();
@@ -456,7 +444,7 @@ void Mesh::draw_ps ( std::string f )
 #ifndef NDEBUG
 	file_ps << "/Courier findfont 0.2 scalefont setfont" << std::endl;
 	{ // just a block for hiding variables
-	CellIterator it = this->iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 	for ( it.reset() ; it.in_range(); it++ )
 	{	Cell & p = *it;
 		if ( p.name() == "" ) continue;
@@ -488,12 +476,12 @@ void Mesh::export_msh ( std::string f )
 	file_msh << "$MeshFormat" << std::endl << "2.2 0 8" << std::endl;
 	file_msh << "$EndMeshFormat" << std::endl;
 	
-  file_msh << "$Nodes" << std::endl << this->cells[0]->size() << std::endl;
+  file_msh << "$Nodes" << std::endl << this->number_of(tag::cells,tag::of_dim,0) << std::endl;
 
 	std::map < Cell*, size_t > numbering;
 
 	{ // just to make variables local : it, counter, x, y
-	CellIterator it = this->iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 	size_t counter = 0;
 	OneDimField & x = coord[0], & y = coord[1];
 	if (coord.size() == 2)
@@ -513,18 +501,18 @@ void Mesh::export_msh ( std::string f )
 	} // just to make variables local : it, counter, x, y
 
 	file_msh << "$Elements" << std::endl;
-	file_msh << this->number_of ( tag::cells_of_max_dim ) << std::endl;
+	file_msh << this->number_of ( tag::cells, tag::of_max_dim ) << std::endl;
 
 	if ( this->dim == 2 )
-	{	CellIterator it = this->iter_over ( tag::cells_of_max_dim, tag::oriented );
+	{	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		size_t counter = 0;
 		for ( it.reset() ; it.in_range(); it++)
 		{	++counter;
 			Cell & elem = *it;
-			if ( elem.boundary().number_of ( tag::cells_of_max_dim ) == 3 ) // a triangle
+			if ( elem.boundary().number_of ( tag::cells, tag::of_max_dim ) == 3 ) // a triangle
 				file_msh << counter << " 2 0 ";
 			else // a quadrilateral
-			{	assert ( elem.boundary().number_of ( tag::cells_of_max_dim ) == 4 );
+			{	assert ( elem.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 				file_msh << counter << " 3 0 ";                            }
 			CellIterator itt = elem.boundary().iter_over ( tag::vertices, tag::around );
 			for ( itt.reset(); itt.in_range(); ++itt )
@@ -533,12 +521,12 @@ void Mesh::export_msh ( std::string f )
 			file_msh << std::endl;                                                            }  }
 	else
 	{	assert ( this->dim == 3);
-		CellIterator it = this->iter_over ( tag::cells_of_max_dim, tag::oriented );
+		CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		size_t counter = 0;
 		for ( it.reset() ; it.in_range(); it++)
 		{	++counter;
 			Cell & elem = *it;
-			size_t n_faces = elem.boundary().number_of ( tag::cells_of_max_dim );
+			size_t n_faces = elem.boundary().number_of ( tag::cells, tag::of_max_dim );
 			if ( n_faces == 4 ) // a tetrahedron
 				file_msh << counter << " 4 0 ";  // to finish !
 			else if ( n_faces == 6 )
@@ -546,11 +534,11 @@ void Mesh::export_msh ( std::string f )
 				// see http://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format
 				// and http://gmsh.info/doc/texinfo/gmsh.html#Node-ordering
 				file_msh << counter << " 5 0 ";
-				CellIterator itt = elem.boundary().iter_over ( tag::cells_of_max_dim, tag::oriented );
+				CellIterator itt = elem.boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 				itt.reset();
 				Cell & back = *itt; // square face behind the cube
 				// back is 0321 in gmsh's documentation
-				assert ( back.boundary().number_of ( tag::cells_of_max_dim ) == 4 );
+				assert ( back.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 				CellIterator itv = back.boundary().iter_over
 					( tag::vertices, tag::around, tag::reverse );
 				// reverse because we want the vertices ordered as 0, 1, 2, 3
@@ -561,13 +549,13 @@ void Mesh::export_msh ( std::string f )
 					file_msh << numbering[&p] << " ";   }
 				Cell & left_wall = elem.boundary().cell_in_front_of(seg_03); // square face on the left
 				// left_wall is 0473 in gmsh's documentation
-				assert ( left_wall.boundary().number_of ( tag::cells_of_max_dim ) == 4 );
+				assert ( left_wall.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 				Cell & seg_04 = left_wall.boundary().cell_in_front_of(ver_0);
 				Cell & ver_4 = seg_04.tip();
 				Cell & seg_47 = left_wall.boundary().cell_in_front_of(ver_4);
 				Cell & front = elem.boundary().cell_in_front_of(seg_47); // square face in front
 				// front is 4567 in gmsh's documentation
-				assert ( front.boundary().number_of ( tag::cells_of_max_dim ) == 4 );
+				assert ( front.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 				CellIterator itvv = front.boundary().iter_over ( tag::vertices, tag::around );
 				itvv.reset(ver_4);
 				for ( ; itvv.in_range(); ++itvv )
@@ -579,17 +567,17 @@ void Mesh::export_msh ( std::string f )
 				// see http://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format
 				// and http://gmsh.info/doc/texinfo/gmsh.html#Node-ordering
 				file_msh << counter << " 6 0 ";
-				CellIterator itt = elem.boundary().iter_over ( tag::cells_of_max_dim, tag::oriented );
+				CellIterator itt = elem.boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 				short int n_tri = 0, n_rect = 0;
 				Cell* base_p;
 				for( itt.reset(); itt.in_range(); ++itt )
 				{	Cell & face = *itt; // every face elem
-			    size_t n_edges = face.boundary().number_of ( tag::cells_of_max_dim );
+			    size_t n_edges = face.boundary().number_of ( tag::cells, tag::of_max_dim );
 					if ( n_edges == 3 )  { n_tri++;   base_p = &face;           }
 					else                 { n_rect++;  assert ( n_edges == 4 );  }   }
 				assert ( n_tri == 2 );  assert ( n_rect == 3 );
 				// base is 021 in gmsh's documentation
-				assert ( base_p->boundary().number_of ( tag::cells_of_max_dim ) == 3 );
+				assert ( base_p->boundary().number_of ( tag::cells, tag::of_max_dim ) == 3 );
 				CellIterator itv = base_p->boundary().iter_over
 					( tag::vertices, tag::around, tag::reverse );
 				// we set it reverse because we want the vertices ordered as 0, 1, 2
@@ -601,13 +589,13 @@ void Mesh::export_msh ( std::string f )
 					file_msh << numbering[&p] << " ";   }
 				Cell & right_wall = elem.boundary().cell_in_front_of(seg_02);
 				// right_wall is 0352 in gmsh's documentation
-				assert ( right_wall.boundary().number_of ( tag::cells_of_max_dim ) == 4 );
+				assert ( right_wall.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 				Cell & seg_03 = right_wall.boundary().cell_in_front_of(ver_0);
 				Cell & ver_3 = seg_03.tip();
 				Cell & seg_35 = right_wall.boundary().cell_in_front_of(ver_3);
 				Cell & roof = elem.boundary().cell_in_front_of(seg_35); //
 				// roof is 345 in gmsh's documentation
-				assert ( roof.boundary().number_of ( tag::cells_of_max_dim ) == 3 );
+				assert ( roof.boundary().number_of ( tag::cells, tag::of_max_dim ) == 3 );
 				CellIterator itvv = roof.boundary().iter_over ( tag::vertices, tag::around );
 				itvv.reset(ver_3);
 				for ( ; itvv.in_range(); ++itvv )
@@ -633,12 +621,12 @@ void Mesh::export_msh ( std::string f, FiniteElement & fe )
 	std::ofstream file_msh (f);
 	file_msh << "$MeshFormat" << std::endl << "2.2 0 8" << std::endl;
 	file_msh << "$EndMeshFormat" << std::endl << "$Nodes" << std::endl;
-	file_msh << this->cells[0]->size() << std::endl;
+	file_msh << this->number_of(tag::cells,tag::of_dim,0) << std::endl;
 
 	std::map < Cell*, int > numbering;
 
 	{ // just to make variables local : it, x, y
-	CellIterator it = this->iter_over ( tag::cells_of_dim, 0, tag::not_oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 	OneDimField & x = coord[0], & y = coord[1];
 	if (coord.size() == 2)
 	{	for ( it.reset() ; it.in_range(); it++ )
@@ -650,23 +638,23 @@ void Mesh::export_msh ( std::string f, FiniteElement & fe )
 		{	Cell & p = *it;
 			file_msh << fe.get_dof(p)+1 << " " << x(p) << " " << y(p) << " " << z(p) << std::endl;  }  }
 	file_msh << "$EndNodes" << std::endl << "$Elements" << std::endl;
-	file_msh << this->cells[2]->size() << std::endl;
+	file_msh << this->number_of(tag::cells,tag::of_max_dim) << std::endl;
 	} // just to make variables local : it, x, y
 
 	{ // just to make variables local : it, counter
-	CellIterator it = this->iter_over ( tag::cells_of_max_dim, tag::oriented );
+	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 	size_t counter = 0;
 	for ( it.reset() ; it.in_range(); it++)
 	{	++counter;
 		Cell & elem = *it;
-		if ( elem.boundary().cells[1]->size() == 3 )
+		if ( elem.boundary().number_of(tag::cells, tag::of_max_dim) == 3 )
 			file_msh << counter << " 2 0 ";
 		else
-		{	assert ( elem.boundary().cells[1]->size() == 4 );
+		{	assert ( elem.boundary().number_of(tag::cells, tag::of_max_dim) == 4 );
 			file_msh << counter << " 3 0 ";                    }
 		CellIterator itt = elem.boundary().iter_over ( tag::vertices, tag::around );
 		itt.reset();
-		size_t s = elem.boundary().cells[0]->size();
+		size_t s = elem.boundary().number_of(tag::cells,tag::of_max_dim);
 		for ( size_t i = 0; i < s; ++i )
 		{	assert ( itt.in_range() );
 			Cell & p = *itt;
@@ -684,20 +672,20 @@ void Mesh::export_msh ( std::string f, FiniteElement & fe )
 } // end of Mesh::export_msh
 
 
-Cell & Cell::cut ( const tag::At &, Cell & ver, const tag::CellIsARectangle & )
+Cell & Cell::cut ( const tag::InTwoTriangles &, const tag::At &,
+                   Cell & ver, const tag::CellIsARectangle &     )
 
 // cut 'this' rectangle along a diagonal
 // which diagonal ? the one passing through vertex 'ver'
 // returns the newly created segment, beginning at 'ver'
 
-// we must also cut the reverse cell, if it exists - to do
+// cut_from_bdry and glue_to_bdry deal with the reverse on their own
+// add_to does too, I think (to check)
 
-{
-	Mesh & bdry = this->boundary();
+{	Mesh & bdry = this->boundary();
 	// let's make sure 'this' is a rectangle (quadrilateral, actually)
 	assert ( this->dim == 2 );
-	assert ( bdry.cells[0]->size() == 4 );
-	assert ( bdry.cells[1]->size() == 4 );
+	assert ( bdry.number_of(tag::cells,tag::of_max_dim) == 4 );
 
 	// unglue two segments from the boundary
 	Cell & seg1 = bdry.cell_in_front_of (ver);
@@ -722,20 +710,101 @@ Cell & Cell::cut ( const tag::At &, Cell & ver, const tag::CellIsARectangle & )
 	// although it is now a triangle
 	// but 'new_tri' is not aware of that, for now
 	// so we must introduce it to all meshes above 'this'
-	MeshIterator it = this->iter_over ( tag::meshes_above, tag::oriented );
+	MeshIterator it = this->iter_over ( tag::meshes, tag::above, tag::oriented );
 	for ( it.reset(); it.in_range(); it++ ) new_tri.add_to (*it);
 
 	return new_seg;
-}
+
+} // end of Cell::cut in two triangles (cell is a rectangle)
 
 
-void Cell::cut ( const tag::InFour &, const tag::CellIsARectangle &,
-                 const tag::WithIn &, Mesh & ambient_mesh, double epsi )
+void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
+	Cell * & middle_of_AB_p, Cell * & AB1_p, Cell * & AB2_p, Cell & center, double epsi )
+
+{	NumericField * coord = Mesh::environment->coord_field;
+	
+	// there are three cases
+	// 1: the neighbour square is the same size (or even larger)
+	//    we need to create a (degenerated) triangle to smoothen the passage
+	// 2: the neighbour square has already been split
+	//    we destroy the (degenerated) triangle and use the half-segments
+	// 3: there is no neighbour square
+	//    we split the segment but there is no need for a (degenerated) triangle
+
+	Cell & A = AB.base().reverse();
+	Cell & B = AB.tip();
+	
+	short int situation;
+	Cell * cll = ambient_mesh.cell_in_front_of ( &AB, tag::may_not_exist );
+	if ( cll == NULL ) situation = 3;
+	else
+	{	situation = 1;
+		if ( ( cll->belongs_to(ambient_mesh) ) and
+	       ( cll->boundary().number_of(tag::cells,tag::of_max_dim) == 3 ) )
+		{	// is this the long edge of the triangle ?
+			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
+			if ( it != cll->hook.end() )
+			{	Cell * seg_p = (Cell*) (it->second);
+				if ( seg_p == AB.hidden_reverse )  situation = 2;   }                  }  }
+	switch ( situation ) {
+	case 1 : // we need to create a (degenerated) triangle
+	{	Cell & middle_of_AB = Cell::point();
+		coord->interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
+		Cell & AB1 = Cell::segment ( A.reverse(), middle_of_AB );
+		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
+		Cell & AB_tri = Cell::triangle ( AB, AB2.reverse(), AB1.reverse() );
+		AB_tri.hook["long edge"] = (void*) (&AB);
+		// std::cout << "in Cell::cut, adding cell with " << AB_tri.boundary().number_of(tag::cells, tag::of_max_dim)
+		// 					<< " sides" << std::endl;
+		AB_tri.add_to ( ambient_mesh );
+		middle_of_AB_p = & middle_of_AB;
+		AB1_p = & AB1;
+		AB2_p = & AB2;                                                                       }
+		break;
+	case 2 : // we destroy the (degenerated) triangle and use the half-segments
+		// yes, this is the long edge of the triangle
+	{	assert ( cll != NULL );
+		assert ( cll->belongs_to (ambient_mesh) );
+		Cell & seg1 = cll->boundary().cell_in_front_of (A);
+		Cell & ver = seg1.tip();
+		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
+		coord->interpolate ( ver, A, 0.5, B, 0.5 );
+		// std::cout << "destroying cell with " << cll->boundary().number_of ( tag::cells, tag::of_max_dim )
+		// 					<< " sides, at AB" << std::endl;
+		AB.reverse().cut_from_bdry_of ( *cll );
+		seg1.cut_from_bdry_of ( *cll );
+		seg2.cut_from_bdry_of ( *cll );
+		cll->remove_from ( ambient_mesh );
+		cll->discard();
+		A.reverse().cut_from_bdry_of ( AB );
+		B.cut_from_bdry_of ( AB );
+		AB.discard();
+		middle_of_AB_p = & ver;
+		AB1_p = & seg1;
+		AB2_p = & seg2;                                                        }
+		break;
+	case 3 : // we split the segment but there is no need for a new triangle
+	{	Cell & middle_of_AB = Cell::point();
+		coord->interpolate ( middle_of_AB, A, 0.5, B, 0.5 );
+		B. cut_from_bdry_of ( AB );
+		middle_of_AB. glue_on_bdry_of ( AB );
+		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
+		middle_of_AB_p = & middle_of_AB;
+		AB1_p = & AB;
+		AB2_p = & AB2;                                                          }
+		break;
+	} // end of switch
+
+} // end of cut_for_hanging_nodes
+
+
+void Cell::cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
+                 const tag::WithIn &, Mesh & ambient_mesh, double epsi         )
 
 // cuts a rectangle in four smaller rectangles, introducing hanging nodes
 
 // epsi defaults to 0.; represents a slight deformation which turns
-// the degenerated triangles visible
+// the degenerated triangles visible (less degenerate)
 
 {	NumericField * coord = Mesh::environment->coord_field;
 
@@ -763,272 +832,26 @@ void Cell::cut ( const tag::InFour &, const tag::CellIsARectangle &,
 	Cell & center = Cell::point();
 	coord->interpolate ( center, A, 0.25, B, 0.25, C, 0.25, D, 0.25 );
 
-	// there are three cases
-	// 1: the neighbour square is the same size (or even larger)
-	//    we need to create a (degenerated) triangle to smoothen the passage
-	// 2: the neighbour square has already been split
-	//    we destroy the (degenerated) triangle and use the half-segments
-	// 3: there is no neighbour square
-	//    we split the segment but there is no need for a (degenerated) triangle
-
 	Cell * middle_of_AB_p, * AB1_p, * AB2_p;
-	short int situation;
-	Cell * cll = ambient_mesh.cell_in_front_of ( &AB, tag::may_not_exist );
-	if ( cll == NULL ) situation = 3;
-	else
-	{	situation = 1;
-		if ( ( cll->belongs_to ( ambient_mesh ) ) and
-	       ( cll->boundary().cells[1]->size() == 3 ) )
-		{	// is this the long edge of the triangle ?
-			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
-			if ( it != cll->hook.end() )
-			{	Cell * seg_p = (Cell*) (it->second);
-				if ( seg_p == AB.hidden_reverse )
-					situation = 2;                      }                                }  }
-	switch ( situation ) {
-	case 1 : // we need to create a (degenerated) triangle
-	{	Cell & middle_of_AB = Cell::point();
-		coord->interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
-		Cell & AB1 = Cell::segment ( A.reverse(), middle_of_AB );
-		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
-		Cell & AB_tri = Cell::triangle ( AB, AB2.reverse(), AB1.reverse() );
-		AB_tri.hook["long edge"] = (void*) (&AB);
-		std::cout << "in Cell::cut, adding cell with " << AB_tri.boundary().cells[1]->size()
-							<< " sides" << std::endl;
-		AB_tri.add_to ( ambient_mesh );
-		middle_of_AB_p = & middle_of_AB;
-		AB1_p = & AB1;
-		AB2_p = & AB2;                                                         }
-		break;
-	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-		// is this the long edge of the triangle ?
-	{	assert ( cll != NULL );
-		assert ( cll->belongs_to (ambient_mesh) );
-		Cell & seg1 = cll->boundary().cell_in_front_of (A);
-		Cell & ver = seg1.tip();
-		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, A, 0.5, B, 0.5 );
-		std::cout << "destroying cell with " << cll->boundary().cells[1]->size()
-							<< " sides, at AB" << std::endl;
-		AB.reverse().cut_from_bdry_of ( *cll );
-		seg1.cut_from_bdry_of ( *cll );
-		seg2.cut_from_bdry_of ( *cll );
-		cll->remove_from ( ambient_mesh );
-		cll->discard();
-		A.reverse().cut_from_bdry_of ( AB );
-		B.cut_from_bdry_of ( AB );
-		AB.discard();
-		middle_of_AB_p = & ver;
-		AB1_p = & seg1;
-		AB2_p = & seg2;                                                        }
-		break;
-	case 3 : // we split the segment but there is no need for a new triangle
-	{	Cell & middle_of_AB = Cell::point();
-		coord->interpolate ( middle_of_AB, A, 0.5, B, 0.5 );
-		B. cut_from_bdry_of ( AB );
-		middle_of_AB. glue_on_bdry_of ( AB );
-		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
-		middle_of_AB_p = & middle_of_AB;
-		AB1_p = & AB;
-		AB2_p = & AB2;                                                          }
-		break;
-	} // end of switch
-	Cell & middle_of_AB = * middle_of_AB_p;
+	cut_for_hanging_nodes ( ambient_mesh, AB, middle_of_AB_p, AB1_p, AB2_p, center, epsi );
+ 	Cell & middle_of_AB = * middle_of_AB_p;
 	Cell & AB1 = * AB1_p;
 	Cell & AB2 = * AB2_p;
 
 	Cell * middle_of_BC_p, * BC1_p, * BC2_p;
-	cll = ambient_mesh.cell_in_front_of ( &BC, tag::may_not_exist );
-	if ( cll == NULL ) situation = 3;
-	else
-	{	situation = 1;
-		if ( ( cll->belongs_to ( ambient_mesh ) ) and
-	       ( cll->boundary().cells[1]->size() == 3 ) )
-		{	// is this the long edge of the triangle ?
-			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
-			if ( it != cll->hook.end() )
-			{	Cell * seg_p = (Cell*) (it->second);
-				if ( seg_p == BC.hidden_reverse )
-					situation = 2;                      }                                  }  }
-	switch ( situation ) {
-	case 1 : // we need to create a (degenerated) triangle
-	{	Cell & middle_of_BC = Cell::point();
-		coord->interpolate ( middle_of_BC, B, 0.5-epsi, C, 0.5-epsi, center, 2.*epsi );
-		Cell & BC1 = Cell::segment ( B.reverse(), middle_of_BC );
-		Cell & BC2 = Cell::segment ( middle_of_BC.reverse(), C );
-		Cell & BC_tri = Cell::triangle ( BC, BC2.reverse(), BC1.reverse() );
-		BC_tri.hook["long edge"] = (void*) (&BC);
-		std::cout << "in Cell::cut, adding cell with " << BC_tri.boundary().cells[1]->size()
-							<< " sides" << std::endl;
-		BC_tri.add_to ( ambient_mesh );
-		middle_of_BC_p = & middle_of_BC;
-		BC1_p = & BC1;
-		BC2_p = & BC2;                                                         }
-		break;
-	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-		// is this the long edge of the triangle ?
-	{	assert ( cll != NULL );
-		assert ( cll->belongs_to (ambient_mesh) );
-		Cell & seg1 = cll->boundary().cell_in_front_of (B);
-		Cell & ver = seg1.tip();
-		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, B, 0.5, C, 0.5 );
-		std::cout << "destroying cell with " << cll->boundary().cells[1]->size()
-							<< " sides, at BC" << std::endl;
-		BC.reverse().cut_from_bdry_of ( *cll );
-		seg1.cut_from_bdry_of ( *cll );
-		seg2.cut_from_bdry_of ( *cll );
-		cll->remove_from ( ambient_mesh );
-		cll->discard();
-		B.reverse().cut_from_bdry_of ( BC );
-		C.cut_from_bdry_of ( BC );
-		BC.discard();
-		middle_of_BC_p = & ver;
-		BC1_p = & seg1;
-		BC2_p = & seg2;                                                        }
-		break;
-	case 3 : // we split the segment but there is no need for a new triangle
-	{	Cell & middle_of_BC = Cell::point();
-		coord->interpolate ( middle_of_BC, B, 0.5, C, 0.5 );
-		C. cut_from_bdry_of ( BC );
-		middle_of_BC. glue_on_bdry_of ( BC );
-		Cell & BC2 = Cell::segment ( middle_of_BC.reverse(), C );
-		middle_of_BC_p = & middle_of_BC;
-		BC1_p = & BC;
-		BC2_p = & BC2;                                                         }
-		break;
-	} // end of switch
+	cut_for_hanging_nodes ( ambient_mesh, BC, middle_of_BC_p, BC1_p, BC2_p, center, epsi );
 	Cell & middle_of_BC = * middle_of_BC_p;
 	Cell & BC1 = * BC1_p;
 	Cell & BC2 = * BC2_p;
 		
 	Cell * middle_of_CD_p, * CD1_p, * CD2_p;
-	cll = ambient_mesh.cell_in_front_of ( &CD, tag::may_not_exist );
-	if ( cll == NULL ) situation = 3;
-	else
-	{	situation = 1;
-		if ( ( cll->belongs_to ( ambient_mesh ) ) and
-	       ( cll->boundary().cells[1]->size() == 3 ) )
-		{	// is this the long edge of the triangle ?
-			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
-			if ( it != cll->hook.end() )
-			{	Cell * seg_p = (Cell*) (it->second);
-				if ( seg_p == CD.hidden_reverse )
-					situation = 2;                      }                                }  }
-	switch ( situation ) {
-	case 1 : // we need to create a (degenerated) triangle
-	{	Cell & middle_of_CD = Cell::point();
-		coord->interpolate ( middle_of_CD, C, 0.5-epsi, D, 0.5-epsi, center, 2.*epsi );
-		Cell & CD1 = Cell::segment ( C.reverse(), middle_of_CD );
-		Cell & CD2 = Cell::segment ( middle_of_CD.reverse(), D );
-		Cell & CD_tri = Cell::triangle ( CD, CD2.reverse(), CD1.reverse() );
-		CD_tri.hook["long edge"] = (void*) (&CD);
-		std::cout << "in Cell::cut, adding cell with " << CD_tri.boundary().cells[1]->size()
-							<< " sides" << std::endl;
-		CD_tri.add_to ( ambient_mesh );
-		middle_of_CD_p = & middle_of_CD;
-		CD1_p = & CD1;
-		CD2_p = & CD2;                                                         }
-		break;
-	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-		// is this the long edge of the triangle ?
-	{	assert ( cll != NULL );
-		assert ( cll->belongs_to (ambient_mesh) );
-		Cell & seg1 = cll->boundary().cell_in_front_of (C);
-		Cell & ver = seg1.tip();
-		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, C, 0.5, D, 0.5 );
-		std::cout << "destroying cell with " << cll->boundary().cells[1]->size()
-							<< " sides, at CD" << std::endl;
-		CD.reverse().cut_from_bdry_of ( *cll );
-		seg1.cut_from_bdry_of ( *cll );
-		seg2.cut_from_bdry_of ( *cll );
-		cll->remove_from ( ambient_mesh );
-		cll->discard();
-		std::cout << "aha" << std::endl << std::flush;
-		C.reverse().cut_from_bdry_of ( CD );
-		D.cut_from_bdry_of ( CD );
-		CD.discard();
-		middle_of_CD_p = & ver;
-		CD1_p = & seg1;
-		CD2_p = & seg2;                                                         }
-		break;
-	case 3 : // we split the segment but there is no need for a new triangle
-	{	Cell & middle_of_CD = Cell::point();
-		coord->interpolate ( middle_of_CD, C, 0.5, D, 0.5 );
-		D. cut_from_bdry_of ( CD );
-		middle_of_CD. glue_on_bdry_of ( CD );
-		Cell & CD2 = Cell::segment ( middle_of_CD.reverse(), D );
-		middle_of_CD_p = & middle_of_CD;
-		CD1_p = & CD;
-		CD2_p = & CD2;                                                         }
-		break;
-	} // end of switch
+	cut_for_hanging_nodes ( ambient_mesh, CD, middle_of_CD_p, CD1_p, CD2_p, center, epsi );
 	Cell & middle_of_CD = * middle_of_CD_p;
 	Cell & CD1 = * CD1_p;
 	Cell & CD2 = * CD2_p;
 		
 	Cell * middle_of_DA_p, * DA1_p, * DA2_p;
-	cll = ambient_mesh.cell_in_front_of ( &DA, tag::may_not_exist );
-	if ( cll == NULL ) situation = 3;
-	else
-	{	situation = 1;
-		if ( ( cll->belongs_to ( ambient_mesh ) ) and
-	       ( cll->boundary().cells[1]->size() == 3 ) )
-		{	// is this the long edge of the triangle ?
-			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
-			if ( it != cll->hook.end() )
-			{	Cell * seg_p = (Cell*) (it->second);
-				if ( seg_p == DA.hidden_reverse )
-					situation = 2;                      }                               }  }
-	switch ( situation ) {
-	case 1 : // we need to create a (degenerated) triangle
-	{	Cell & middle_of_DA = Cell::point();
-		coord->interpolate ( middle_of_DA, D, 0.5-epsi, A, 0.5-epsi, center, 2.*epsi );
-		Cell & DA1 = Cell::segment ( D.reverse(), middle_of_DA );
-		Cell & DA2 = Cell::segment ( middle_of_DA.reverse(), A );
-		Cell & DA_tri = Cell::triangle ( DA, DA2.reverse(), DA1.reverse() );
-		DA_tri.hook["long edge"] = (void*) (&DA);
-		std::cout << "in Cell::cut, adding cell with " << DA_tri.boundary().cells[1]->size()
-							<< " sides" << std::endl;
-		DA_tri.add_to ( ambient_mesh );
-		middle_of_DA_p = & middle_of_DA;
-		DA1_p = & DA1;
-		DA2_p = & DA2;                                                         }
-		break;
-	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-		// is this the long edge of the triangle ?
-	{	assert ( cll != NULL );
-		assert ( cll->belongs_to (ambient_mesh) );
-		Cell & seg1 = cll->boundary().cell_in_front_of (D);
-		Cell & ver = seg1.tip();
-		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, D, 0.5, A, 0.5 );
-		std::cout << "destroying cell with " << cll->boundary().cells[1]->size()
-							<< " sides, at DA" << std::endl;
-		DA.reverse().cut_from_bdry_of ( *cll );
-		seg1.cut_from_bdry_of ( *cll );
-		seg2.cut_from_bdry_of ( *cll );
-		cll->remove_from ( ambient_mesh );
-		cll->discard();
-		D.reverse().cut_from_bdry_of ( DA );
-		A.cut_from_bdry_of ( DA );
-		DA.discard();
-		middle_of_DA_p = & ver;
-		DA1_p = & seg1;
-		DA2_p = & seg2;                                                        }
-		break;
-	case 3 : // we split the segment but there is no need for a new triangle
-	{	Cell & middle_of_DA = Cell::point();
-		coord->interpolate ( middle_of_DA, D, 0.5, A, 0.5 );
-		A. cut_from_bdry_of ( DA );
-		middle_of_DA. glue_on_bdry_of ( DA );
-		Cell & DA2 = Cell::segment ( middle_of_DA.reverse(), A );
-		middle_of_DA_p = & middle_of_DA;
-		DA1_p = & DA;
-		DA2_p = & DA2;                                                         }
-		break;
-	} // end of switch
+	cut_for_hanging_nodes ( ambient_mesh, DA, middle_of_DA_p, DA1_p, DA2_p, center, epsi );
 	Cell & middle_of_DA = * middle_of_DA_p;
 	Cell & DA1 = * DA1_p;
 	Cell & DA2 = * DA2_p;
@@ -1044,22 +867,23 @@ void Cell::cut ( const tag::InFour &, const tag::CellIsARectangle &,
 	AB_center.glue_on_bdry_of (*this);
 	DA_center.reverse().glue_on_bdry_of (*this);
 	DA2.glue_on_bdry_of (*this);
-	std::cout << "in Cell::cut, keeping cell with " << this->boundary().cells[1]->size()
-						<< " sides" << std::endl;
+	// std::cout << "in Cell::cut, keeping cell with " << this->boundary().number_of(tag::cells,tag::of_max_dim)
+	// 					<< " sides" << std::endl;
 
 	// three new rectangles
 	Cell & sq_B = Cell::rectangle ( AB2, BC1, BC_center, AB_center.reverse() );
-	std::cout << "in Cell::cut, adding cell with " << sq_B.boundary().cells[1]->size()
-						<< " sides" << std::endl;
+	// std::cout << "in Cell::cut, adding cell with " << sq_B.boundary().number_of(tag::cells,tag::of_max_dim)
+	// 					<< " sides" << std::endl;
 	sq_B.add_to ( ambient_mesh );
 	Cell & sq_C = Cell::rectangle ( BC2, CD1, CD_center, BC_center.reverse() );
-	std::cout << "in Cell::cut, adding cell with " << sq_C.boundary().cells[1]->size()
-						<< " sides" << std::endl;
+	// std::cout << "in Cell::cut, adding cell with " << sq_C.boundary().number_of(tag::cells,tag::of_max_dim)
+	// 					<< " sides" << std::endl;
 	sq_C.add_to ( ambient_mesh );
 	Cell & sq_D = Cell::rectangle ( CD2, DA1, DA_center, CD_center.reverse() );
-	std::cout << "in Cell::cut, adding cell with " << sq_D.boundary().cells[1]->size()
-						<< " sides" << std::endl;
+	// std::cout << "in Cell::cut, adding cell with " << sq_D.boundary().number_of(tag::cells,tag::of_max_dim)
+	// 					<< " sides" << std::endl;
 	sq_D.add_to ( ambient_mesh );
 
-} // end of Cell::cut
+} // end of Cell::cut in four rectangles (cell is a rectangle)
+
 

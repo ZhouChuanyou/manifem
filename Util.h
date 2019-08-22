@@ -1,4 +1,4 @@
-// src/manifem/Util.h 2019.08.17
+// src/manifem/Util.h 2019.08.22
 
 #ifndef util_h
 #define util_h
@@ -24,14 +24,15 @@ namespace ManiFEM {
 
 namespace ManiFEM { namespace tag {
 		struct ReverseOf {}; static const ReverseOf reverse_of;
-		struct CellsOfDim {}; static const CellsOfDim cells_of_dim;
-		struct CellsOfMaxDim {}; static const CellsOfMaxDim cells_of_max_dim;
-		struct NotOriented {}; static const NotOriented not_oriented;
 		struct Oriented {}; static const Oriented oriented;
 		                    static const Oriented positive;
-		struct CellsAbove {}; static const CellsAbove cells_above;
-		struct MeshesAbove {}; static const MeshesAbove meshes_above;
+		struct NotOriented {}; static const NotOriented not_oriented;
+		struct Cells {}; static const Cells cells;
+		struct Meshes {}; static const Meshes meshes;
+		struct Above { }; static const Above above;
+		struct OfDim {}; static const OfDim of_dim;
 		struct OfMinDim {}; static const OfMinDim of_min_dim;
+		struct OfMaxDim {}; static const OfMaxDim of_max_dim;
 		struct OfDimPlusOne {}; static const OfDimPlusOne of_dim_plus_one;
 		struct OfDimPlusTwo {}; static const OfDimPlusTwo of_dim_plus_two;
 		struct Vertices {}; static const Vertices vertices;
@@ -41,10 +42,12 @@ namespace ManiFEM { namespace tag {
 		struct Reverse {}; static const Reverse reverse;
 		struct MayNotExist {}; static const MayNotExist may_not_exist;
 		struct SurelyExists {}; static const SurelyExists surely_exists;
+		struct OnTheFly {}; static const OnTheFly on_the_fly;
 		struct WithTriangles {}; static const WithTriangles with_triangles;
 		struct CellIsARectangle {}; static const CellIsARectangle cell_is_a_rectangle;
 		struct At {}; static const At at;
-		struct InFour {}; static const InFour in_four;
+		struct InFourRectangles {}; static const InFourRectangles in_four_rectangles;
+		struct InTwoTriangles {}; static const InTwoTriangles in_two_triangles;
 		struct WithIn {}; static const WithIn within;
 }	}
 
