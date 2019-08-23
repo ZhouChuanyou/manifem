@@ -291,7 +291,7 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	cerr << "done building tree of neighbours" << endl;
 
 	// begin building the interface
-	Mesh interface (1);
+	Mesh & interface = * ( new Mesh (1) );
 	// looking for the first point :
 	{ // a block for hiding variables AA and BB
 	Cell & AA = first_seg.base().reverse();
@@ -556,6 +556,8 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 
 	cerr << "done with baricenter on first layer" << endl;
 
+	return interface;
+
 } // end of build_interface
 	
 
@@ -672,9 +674,11 @@ int main ()
 	
 	// hanging_nodes ( square, bdry, corners, psi );
 
-	build_interface ( square, bdry, corners, psi );  // draws eps
+	Mesh & cut = build_interface ( square, bdry, corners, psi );  // draws eps
 
+	special_draw ( square, cut, "square-cut.eps" );
 	// square.draw_ps ("square-cut.eps");
+		
 	cout << "reached end" << endl;
 	
 } // end of main
