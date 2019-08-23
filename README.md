@@ -6,7 +6,7 @@ in particular meshes on Riemannian manifolds, even manifolds which cannot be emb
 Also, ManiFEM has been written with the goal of being conceptually clear and easy to read.
 
 ManiFEM is written in C++ and uses the Standard Template Library (STL). 
-It uses Eigen for storing matrices and solving systems of linear equations, eigen.tuxfamily.org/index.php?title=Main_Page.
+It uses Eigen for storing matrices and solving systems of linear equations, http://eigen.tuxfamily.org/index.php?title=Main_Page
 
 To learn ManiFEM, you should probably begin by reading the document manual.pdf.
 
