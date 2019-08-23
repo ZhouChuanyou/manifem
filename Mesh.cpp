@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.cpp 2019.08.21
+﻿// src/manifem/Mesh.cpp 2019.08.23
 
 #include <list>
 #include <map>
@@ -725,6 +725,85 @@ void Mesh::deep_connections ( Cell & cell,
 
 } // end of Mesh::deep_connections
 
+
+void Cell::is_part_of ( Cell & cll )
+
+// we introduce 'this' to all meshes above 'cll'
+
+{	{ // just a block of code for hiding 'it'
+	MeshIterator it = cll.iter_over
+		( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
+	for ( it.reset(); it.in_range(); it++ ) this->add_to (*it);
+	} // just a block of code for hiding 'it'
+	
+	// if the cell has a reverse, and the mesh above has a reverse as well,
+	// then the above 'add_to' has done the job for the reverse pair
+	// BUT the reverse cell may belong to other meshes, not reverses of
+	// meshes above 'this' and those must be taken care of separately
+
+	// we should ask before adding again, right ?
+	
+	if ( this->hidden_reverse ) // there is a reverse
+	{	Cell & cll_r = cll.reverse();
+		MeshIterator it = cll_r.iter_over
+			( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
+		for ( it.reset(); it.in_range(); it++ )
+		{	Mesh & msh = *it;
+			if ( not this->hidden_reverse->belongs_to ( msh ) )
+				this->hidden_reverse->add_to (*it);                 }           }
+
+} // end of Cell::is_part_of
+
+
+void Mesh::discard ()
+
+// first discard all cells
+// then keep 'this' mesh in a pool of cells for future use (to do)
+
+{	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+	for ( it.reset(); it.in_range(); it++ )
+	{	Cell & cll = * it;
+		cll.discard();      }
+
+	// what about the reverse mesh ?
+	
+	// to do : keep mesh in a pool for future use
+	
+} // end of Cell::discard
+
+
+void Cell::discard ()
+
+// first discard the boundary of 'this'
+// then remove 'this' from all meshes above it
+// finally, keep 'this' cell in a pool of cells for future use (to do)
+	
+{	if(  this->dim > 0 ) this->boundary().discard();
+
+	{ // just a block of code for hiding 'it'
+	MeshIterator it = this->iter_over
+		( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
+	for ( it.reset(); it.in_range(); it++ )
+	{	Mesh & msh = *it;
+		this->remove_from (msh);  }
+	} // just a block of code for hiding 'it'
+
+	// if the cell has a reverse, and the mesh above has a reverse as well,
+	// then the above 'remove_from' has done the job for the reverse pair
+	// BUT the reverse cell may belong to other meshes, not reverses of
+	// meshes above 'this' and those must be taken care of separately
+	
+	if ( this->hidden_reverse ) // there is a reverse
+	{	MeshIterator it = this->hidden_reverse->iter_over
+			( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
+		for ( it.reset(); it.in_range(); it++ )
+		{	Mesh & msh = *it;
+			this->remove_from (msh);  }                                     }
+
+	// to do : keep cell in a pool for future use
+	
+} // end of Cell::discard
+	
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                        //

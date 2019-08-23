@@ -52,7 +52,13 @@ namespace ManiFEM { namespace FunctionOnMesh {
 		inline void prescribe_on ( Cell & cll );
 }	}
 
+namespace ManiFEM { namespace hidden {
+		void for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
+			Cell & AB, Cell * & AB1_p, Cell * & AB2_p, Cell & center, double epsi );
+	}	}
+
 using namespace ManiFEM;
+
 
 //////////////////////////////////////////////////////////////
 //                                                          //
@@ -189,10 +195,6 @@ class ManiFEM::Cell
 	Cell ( const Cell & ) = delete;
 	Cell& operator= ( const Cell & ) = delete;
 
-	// send a cell to the pool of unused cells (to do) :
-
-	inline void discard () {};
-
 	// we are still in class Cell
 
 	// do not use for points, since they have no boundary
@@ -239,15 +241,29 @@ class ManiFEM::Cell
 	void print_everything ();
 #endif
 
-	Cell & cut ( const tag::InTwoTriangles &, const tag::At &,
-	             Cell & ver, const tag::CellIsARectangle &     );
-	// cut 'this' rectangle along a diagonal
+	Cell & split ( const tag::InTwoSegments &, const tag::CellIsSegment & );
+	// split 'this' segment in two smaller segments
+	// after split, 'this' will be the first half of the segment
+	// return the second half
+
+	Cell & split ( const tag::InTwoTriangles &, const tag::At &,
+	               Cell & ver, const tag::CellIsRectangle &       );
+	// split 'this' rectangle along a diagonal
 	// returns the newly created segment, beginning at 'ver'
 
-	void cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
+	void split ( const tag::InFourRectangles &, const tag::CellIsRectangle &,
              const tag::WithIn &, Mesh & ambient_mesh, double epsi = 0.    );
-	// cut 'this' rectangle in four smaller rectangles, creating hanging nodes
+	// split 'this' rectangle in four smaller rectangles, creating hanging nodes
 	// degenerated triangles make the transition towards bigger rectangles
+
+	void is_part_of ( Cell & cll );
+	// state that 'this' cell must belong to all meshes where 'cll' belongs
+	// used when we split a cell
+
+	void discard ();
+	// first discard the boundary of 'this'
+	// then remove 'this' from all meshes above it
+	// finally, keep 'this' cell in a pool of cells for future use (to do)
 
 	static Cell & cartesian_product_orient ( Cell & cell1, Cell & cell2,
 		std::map < Cell*, std::map < Cell*, std::pair < Cell*, bool > > > & cartesian, bool revert );
@@ -257,9 +273,9 @@ class ManiFEM::Cell
 	void glue_on_bdry_core ( Cell & cll );
 	void cut_from_bdry_core ( Cell & cll );
 
-	inline MeshIterator iter_over ( const tag::Meshes &, const tag::Above &, const tag::Oriented & );
+	inline MeshIterator iter_over ( const tag::Meshes &, const tag::Above &, const tag::OfSameDim &, const tag::Oriented & );
 	// defined after class ManiFEM::MeshIterator
-	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &, const tag::Oriented & );
+	inline CellIterator iter_over ( const tag::Cells &, const tag::Above &, const tag::OfDimPlusOne &, const tag::Oriented & );
 	// defined after class ManiFEM::CellIterator
 	
 	// (we are still in class Cell)  data for iterators :
@@ -535,9 +551,10 @@ class ManiFEM::Mesh
 
 	// (we are still in class Mesh)  output :
 	
-	void export_msh ( std::string );
-	void export_msh ( std::string, FiniteElement & );
-	void draw_ps ( std::string );
+	void export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering );
+	void export_msh ( std::string f );
+	void export_msh ( std::string f, FiniteElement & fe );
+	void draw_ps ( std::string f );
 #ifndef NDEBUG
 	// 'name', 'print_cells' and 'print_everything' only exist for debugging purposes
 	std::string name ();
@@ -570,6 +587,10 @@ class ManiFEM::Mesh
 			bool interpolate, NumericField & coords, bool with_triangles );
 
 	static Mesh & cartesian_product ( Mesh & mesh1, Mesh & mesh2 );
+
+	void discard ();
+	// first discard all cells
+	// then keep 'this' mesh in a pool of cells for future use (to do)
 
 	// iterator over Cells belonging to 'this'
 	inline CellIterator iter_over ( const tag::Cells &, const tag::OfMaxDim &, const tag::Oriented & );
@@ -871,7 +892,7 @@ class ManiFEM::MeshIterator
 	
 	// iterates over Meshes "above" 'cll'
 	inline MeshIterator
-		( const Cell & cll, const tag::Meshes &, const tag::Above &, const tag::OfMinDim &, const tag::Oriented & )
+		( const Cell & cll, const tag::Meshes &, const tag::Above &, const tag::OfSameDim &, const tag::Oriented & )
 		: base ( (void*) cll.positive )
 	{ };
 	
@@ -890,9 +911,9 @@ class ManiFEM::MeshIterator
 }; // end of class ManiFEM::MeshIterator
 
 
-inline MeshIterator Cell::iter_over ( const tag::Meshes &, const tag::Above &, const tag::Oriented & )
+inline MeshIterator Cell::iter_over ( const tag::Meshes &, const tag::Above &, const tag::OfSameDim &, const tag::Oriented & )
 
-{	MeshIterator it ( *this, tag::meshes, tag::above, tag::of_min_dim, tag::oriented );
+{	MeshIterator it ( *this, tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
 	it.data = (void*) new Cell::data_for_iter_min_dim;
 	it.re_set = Cell::reset_mesh_iter_min_dim;
 	it.ad_vance = Cell::advance_mesh_iter_min_dim;
@@ -940,7 +961,7 @@ class ManiFEM::CellIterator
 	// iterates over Cells "above" 'cll'
 	inline CellIterator ( const Cell & cll ) : base ( (void*) cll.positive )
 	// anyway, 'base' is irrelevant here (never used),
-	// see Cell::iter_over ( tag::Cells &, const tag::Above &, tag::Oriented & )
+	// see Cell::iter_over ( tag::Cells &, const tag::Above &, const tag::OfDimPlusOne &, tag::Oriented & )
 	{ };
 	
 	inline void reset ()  {  re_set ( this, NULL );  }
@@ -960,7 +981,7 @@ class ManiFEM::CellIterator
 
 
 
-inline CellIterator Cell::iter_over ( const tag::Cells &, const tag::Above &, const tag::Oriented & )
+inline CellIterator Cell::iter_over ( const tag::Cells &, const tag::Above &, const tag::OfDimPlusOne &, const tag::Oriented & )
 
 // iterator over Cells "above" 'this' cell
 
@@ -968,7 +989,7 @@ inline CellIterator Cell::iter_over ( const tag::Cells &, const tag::Above &, co
 //	      ( this, "cells above, of minimum dimension, oriented") );  }
 	// the only relevant datum is another iterator, over meshes "above" cll
 	MeshIterator * it_m = new MeshIterator  // !
-		( *this, tag::meshes, tag::above, tag::of_min_dim, tag::oriented );
+		( *this, tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
 	it_m->data = (void*) new Cell::data_for_iter_min_dim;
 	it_m->re_set = Cell::reset_mesh_iter_min_dim;
 	it_m->ad_vance = Cell::advance_mesh_iter_min_dim;

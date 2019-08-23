@@ -1,4 +1,4 @@
-// src/manifem/current/main-cut.cpp  2019.08.20
+// src/manifem/current/main-cut.cpp  2019.08.22
 
 #include <fstream>
 #include "Mesh.h"
@@ -80,7 +80,7 @@ void special_draw ( Mesh & square, Mesh & cut, std::string f )
 		file_ps << x(p) << " " << y(p) << " moveto (" << p.name() << ") show" << std::endl;  }
 #endif
 
-	file_ps << "0.8 0 0 setrgbcolor 0.015 setlinewidth" << std::endl;
+	file_ps << "0.8 0 0 setrgbcolor 0.007 setlinewidth" << std::endl;
 	CellIterator itt = cut.iter_over ( tag::segments, tag::along );
 	for ( itt.reset(); itt.in_range(); itt++ )
 	{	Cell & seg = *itt;
@@ -142,9 +142,9 @@ void analyse_angles_left ( Mesh & square, Mesh & interface, Cell & seg )
 		assert ( cll.boundary().cells[1]->size() == 4 );
 		cos_angle = ( dx*dx2 + dy*dy2 ) / norm / norm2;
 		if ( cos_angle < -0.3 ) // wide angle
-			cll.cut ( tag::in_two_triangles, tag::at, P, tag::cell_is_a_rectangle );
+			cll.split ( tag::in_two_triangles, tag::at, P, tag::cell_is_rectangle );
 		else if ( cos_angle > 0.3 ) // sharp angle
-			cll.cut ( tag::in_two_triangles, tag::at, Q, tag::cell_is_a_rectangle );
+			cll.split ( tag::in_two_triangles, tag::at, Q, tag::cell_is_rectangle );
 	next_neighbour_cell :
 		first_pass = false;
 		if ( seg2.belongs_to(interface) ) return;
@@ -191,9 +191,9 @@ void analyse_angles_right ( Mesh & square, Mesh & interface, Cell & seg )
 		assert ( cll.boundary().cells[1]->size() == 4 );
 		cos_angle = ( dx*dx2 + dy*dy2 ) / norm / norm2;
 		if ( cos_angle < -0.3 ) // wide angle
-			cll.cut ( tag::in_two_triangles, tag::at, P, tag::cell_is_a_rectangle );
+			cll.split ( tag::in_two_triangles, tag::at, P, tag::cell_is_rectangle );
 		else if ( cos_angle > 0.3 ) // sharp angle
-			cll.cut ( tag::in_two_triangles, tag::at, Q, tag::cell_is_a_rectangle );
+			cll.split ( tag::in_two_triangles, tag::at, Q, tag::cell_is_rectangle );
 	next_neighbour_cell :
 		first_pass = false;
 		if ( seg2.belongs_to(interface) ) return;
@@ -316,8 +316,8 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		if ( cll->dim == 1 ) cll->add_to ( interface );
 		else
 		{	assert ( cll->dim == 2 );
-			Cell & new_seg = cll->cut ( tag::in_two_triangles, tag::at, *previous_point,
-			                            tag::cell_is_a_rectangle                         );
+			Cell & new_seg = cll->split ( tag::in_two_triangles, tag::at, *previous_point,
+			                              tag::cell_is_rectangle                           );
 			assert ( & ( new_seg.base() ) == & ( previous_point->reverse() ) );
 			keep = & ( new_seg.tip() );
 			new_seg.add_to ( interface );                                                         }
@@ -556,17 +556,8 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 
 	cerr << "done with baricenter on first layer" << endl;
 
-	special_draw ( ambient, interface, "square-cut.eps" );
-
-	cout << "reached end in build_interface" << endl;
-	exit (0);
-	
 } // end of build_interface
 	
-
-void cut_new ( Cell * that, const tag::InFourRectangles &, const tag::CellIsARectangle &,
-							 const tag::WithIn &, Mesh & ambient_mesh, double epsi         );
-
 
 int main ()
 	
@@ -576,9 +567,9 @@ int main ()
 	FunctionOnMesh::Function & x = xy[0], & y = xy[1];
 
 	double radius = 0.55;
-	FunctionOnMesh::Function psi = x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y;
+	FunctionOnMesh::Function psi = 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius );
 
-	// 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius );
+	// 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius )  circulo
 
 	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.35*x*x*y*y  triangulos esquisitos
 	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y  angulo muito aberto
@@ -598,9 +589,6 @@ int main ()
 	auto & square = Mesh::rectangle ( AB, BC, CD, DA );
 	// square.draw_ps ("square.eps");
 
-//	build_interface ( square, bdry, corners, psi );
-	// draws eps and exits
-
 	set < Cell * > set_of_sq;
 	{ // just a block of code for hiding 'it'
 	CellIterator it = square.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
@@ -616,11 +604,29 @@ int main ()
 			{	psi_changes_sign = true; break;  }          }
 		// inserir tambem os 4 vizinhos
 		if ( psi_changes_sign ) set_of_sq.insert (&sq);                                 }
-	} { // just a block of code for hiding 'it'
+	} // just a block of code for hiding 'it'
+	
+	set < Cell * > set_of_sq_2; // neighbours of set_of_sq
+	{ // just a block of code for hiding 'it'
 	set<Cell*>::iterator it;
 	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
 	{	Cell * sq = *it;
-		sq->cut ( tag::in_four_rectangles, tag::cell_is_a_rectangle, tag::within, square, 0.15 );  }
+		CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
+		for ( itt.reset(); itt.in_range(); itt++ )
+		{	Cell & face = *itt;
+			Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
+			if ( neigh ) set_of_sq_2.insert ( neigh );                               }  }
+	} { // just a block of code for hiding 'it'
+	set<Cell*>::iterator it;
+	for ( it = set_of_sq_2.begin(); it != set_of_sq_2.end(); it++ )
+		set_of_sq.insert ( *it );
+	} // just a block of code for hiding 'it'
+
+	{ // just a block of code for hiding 'it'
+	set<Cell*>::iterator it;
+	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
+	{	Cell * sq = *it;
+		sq->split ( tag::in_four_rectangles, tag::cell_is_rectangle, tag::within, square );  }
 	} // just a block of code for hiding 'it'
 	
 	set_of_sq.clear();
@@ -639,16 +645,37 @@ int main ()
 			{	psi_changes_sign = true; break;  }          }
 		// inserir tambem os 4 vizinhos
 		if ( psi_changes_sign ) set_of_sq.insert (&sq);                                 }
-	} { // just a block of code for hiding 'it'
+	} // just a block of code for hiding 'it'
+
+	set_of_sq_2.clear();
+	{ // just a block of code for hiding 'it'
 	set<Cell*>::iterator it;
 	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
 	{	Cell * sq = *it;
-		sq->cut ( tag::in_four_rectangles, tag::cell_is_a_rectangle, tag::within, square, 0.15 );  }
+		CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
+		for ( itt.reset(); itt.in_range(); itt++ )
+		{	Cell & face = *itt;
+			Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
+			if ( neigh ) set_of_sq_2.insert ( neigh );                               }  }
+	} { // just a block of code for hiding 'it'
+	set<Cell*>::iterator it;
+	for ( it = set_of_sq_2.begin(); it != set_of_sq_2.end(); it++ )
+		set_of_sq.insert ( *it );
+	} // just a block of code for hiding 'it'
+
+	{ // just a block of code for hiding 'it'
+	set<Cell*>::iterator it;
+	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
+	{	Cell * sq = *it;
+		sq->split ( tag::in_four_rectangles, tag::cell_is_rectangle, tag::within, square );  }
 	} // just a block of code for hiding 'it'
 	
 	// hanging_nodes ( square, bdry, corners, psi );
 
-	square.draw_ps ("square-cut.eps");
+	build_interface ( square, bdry, corners, psi );  // draws eps
+
+	// square.draw_ps ("square-cut.eps");
+	cout << "reached end" << endl;
 	
 } // end of main
 

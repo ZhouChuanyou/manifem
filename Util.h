@@ -35,6 +35,7 @@ namespace ManiFEM { namespace tag {
 		struct OfMaxDim {}; static const OfMaxDim of_max_dim;
 		struct OfDimPlusOne {}; static const OfDimPlusOne of_dim_plus_one;
 		struct OfDimPlusTwo {}; static const OfDimPlusTwo of_dim_plus_two;
+		struct OfSameDim {}; static const OfSameDim of_same_dim;
 		struct Vertices {}; static const Vertices vertices;
 		struct Segments {}; static const Segments segments;
 		struct Around {}; static const Around around;
@@ -44,10 +45,12 @@ namespace ManiFEM { namespace tag {
 		struct SurelyExists {}; static const SurelyExists surely_exists;
 		struct OnTheFly {}; static const OnTheFly on_the_fly;
 		struct WithTriangles {}; static const WithTriangles with_triangles;
-		struct CellIsARectangle {}; static const CellIsARectangle cell_is_a_rectangle;
+		struct CellIsSegment {}; static const CellIsSegment cell_is_segment;
+		struct CellIsRectangle {}; static const CellIsRectangle cell_is_rectangle;
 		struct At {}; static const At at;
-		struct InFourRectangles {}; static const InFourRectangles in_four_rectangles;
+		struct InTwoSegments {}; static const InTwoSegments in_two_segments;
 		struct InTwoTriangles {}; static const InTwoTriangles in_two_triangles;
+		struct InFourRectangles {}; static const InFourRectangles in_four_rectangles;
 		struct WithIn {}; static const WithIn within;
 }	}
 

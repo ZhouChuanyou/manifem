@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.08.20
+// manifem/global.cpp 2019.08.22
 
 #include <list>
 #include <map>
@@ -465,9 +465,7 @@ void Mesh::draw_ps ( std::string f )
 } // end of Mesh::draw_ps
 
 
-void Mesh::export_msh ( std::string f )
-
-// the numbering of vertices is produced on-the-fly
+void Mesh::export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering )
 
 {	assert ( Mesh::environment != NULL );
 	NumericField &coord = * ( Mesh::environment->coord_field );
@@ -478,8 +476,6 @@ void Mesh::export_msh ( std::string f )
 	
   file_msh << "$Nodes" << std::endl << this->number_of(tag::cells,tag::of_dim,0) << std::endl;
 
-	std::map < Cell*, size_t > numbering;
-
 	{ // just to make variables local : it, counter, x, y
 	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
 	size_t counter = 0;
@@ -488,14 +484,14 @@ void Mesh::export_msh ( std::string f )
 	{	for ( it.reset() ; it.in_range(); it++ )
 		{	++counter;
 			Cell & p = *it;
-			numbering[&p] = counter;
+			ver_numbering [&p] = counter;
 			file_msh << counter << " " << x(p) << " " << y(p) << " " << 0 << std::endl;  }  }
 	if ( coord.size() == 3 )
 	{	OneDimField &z = coord[2];
 		for ( it.reset() ; it.in_range(); it++ )
 		{	++counter;
 			Cell & p = *it;
-			numbering[&p] = counter;
+			ver_numbering [&p] = counter;
 			file_msh << counter << " " << x(p) << " " << y(p) << " " << z(p) << std::endl;  }  }
 	file_msh << "$EndNodes" << std::endl;
 	} // just to make variables local : it, counter, x, y
@@ -517,7 +513,7 @@ void Mesh::export_msh ( std::string f )
 			CellIterator itt = elem.boundary().iter_over ( tag::vertices, tag::around );
 			for ( itt.reset(); itt.in_range(); ++itt )
 			{	Cell & p = *itt;
-				file_msh << numbering[&p] << " ";   }
+				file_msh << ver_numbering [&p] << " ";   }
 			file_msh << std::endl;                                                            }  }
 	else
 	{	assert ( this->dim == 3);
@@ -546,7 +542,7 @@ void Mesh::export_msh ( std::string f )
 				Cell & seg_03 = back.boundary().cell_in_front_of(ver_0);
 				for ( ; itv.in_range(); ++itv )
 				{	Cell & p = *itv;
-					file_msh << numbering[&p] << " ";   }
+					file_msh << ver_numbering [&p] << " ";   }
 				Cell & left_wall = elem.boundary().cell_in_front_of(seg_03); // square face on the left
 				// left_wall is 0473 in gmsh's documentation
 				assert ( left_wall.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
@@ -560,7 +556,7 @@ void Mesh::export_msh ( std::string f )
 				itvv.reset(ver_4);
 				for ( ; itvv.in_range(); ++itvv )
 				{	Cell & p = *itvv;
-					file_msh << numbering[&p] << " ";   }                                                  }
+					file_msh << ver_numbering [&p] << " ";   }                                              }
 			else
 			{	assert( n_faces == 5 );
 				// triangular prism = 6-node prism
@@ -586,7 +582,7 @@ void Mesh::export_msh ( std::string f )
 				Cell & seg_02 = base_p->boundary().cell_in_front_of(ver_0);
 				for (  ; itv.in_range(); ++itv )
 				{	Cell & p = *itv;
-					file_msh << numbering[&p] << " ";   }
+					file_msh << ver_numbering [&p] << " ";   }
 				Cell & right_wall = elem.boundary().cell_in_front_of(seg_02);
 				// right_wall is 0352 in gmsh's documentation
 				assert ( right_wall.boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
@@ -600,7 +596,7 @@ void Mesh::export_msh ( std::string f )
 				itvv.reset(ver_3);
 				for ( ; itvv.in_range(); ++itvv )
 				{	Cell & p = *itvv;
-					file_msh << numbering[&p] << " ";   }                                                }
+					file_msh << ver_numbering [&p] << " ";   }                                           }
 			file_msh << std::endl;                                                                      } }
 	file_msh << "$EndElements" << std::endl;
 	
@@ -611,75 +607,70 @@ void Mesh::export_msh ( std::string f )
 } // end of Mesh::export_msh
 
 
-void Mesh::export_msh ( std::string f, FiniteElement & fe )
+void Mesh::export_msh ( std::string f )
+	
+// the numbering of vertices is produced on-the-fly
 
-// the numbering of vertices is given by the degrees of freedom provided by 'fe'
+{	std::map < Cell*, size_t > numbering;
 
-{	assert ( Mesh::environment != NULL );
-	NumericField &coord = * ( Mesh::environment->coord_field );
-
-	std::ofstream file_msh (f);
-	file_msh << "$MeshFormat" << std::endl << "2.2 0 8" << std::endl;
-	file_msh << "$EndMeshFormat" << std::endl << "$Nodes" << std::endl;
-	file_msh << this->number_of(tag::cells,tag::of_dim,0) << std::endl;
-
-	std::map < Cell*, int > numbering;
-
-	{ // just to make variables local : it, x, y
 	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
-	OneDimField & x = coord[0], & y = coord[1];
-	if (coord.size() == 2)
-	{	for ( it.reset() ; it.in_range(); it++ )
-		{	Cell & p = *it;
-			file_msh << fe.get_dof(p)+1 << " " << x(p) << " " << y(p) << " " << 0 << std::endl;  }  }
-	if (coord.size() == 3)
-	{	OneDimField &z = coord[2];
-		for ( it.reset() ; it.in_range(); it++ )
-		{	Cell & p = *it;
-			file_msh << fe.get_dof(p)+1 << " " << x(p) << " " << y(p) << " " << z(p) << std::endl;  }  }
-	file_msh << "$EndNodes" << std::endl << "$Elements" << std::endl;
-	file_msh << this->number_of(tag::cells,tag::of_max_dim) << std::endl;
-	} // just to make variables local : it, x, y
-
-	{ // just to make variables local : it, counter
-	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 	size_t counter = 0;
-	for ( it.reset() ; it.in_range(); it++)
-	{	++counter;
-		Cell & elem = *it;
-		if ( elem.boundary().number_of(tag::cells, tag::of_max_dim) == 3 )
-			file_msh << counter << " 2 0 ";
-		else
-		{	assert ( elem.boundary().number_of(tag::cells, tag::of_max_dim) == 4 );
-			file_msh << counter << " 3 0 ";                    }
-		CellIterator itt = elem.boundary().iter_over ( tag::vertices, tag::around );
-		itt.reset();
-		size_t s = elem.boundary().number_of(tag::cells,tag::of_max_dim);
-		for ( size_t i = 0; i < s; ++i )
-		{	assert ( itt.in_range() );
-			Cell & p = *itt;
-			file_msh << fe.get_dof(p)+1 << " ";
-			itt++;                               }
-		assert ( ! ( itt.in_range() ) );
-		file_msh << std::endl;                                                }
-	file_msh << "$EndElements" << std::endl;
-	} // just to make variables local : it, counter
+	for ( it.reset() ; it.in_range(); it++ )
+	{	++counter;  Cell & p = *it;  numbering [&p] = counter;  }
 
-	if ( ! file_msh.good() )
-	{	std::cerr << "error writing msh file" << std::endl;
-		exit (1);                                    }
+	this->export_msh ( f, numbering );
 
 } // end of Mesh::export_msh
 
 
-Cell & Cell::cut ( const tag::InTwoTriangles &, const tag::At &,
-                   Cell & ver, const tag::CellIsARectangle &     )
+void Mesh::export_msh ( std::string f, FiniteElement & fe )
 
-// cut 'this' rectangle along a diagonal
+// the numbering of vertices is given by the degrees of freedom provided by 'fe'
+
+{
+	std::map < Cell*, size_t > numbering;
+
+	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 0, tag::not_oriented );
+	for ( it.reset() ; it.in_range(); it++ )
+	{	Cell & p = *it;  numbering [&p] = fe.get_dof(p)+1;  }
+
+	this->export_msh ( f, numbering );
+
+} // end of Mesh::export_msh
+
+
+Cell & Cell::split ( const tag::InTwoSegments &, const tag::CellIsSegment & )
+
+// split 'this' segment in two smaller segments
+// after split, 'this' will be the first half of the segment
+// return the second half
+
+{	NumericField * coord = Mesh::environment->coord_field;
+
+	Cell & A = this->base().reverse();
+	Cell & B = this->tip();
+	
+	Cell & middle = Cell::point();
+	coord->interpolate ( middle, A, 0.5, B, 0.5 );
+	B. cut_from_bdry_of ( *this );
+	middle.glue_on_bdry_of ( *this );
+	Cell & AB2 = Cell::segment ( middle.reverse(), B );
+	
+	// we must introduce AB2 to all meshes above 'this'
+	AB2.is_part_of ( *this );
+
+	return AB2;
+}
+
+		
+Cell & Cell::split ( const tag::InTwoTriangles &, const tag::At &,
+                   Cell & ver, const tag::CellIsRectangle &     )
+
+// split 'this' rectangle along a diagonal
 // which diagonal ? the one passing through vertex 'ver'
 // returns the newly created segment, beginning at 'ver'
 
-// cut_from_bdry and glue_to_bdry deal with the reverse on their own
+// split_from_bdry and glue_to_bdry deal with the reverse on their own
 // add_to does too, I think (to check)
 
 {	Mesh & bdry = this->boundary();
@@ -710,16 +701,15 @@ Cell & Cell::cut ( const tag::InTwoTriangles &, const tag::At &,
 	// although it is now a triangle
 	// but 'new_tri' is not aware of that, for now
 	// so we must introduce it to all meshes above 'this'
-	MeshIterator it = this->iter_over ( tag::meshes, tag::above, tag::oriented );
-	for ( it.reset(); it.in_range(); it++ ) new_tri.add_to (*it);
+	new_tri.is_part_of ( *this );
 
 	return new_seg;
 
-} // end of Cell::cut in two triangles (cell is a rectangle)
+} // end of Cell::split in two triangles (cell is a rectangle)
 
 
-void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
-	Cell * & middle_of_AB_p, Cell * & AB1_p, Cell * & AB2_p, Cell & center, double epsi )
+void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
+  Cell & AB, Cell * & AB1_p, Cell * & AB2_p, Cell & center, double epsi )
 
 {	NumericField * coord = Mesh::environment->coord_field;
 	
@@ -728,7 +718,7 @@ void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
 	//    we need to create a (degenerated) triangle to smoothen the passage
 	// 2: the neighbour square has already been split
 	//    we destroy the (degenerated) triangle and use the half-segments
-	// 3: there is no neighbour square
+	// 3: there is no neighbour square (we are on the boundary of the ambient mesh)
 	//    we split the segment but there is no need for a (degenerated) triangle
 
 	Cell & A = AB.base().reverse();
@@ -746,7 +736,9 @@ void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
 			if ( it != cll->hook.end() )
 			{	Cell * seg_p = (Cell*) (it->second);
 				if ( seg_p == AB.hidden_reverse )  situation = 2;   }                  }  }
+
 	switch ( situation ) {
+		
 	case 1 : // we need to create a (degenerated) triangle
 	{	Cell & middle_of_AB = Cell::point();
 		coord->interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
@@ -754,15 +746,14 @@ void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
 		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
 		Cell & AB_tri = Cell::triangle ( AB, AB2.reverse(), AB1.reverse() );
 		AB_tri.hook["long edge"] = (void*) (&AB);
-		// std::cout << "in Cell::cut, adding cell with " << AB_tri.boundary().number_of(tag::cells, tag::of_max_dim)
-		// 					<< " sides" << std::endl;
-		AB_tri.add_to ( ambient_mesh );
-		middle_of_AB_p = & middle_of_AB;
+		// we must introduce 'AB_tri' to all meshes above 'square'
+		AB_tri.is_part_of ( square );
 		AB1_p = & AB1;
 		AB2_p = & AB2;                                                                       }
 		break;
+
 	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-		// yes, this is the long edge of the triangle
+	         // yes, this is the long edge of the triangle
 	{	assert ( cll != NULL );
 		assert ( cll->belongs_to (ambient_mesh) );
 		Cell & seg1 = cll->boundary().cell_in_front_of (A);
@@ -774,34 +765,30 @@ void cut_for_hanging_nodes ( Mesh & ambient_mesh, Cell & AB,
 		AB.reverse().cut_from_bdry_of ( *cll );
 		seg1.cut_from_bdry_of ( *cll );
 		seg2.cut_from_bdry_of ( *cll );
-		cll->remove_from ( ambient_mesh );
-		cll->discard();
+		cll->discard(); // removes cll from all meshes above
 		A.reverse().cut_from_bdry_of ( AB );
 		B.cut_from_bdry_of ( AB );
-		AB.discard();
-		middle_of_AB_p = & ver;
+		AB.discard(); // removes AB from all meshes above
 		AB1_p = & seg1;
 		AB2_p = & seg2;                                                        }
 		break;
-	case 3 : // we split the segment but there is no need for a new triangle
-	{	Cell & middle_of_AB = Cell::point();
-		coord->interpolate ( middle_of_AB, A, 0.5, B, 0.5 );
-		B. cut_from_bdry_of ( AB );
-		middle_of_AB. glue_on_bdry_of ( AB );
-		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
-		middle_of_AB_p = & middle_of_AB;
+
+	case 3 : // we are on the boundary of the ambient mesh
+	         // we split the segment but there is no need for a new triangle
+	{	Cell & AB2 = AB.split ( tag::in_two_segments, tag::cell_is_segment );
+		// after split, AB will be the first half of the segment, AB2 the second half
 		AB1_p = & AB;
 		AB2_p = & AB2;                                                          }
 		break;
 	} // end of switch
 
-} // end of cut_for_hanging_nodes
+} // end of hidden::for_hanging_nodes_2d
 
 
-void Cell::cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
+void Cell::split ( const tag::InFourRectangles &, const tag::CellIsRectangle &,
                  const tag::WithIn &, Mesh & ambient_mesh, double epsi         )
 
-// cuts a rectangle in four smaller rectangles, introducing hanging nodes
+// split 'this' rectangle in four smaller rectangles, introducing hanging nodes
 
 // epsi defaults to 0.; represents a slight deformation which turns
 // the degenerated triangles visible (less degenerate)
@@ -832,29 +819,29 @@ void Cell::cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
 	Cell & center = Cell::point();
 	coord->interpolate ( center, A, 0.25, B, 0.25, C, 0.25, D, 0.25 );
 
-	Cell * middle_of_AB_p, * AB1_p, * AB2_p;
-	cut_for_hanging_nodes ( ambient_mesh, AB, middle_of_AB_p, AB1_p, AB2_p, center, epsi );
- 	Cell & middle_of_AB = * middle_of_AB_p;
+	Cell * AB1_p, * AB2_p;
+	hidden::for_hanging_nodes_2d ( ambient_mesh, *this, AB, AB1_p, AB2_p, center, epsi );
 	Cell & AB1 = * AB1_p;
 	Cell & AB2 = * AB2_p;
+ 	Cell & middle_of_AB = AB1.tip();
 
-	Cell * middle_of_BC_p, * BC1_p, * BC2_p;
-	cut_for_hanging_nodes ( ambient_mesh, BC, middle_of_BC_p, BC1_p, BC2_p, center, epsi );
-	Cell & middle_of_BC = * middle_of_BC_p;
+	Cell * BC1_p, * BC2_p;
+	hidden::for_hanging_nodes_2d ( ambient_mesh, *this, BC, BC1_p, BC2_p, center, epsi );
 	Cell & BC1 = * BC1_p;
 	Cell & BC2 = * BC2_p;
+	Cell & middle_of_BC = BC1.tip();
 		
-	Cell * middle_of_CD_p, * CD1_p, * CD2_p;
-	cut_for_hanging_nodes ( ambient_mesh, CD, middle_of_CD_p, CD1_p, CD2_p, center, epsi );
-	Cell & middle_of_CD = * middle_of_CD_p;
+	Cell * CD1_p, * CD2_p;
+	hidden::for_hanging_nodes_2d ( ambient_mesh, *this, CD, CD1_p, CD2_p, center, epsi );
 	Cell & CD1 = * CD1_p;
 	Cell & CD2 = * CD2_p;
+	Cell & middle_of_CD = CD1.tip();
 		
-	Cell * middle_of_DA_p, * DA1_p, * DA2_p;
-	cut_for_hanging_nodes ( ambient_mesh, DA, middle_of_DA_p, DA1_p, DA2_p, center, epsi );
-	Cell & middle_of_DA = * middle_of_DA_p;
+	Cell * DA1_p, * DA2_p;
+	hidden::for_hanging_nodes_2d ( ambient_mesh, *this, DA, DA1_p, DA2_p, center, epsi );
 	Cell & DA1 = * DA1_p;
 	Cell & DA2 = * DA2_p;
+	Cell & middle_of_DA = DA1.tip();
 	
 	// four new segments :
 	Cell & AB_center = Cell::segment ( middle_of_AB.reverse(), center );
@@ -867,23 +854,18 @@ void Cell::cut ( const tag::InFourRectangles &, const tag::CellIsARectangle &,
 	AB_center.glue_on_bdry_of (*this);
 	DA_center.reverse().glue_on_bdry_of (*this);
 	DA2.glue_on_bdry_of (*this);
-	// std::cout << "in Cell::cut, keeping cell with " << this->boundary().number_of(tag::cells,tag::of_max_dim)
-	// 					<< " sides" << std::endl;
 
 	// three new rectangles
 	Cell & sq_B = Cell::rectangle ( AB2, BC1, BC_center, AB_center.reverse() );
-	// std::cout << "in Cell::cut, adding cell with " << sq_B.boundary().number_of(tag::cells,tag::of_max_dim)
-	// 					<< " sides" << std::endl;
-	sq_B.add_to ( ambient_mesh );
+	// we must introduce 'sq_B' to all meshes above 'this'
+	sq_B.is_part_of (*this);
 	Cell & sq_C = Cell::rectangle ( BC2, CD1, CD_center, BC_center.reverse() );
-	// std::cout << "in Cell::cut, adding cell with " << sq_C.boundary().number_of(tag::cells,tag::of_max_dim)
-	// 					<< " sides" << std::endl;
-	sq_C.add_to ( ambient_mesh );
+	// we must introduce 'sq_B' to all meshes above 'this'
+	sq_C.is_part_of (*this);
 	Cell & sq_D = Cell::rectangle ( CD2, DA1, DA_center, CD_center.reverse() );
-	// std::cout << "in Cell::cut, adding cell with " << sq_D.boundary().number_of(tag::cells,tag::of_max_dim)
-	// 					<< " sides" << std::endl;
-	sq_D.add_to ( ambient_mesh );
+	// we must introduce 'sq_B' to all meshes above 'this'
+	sq_D.is_part_of (*this);
 
-} // end of Cell::cut in four rectangles (cell is a rectangle)
+} // end of Cell::split in four rectangles (cell is a rectangle)
 
 
