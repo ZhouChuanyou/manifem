@@ -221,7 +221,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	// that is, psi increases along 'seg'
 	Cell * keep = NULL;
 	{ // just a block for making 'it' local
-	cout << bdry.number_of ( tag::cells, tag::of_max_dim ) << endl;
 	CellIterator it = bdry.iter_over ( tag::segments, tag::around );
 	for ( it.reset(); it.in_range(); it++ )
 	{	Cell & seg = *it;
@@ -229,14 +228,14 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		Cell & BB = seg.tip();
 		double xa = x(AA), ya = y(AA), xb = x(BB), yb = y(BB),
 			delta_x = xb-xa, delta_y = yb-ya;
-		cout << "(" << xa << "," << ya <<") (" << xb << "," << yb << ")" << endl;
 		double psi1 = psi (AA);
 		double psi2 = psi (BB);
 		if ( ( opposite_signs ( psi1, psi2 ) ) and
 				 ( psi_x(AA)*delta_x + psi_y(AA)*delta_y >= 0. ) )
 			keep = & seg;                                         }
 	if ( keep == NULL )
-	{	cout << "cannot start process of building the interface" << endl;
+	{	cerr << "cannot start process of building the interface" << endl;
+		cout << "cannot start process of building the interface" << endl;
 		exit (0);                                                          }
 	} // just a block for making 'it' local
 	Cell & first_seg = * keep;
@@ -288,8 +287,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		assert ( found );                                                                      }
 	// in each square, psi changes sign
 
-	cerr << "done building tree of neighbours" << endl;
-
 	// begin building the interface
 	Mesh & interface = * ( new Mesh (1) );
 	// looking for the first point :
@@ -324,9 +321,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		if ( keep->belongs_to(bdry) ) break;
 		// if ( keep->meshes[1]->find(&bdry) != keep->meshes[1]->end()) break;
 	} // end of 'while true'
-
-	cerr << "done building interface (chain of "
-			 << interface.cells[1]->size() << " segments)" << endl;
 
 	// changing the interface's shape to match the level set
 	// apply Newton's method and baricenter
@@ -407,8 +401,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		}  // end of for it
 	} // end of 'for i'
 
-	cerr << "done with Newton + baricenter" << endl;
-
 	// apply Newton's method only
 	{ // a block for hiding variables
 	for ( short int i = 0; i < 2; i++ )
@@ -430,8 +422,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	} // end of 'for i'
 	} // just a block of code for hiding variables
 	
-	cerr << "done with second stage Newton" << endl;
-
 	// apply baricenter for the first layer of neighbours
 	set < Cell * > layer;
 	{	// just a block of code for hiding variables
@@ -519,8 +509,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 			xx /= counter; yy /= counter;                               }
 		FunctionOnMesh::prescribe_on (P); x == xx; y == yy;                               }
 
-	cerr << "done with baricenter on first layer" << endl;
-
 	// cut wide angles
 	{	// just a block of code for hiding 'it'
 	CellIterator it = interface.iter_over ( tag::segments, tag::along );
@@ -536,8 +524,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	analyse_angles_left ( ambient, interface, seg );
 	}	// just a block of code for hiding 'it'
 	
-	cerr << "done with cutting wide angles" << endl;
-
 	// apply baricenter for the first layer of neighbours
 	for ( short int i = 0; i < 3; i++ )
 	for ( set<Cell*>::iterator itt = layer.begin(); itt != layer.end(); itt++ )
@@ -554,12 +540,66 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 			xx /= counter; yy /= counter;
 			FunctionOnMesh::prescribe_on (P); x == xx; y == yy;                   }  }
 
-	cerr << "done with baricenter on first layer" << endl;
-
 	return interface;
 
 } // end of build_interface
+
+
+void hanging_nodes ( Mesh & square, FunctionOnMesh::Function & psi, short int layers )
+
+// splits square cells in four, near the level set psi == 0
+// 'layers' tells us how many squares we want to be split
+// layers == 0  means only those where psi changes sign will be split
+// layers == 1  means we also add their immediate neighbours
+// layers == 2  means one more layer of neighbours, and so on
 	
+{	set < Cell * > set_of_sq;
+
+	// look for cells where psi changes sign :
+	
+	{ // just a block of code for hiding 'it'
+	CellIterator it = square.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+	for ( it.reset(); it.in_range(); it++ )
+	{	bool psi_changes_sign = false;
+		Cell & sq = *it;
+		CellIterator itt = sq.boundary().iter_over ( tag::segments, tag::around );
+		for ( itt.reset(); itt.in_range(); itt++ )
+		{	Cell & seg = *itt;
+			Cell & P = seg.base().reverse();
+			Cell & Q = seg.tip();
+			if ( opposite_signs ( psi(P), psi(Q) ) )
+			{	psi_changes_sign = true; break;  }          }
+		// inserir tambem os 4 vizinhos
+		if ( psi_changes_sign ) set_of_sq.insert (&sq);                                 }
+	} // just a block of code for hiding 'it'
+
+	// add layers of neighbours :
+	
+	set < Cell * > set_of_sq_2; // neighbours of set_of_sq
+	for ( short int i = 0; i < layers; i++ )
+	{	set_of_sq_2.clear();
+		set<Cell*>::iterator it;
+		for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
+		{	Cell * sq = *it;
+			CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
+			for ( itt.reset(); itt.in_range(); itt++ )
+			{	Cell & face = *itt;
+				Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
+				if ( neigh ) set_of_sq_2.insert ( neigh );                             }   }
+		set<Cell*>::iterator it_2;
+		for ( it_2 = set_of_sq_2.begin(); it_2 != set_of_sq_2.end(); it_2++ )
+			set_of_sq.insert ( *it_2 );                                                       }
+
+	// finally, split each cell in four smaller rectangles :
+	
+	{ // just a block of code for hiding 'it'
+	set<Cell*>::iterator it;
+	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
+	{	Cell * sq = *it;
+		sq->split ( tag::in_four_rectangles, tag::cell_is_rectangle, tag::within, square );  }
+	} // just a block of code for hiding 'it'
+
+} // end of hanging_nodes
 
 int main ()
 	
@@ -568,14 +608,6 @@ int main ()
 		environment.coordinate_system ("Lagrange degree one");
 	FunctionOnMesh::Function & x = xy[0], & y = xy[1];
 
-	double radius = 0.55;
-	FunctionOnMesh::Function psi = 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius );
-
-	// 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius )
-
-	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.35*x*x*y*y
-	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y
-	
 	auto & A = Cell::point();  x == -1.;  y == 0.;
 	auto & B = Cell::point();  x == 1.;  y == 0.;
 	auto & C = Cell::point();  x == 1.;  y == 1.;
@@ -588,97 +620,30 @@ int main ()
 	auto & bdry = Mesh::join ( list<Mesh*>{&AB,&BC,&CD,&DA} );
 	set < Cell * > corners { &A, &B, &C, &D };
 
-	auto & square = Mesh::rectangle ( AB, BC, CD, DA );
-	// square.draw_ps ("square.eps");
+	auto & rect_mesh = Mesh::rectangle ( AB, BC, CD, DA );
+	// rect_mesh.draw_ps ("square.eps");
 
-	set < Cell * > set_of_sq;
-	{ // just a block of code for hiding 'it'
-	CellIterator it = square.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
-	for ( it.reset(); it.in_range(); it++ )
-	{	bool psi_changes_sign = false;
-		Cell & sq = *it;
-		CellIterator itt = sq.boundary().iter_over ( tag::segments, tag::around );
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	Cell & seg = *itt;
-			Cell & P = seg.base().reverse();
-			Cell & Q = seg.tip();
-			if ( opposite_signs ( psi(P), psi(Q) ) )
-			{	psi_changes_sign = true; break;  }          }
-		// inserir tambem os 4 vizinhos
-		if ( psi_changes_sign ) set_of_sq.insert (&sq);                                 }
-	} // just a block of code for hiding 'it'
+	double radius = 0.55;
+	FunctionOnMesh::Function psi = 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius );
+
+	// 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius )  circulo
+
+	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.35*x*x*y*y  triangulos esquisitos
+	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y  angulo muito aberto
 	
-	set < Cell * > set_of_sq_2; // neighbours of set_of_sq
-	{ // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
-	{	Cell * sq = *it;
-		CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	Cell & face = *itt;
-			Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
-			if ( neigh ) set_of_sq_2.insert ( neigh );                               }  }
-	} { // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq_2.begin(); it != set_of_sq_2.end(); it++ )
-		set_of_sq.insert ( *it );
-	} // just a block of code for hiding 'it'
+	hanging_nodes ( rect_mesh, psi, 1 );
+	hanging_nodes ( rect_mesh, psi, 1 );
+	// splits rectangular cells in four, near the level set psi == 0
+	// third argument controls how many layers of cells we want to be split
+	// (how far from the level set)
 
-	{ // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
-	{	Cell * sq = *it;
-		sq->split ( tag::in_four_rectangles, tag::cell_is_rectangle, tag::within, square );  }
-	} // just a block of code for hiding 'it'
-	
-	set_of_sq.clear();
-	{ // just a block of code for hiding 'it'
-	CellIterator it = square.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
-	for ( it.reset(); it.in_range(); it++ )
-	{	bool psi_changes_sign = false;
-		Cell & sq = *it;
-		if ( sq.boundary().number_of ( tag::cells, tag::of_max_dim ) != 4 ) continue;
-		CellIterator itt = sq.boundary().iter_over ( tag::segments, tag::around );
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	Cell & seg = *itt;
-			Cell & P = seg.base().reverse();
-			Cell & Q = seg.tip();
-			if ( opposite_signs ( psi(P), psi(Q) ) )
-			{	psi_changes_sign = true; break;  }          }
-		// inserir tambem os 4 vizinhos
-		if ( psi_changes_sign ) set_of_sq.insert (&sq);                                 }
-	} // just a block of code for hiding 'it'
+	Mesh & cut = build_interface ( rect_mesh, bdry, corners, psi );
+	// deforms the mesh near the level set psi == 0, splits some rectangles in two traingles
 
-	set_of_sq_2.clear();
-	{ // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
-	{	Cell * sq = *it;
-		CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	Cell & face = *itt;
-			Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
-			if ( neigh ) set_of_sq_2.insert ( neigh );                               }  }
-	} { // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq_2.begin(); it != set_of_sq_2.end(); it++ )
-		set_of_sq.insert ( *it );
-	} // just a block of code for hiding 'it'
-
-	{ // just a block of code for hiding 'it'
-	set<Cell*>::iterator it;
-	for ( it = set_of_sq.begin(); it != set_of_sq.end(); it++ )
-	{	Cell * sq = *it;
-		sq->split ( tag::in_four_rectangles, tag::cell_is_rectangle, tag::within, square );  }
-	} // just a block of code for hiding 'it'
-	
-	// hanging_nodes ( square, bdry, corners, psi );
-
-	Mesh & cut = build_interface ( square, bdry, corners, psi );  // draws eps
-
-	special_draw ( square, cut, "square-cut.eps" );
-	// square.draw_ps ("square-cut.eps");
+	special_draw ( rect_mesh, cut, "square-cut.eps" );
+	// rect_mesh.draw_ps ("square-cut.eps");
 		
 	cout << "reached end" << endl;
 	
 } // end of main
+
