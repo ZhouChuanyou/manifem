@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.08.22
+// manifem/global.cpp 2019.09.02
 
 #include <list>
 #include <map>
@@ -58,7 +58,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 	Cell *SE, *NE, *SW, *NW;
 	size_t N_horiz, N_vert;
 	// we get the first and last points of each side using freshly reset iterators
-	// see paragraph 5.2 in the manual
+	// as explained in the manual, at the end of paragraph 2.5
 	{ // just to keep it1 and it2 local
 	CellIterator it1 = south.iter_over ( tag::vertices, tag::along );
 	it1.reset(); SW = &(*it1);
@@ -98,34 +98,48 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 	rectangle.hook["corners"] = (void*) ( corners_p );
 	
 	// prepare ground
-	std::list <Cell*> ground ;
-	Cell * P = SW;
-	for ( size_t j = 1; j <= N_horiz; ++j )
-	{	Cell * s = south.cell_in_front_of ( P, tag::may_not_exist );
-		assert ( s != NULL );
-		ground.push_back (s);
-		P = & ( s->tip() );                                              }
+	std::list <Cell*> horizon;
+	{ // just a block of code for hiding 'it'
+	CellIterator it = south.iter_over ( tag::segments, tag::along );
+	for ( it.reset(); it.in_range(); it++ )
+	{	Cell & seg = *it;
+		horizon.push_back ( &seg );  }
+	} // just a block of code for hiding 'it'
 
 	// start mesh generation
+	CellIterator it_east = east.iter_over ( tag::vertices, tag::along );
+	CellIterator it_west = west.iter_over ( tag::vertices, tag::along, tag::reverse );
+	CellIterator it_south = south.iter_over ( tag::vertices, tag::along );
+	CellIterator it_north = north.iter_over ( tag::vertices, tag::along, tag::reverse );
+	it_east.reset(); it_east++;
+  it_west.reset(); it_west++;
 	for ( size_t i = 1; i < N_vert; ++i )
-	{	std::list <Cell*>::iterator it = ground.begin();
+	{	std::list <Cell*>::iterator it = horizon.begin();
 		Cell & A = (*it)->base().reverse();
-		Cell * s4_p = west.cell_behind ( &A, tag::may_not_exist );
+		Cell * s4_p = west.cell_behind ( A, tag::may_not_exist );
 		assert ( s4_p != NULL );
 		Cell * D_p = & (  s4_p->base().reverse() );
+		Cell & ver_east = *it_east;
+		Cell & ver_west = *it_west;
+		double frac_N = double(i) / double(N_vert),
+					alpha = frac_N * (1-frac_N);
+		alpha = alpha*alpha*alpha;
+		it_south.reset(); it_south++;
+		it_north.reset(); it_north++;
 		for ( size_t j = 1; j < N_horiz; j++ )
-		{	//Cell & s1 = south.cell_in_front_of (A);
-			Cell * s1_p = *it;
+		{	Cell * s1_p = *it;  // 'it' points into the 'horizon' list
 			Cell & B = s1_p->tip();
 			Cell & C = Cell::point();
+			Cell & ver_south = *it_south;
+			Cell & ver_north = *it_north;
 			if (interpolate)
-			{	double frac_N = double(i) / double(N_vert),
-					frac_E = double(j) / double(N_horiz),
-					frac_SW = (1.-frac_N) * (1.-frac_E),
-					frac_SE = (1.-frac_N) * frac_E,
-					frac_NE = frac_N * frac_E,
-					frac_NW = frac_N * (1.-frac_E);
-				coord.interpolate ( C, *NE, frac_NE, *NW, frac_NW, *SE, frac_SE, *SW, frac_SW);  }
+			{	double frac_E = double(j) / double(N_horiz),
+					beta = frac_E * (1-frac_E);
+				beta = beta*beta*beta;
+				double sum = alpha + beta,
+					aa = alpha/sum,  bb = beta/sum;
+				coord.interpolate ( C, ver_south, bb*(1-frac_N), ver_east, aa*frac_E,     
+				                       ver_north, bb*frac_N,     ver_west, aa*(1-frac_E));  }
 			Cell & s2 = Cell::segment ( B.reverse(), C );
 			Cell & s3 = Cell::segment ( C.reverse(), *D_p );
 			if ( with_triangles )
@@ -137,14 +151,14 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 			else // with quadrilaterals
 			{	Cell & Q = Cell::rectangle ( *s1_p, s2, s3, *s4_p );
 				Q.add_to (rectangle);                                 }
-			// 's3' is on the ceiling; we keep it in the 'ground' list, since
+			// 's3' is on the ceiling, we keep it in the 'horizon' list
 			// it will be on the ground when we build the next layer of cells
-			*it = & ( s3.reverse() ); // 'it' points into the 'ground' list
+			*it = & ( s3.reverse() ); // 'it' points into the 'horizon' list
 			it++;
 			D_p = &C;
 			s4_p = & ( s2.reverse() );
-		} // end of if (interpolate)
-		//Cell & s1 = south.cell_in_front_of (A);
+			it_south++;  it_north++;
+		} // end of for j
 		Cell * s1_p = *it;
 		Cell & B = s1_p->tip();
 		Cell & s2 = east.cell_in_front_of (B);
@@ -160,9 +174,10 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 		{	Cell & Q = Cell::rectangle ( *s1_p, s2, s3, *s4_p );
 			Q.add_to (rectangle);                                 }
 		*it = & ( s3.reverse() );
-	} // end of for j
-	std::list <Cell*>::iterator it = ground.begin();
-	Cell * s4_p = west.cell_in_front_of ( NW, tag::may_not_exist );
+		it_east++;  it_west++;
+	} // end of for i
+	std::list <Cell*>::iterator it = horizon.begin();
+	Cell * s4_p = west.cell_in_front_of ( *NW, tag::may_not_exist );
 	assert ( s4_p != NULL );
 	Cell * D_p = NW;
 	for (size_t j=1; j < N_horiz; j++)
@@ -184,7 +199,6 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 		it++;
 		D_p = &C;
 		s4_p = & ( s2.reverse () );                             }
-	//Cell & s1 = south.cell_in_front_of (A);
 	Cell * s1_p = *it;
 	Cell & B = s1_p->tip();
 	Cell & s2 = east.cell_in_front_of (B);
@@ -384,6 +398,17 @@ Mesh & Mesh::cartesian_product ( Mesh & mesh1, Mesh & mesh2 ) // static
 
 void Mesh::draw_ps ( std::string f )
 
+// cabecalho para o seguinte comando funcionar :
+// gs -q -dNOPAUSE -dBATCH -sDEVICE=png16 -sOUTPUTFILE=output.png input.eps
+	
+// %!PS-Adobe-3.0 EPSF-3.0
+// %%Title:                     malha
+// %%BoundingBox:  0 0  520   270
+// %%EndComments
+// %%BeginSetup
+// << /PageSize [520 270] >> setpagedevice
+// %%EndSetup
+	
 {	assert ( Mesh::environment != NULL );
 	NumericField &coord = * ( Mesh::environment->coord_field );
 
@@ -417,19 +442,23 @@ void Mesh::draw_ps ( std::string f )
 	std::ofstream file_ps (f);
 	file_ps << "%!PS-Adobe-3.0 EPSF-3.0" << std::endl;
 	file_ps << "%%Title:                     malha" << std::endl;
-	file_ps << "%%BoundingBox:  " << -border*scale_factor << " " << -border*scale_factor << " "
-					<< scale_factor*(xmax+border) + translation_x << "   "
-					<< scale_factor*(ymax+border) + translation_y << std::endl;
-	file_ps << "%%EndComments" << std::endl << std::endl;
+	file_ps << "%%BoundingBox:  0 0 " << " " << scale_factor*(xmax-xmin+2*border)
+	        << "   " << scale_factor*(ymax-ymin+2*border) << std::endl;
+	file_ps << "%%EndComments" << std::endl;
+	file_ps << "%%BeginSetup" << std::endl;
+	file_ps << "<< /PageSize [" << scale_factor*(xmax-xmin+2*border) << " "
+	        << scale_factor*(ymax-ymin+2*border) << "] >> setpagedevice" << std::endl;
+	file_ps << "%%EndSetup" << std::endl << std::endl;
 	
 	file_ps << "gsave" << std::endl;
 	// file_ps << "/m{moveto}def" << std::endl;
 	// file_ps << "/l{lineto}def" << std::endl;
 	// file_ps << "/s{stroke}def" << std::endl;
-	file_ps << translation_x << " " << translation_y << " translate" << std::endl;
-	file_ps << scale_factor << " " << scale_factor << " scale" << std::endl << std::endl;
+	file_ps << translation_x + scale_factor*border << " "
+	        << translation_y + scale_factor*border << " translate" << std::endl;
+	file_ps << scale_factor << " dup scale" << std::endl << std::endl;
 
-	file_ps << "gsave 0.003 setlinewidth" << std::endl;
+	file_ps << "gsave " << 1.5 / scale_factor << " setlinewidth" << std::endl;
 	
 	{ // just a block for hiding variables
 	CellIterator it = this->iter_over ( tag::cells, tag::of_dim, 1, tag::not_oriented );
@@ -725,7 +754,7 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 	Cell & B = AB.tip();
 	
 	short int situation;
-	Cell * cll = ambient_mesh.cell_in_front_of ( &AB, tag::may_not_exist );
+	Cell * cll = ambient_mesh.cell_in_front_of ( AB, tag::may_not_exist );
 	if ( cll == NULL ) situation = 3;
 	else
 	{	situation = 1;
@@ -760,15 +789,15 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 		Cell & ver = seg1.tip();
 		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
 		coord->interpolate ( ver, A, 0.5, B, 0.5 );
-		// std::cout << "destroying cell with " << cll->boundary().number_of ( tag::cells, tag::of_max_dim )
-		// 					<< " sides, at AB" << std::endl;
-		AB.reverse().cut_from_bdry_of ( *cll );
+		// when *cll is discarded, we do not want seg1 and seg2 to be discarded
 		seg1.cut_from_bdry_of ( *cll );
 		seg2.cut_from_bdry_of ( *cll );
-		cll->discard(); // removes cll from all meshes above
+		// we do not cut AB.reverse() from the boundary of *cll
+		// thus, when *cll is discarded, AB will be discarded, too
+		// bu we do not want A or B to be discarded
 		A.reverse().cut_from_bdry_of ( AB );
 		B.cut_from_bdry_of ( AB );
-		AB.discard(); // removes AB from all meshes above
+		cll->discard(); // removes cll from all meshes above
 		AB1_p = & seg1;
 		AB2_p = & seg2;                                                        }
 		break;
