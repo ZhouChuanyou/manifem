@@ -10,6 +10,6 @@ It uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for storin
 
 To learn ManiFEM, you should begin by reading the document [manual.pdf](./manual.pdf).
 
-To use ManiFEM, copy all .cpp and .h files to some directory in your computer, together with Makefile.
-Then try 'make run-1.1' for the example in paragraph 1.1 of the manual, 'make run-2.2' for the example in paragraph 2.2, and so on.
+To use ManiFEM, copy all `.cpp` and `.h` files to some directory in your computer, together with `Makefile`.
+Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
 
