@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.09.02
+// manifem/global.cpp 2019.09.04
 
 #include <list>
 #include <map>
@@ -97,7 +97,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 	corners["SW"] = SW; corners["SE"] = SE; corners["NE"] = NE; corners["NW"] = NW;
 	rectangle.hook["corners"] = (void*) ( corners_p );
 	
-	// prepare ground
+	// prepare horizon
 	std::list <Cell*> horizon;
 	{ // just a block of code for hiding 'it'
 	CellIterator it = south.iter_over ( tag::segments, tag::along );
@@ -559,7 +559,8 @@ void Mesh::export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering )
 				// see http://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format
 				// and http://gmsh.info/doc/texinfo/gmsh.html#Node-ordering
 				file_msh << counter << " 5 0 ";
-				CellIterator itt = elem.boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+				CellIterator itt = elem.boundary().iter_over
+					( tag::cells, tag::of_max_dim, tag::oriented );
 				itt.reset();
 				Cell & back = *itt; // square face behind the cube
 				// back is 0321 in gmsh's documentation
@@ -585,14 +586,15 @@ void Mesh::export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering )
 				itvv.reset(ver_4);
 				for ( ; itvv.in_range(); ++itvv )
 				{	Cell & p = *itvv;
-					file_msh << ver_numbering [&p] << " ";   }                                              }
+					file_msh << ver_numbering [&p] << " ";   }                                         }
 			else
 			{	assert( n_faces == 5 );
 				// triangular prism = 6-node prism
 				// see http://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format
 				// and http://gmsh.info/doc/texinfo/gmsh.html#Node-ordering
 				file_msh << counter << " 6 0 ";
-				CellIterator itt = elem.boundary().iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+				CellIterator itt = elem.boundary().iter_over
+					( tag::cells, tag::of_max_dim, tag::oriented );
 				short int n_tri = 0, n_rect = 0;
 				Cell* base_p;
 				for( itt.reset(); itt.in_range(); ++itt )
@@ -625,8 +627,8 @@ void Mesh::export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering )
 				itvv.reset(ver_3);
 				for ( ; itvv.in_range(); ++itvv )
 				{	Cell & p = *itvv;
-					file_msh << ver_numbering [&p] << " ";   }                                           }
-			file_msh << std::endl;                                                                      } }
+					file_msh << ver_numbering [&p] << " ";   }                                      }
+			file_msh << std::endl;                                                                } }
 	file_msh << "$EndElements" << std::endl;
 	
 	if ( ! file_msh.good() )
@@ -750,25 +752,27 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 	// 3: there is no neighbour square (we are on the boundary of the ambient mesh)
 	//    we split the segment but there is no need for a (degenerated) triangle
 
+	enum Situation { create_tri, destroy_tri, boundary };
+
 	Cell & A = AB.base().reverse();
 	Cell & B = AB.tip();
 	
-	short int situation;
-	Cell * cll = ambient_mesh.cell_in_front_of ( AB, tag::may_not_exist );
-	if ( cll == NULL ) situation = 3;
+	Situation situation;
+	Cell * cll_p = ambient_mesh.cell_in_front_of ( AB, tag::may_not_exist );
+	if ( cll_p == NULL ) situation = boundary;
 	else
-	{	situation = 1;
-		if ( ( cll->belongs_to(ambient_mesh) ) and
-	       ( cll->boundary().number_of(tag::cells,tag::of_max_dim) == 3 ) )
+	{	situation = create_tri;
+		if ( ( cll_p->belongs_to(ambient_mesh) ) and
+	       ( cll_p->boundary().number_of(tag::cells,tag::of_max_dim) == 3 ) )
 		{	// is this the long edge of the triangle ?
-			std::map<std::string,void*>::iterator it = cll->hook.find("long edge");
-			if ( it != cll->hook.end() )
+			std::map<std::string,void*>::iterator it = cll_p->hook.find("long edge");
+			if ( it != cll_p->hook.end() )
 			{	Cell * seg_p = (Cell*) (it->second);
-				if ( seg_p == AB.hidden_reverse )  situation = 2;   }                  }  }
+				if ( seg_p == AB.hidden_reverse )  situation = destroy_tri;   }          }  }
 
 	switch ( situation ) {
 		
-	case 1 : // we need to create a (degenerated) triangle
+	case create_tri : // we need to create a (degenerated) triangle
 	{	Cell & middle_of_AB = Cell::point();
 		coord->interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
 		Cell & AB1 = Cell::segment ( A.reverse(), middle_of_AB );
@@ -776,33 +780,36 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 		Cell & AB_tri = Cell::triangle ( AB, AB2.reverse(), AB1.reverse() );
 		AB_tri.hook["long edge"] = (void*) (&AB);
 		// we must introduce 'AB_tri' to all meshes above 'square'
-		AB_tri.is_part_of ( square );
+		AB_tri.is_part_of ( square ); // add_to ?
 		AB1_p = & AB1;
 		AB2_p = & AB2;                                                                       }
 		break;
 
-	case 2 : // we destroy the (degenerated) triangle and use the half-segments
-	         // yes, this is the long edge of the triangle
-	{	assert ( cll != NULL );
-		assert ( cll->belongs_to (ambient_mesh) );
-		Cell & seg1 = cll->boundary().cell_in_front_of (A);
+	case destroy_tri : // we destroy the (degenerated) triangle 
+	  // and use the half-segments (yes, this is the long edge of the triangle)
+	{	assert ( cll_p != NULL );
+		assert ( cll_p->belongs_to (ambient_mesh) );
+		Cell & seg1 = cll_p->boundary().cell_in_front_of (A);
 		Cell & ver = seg1.tip();
-		Cell & seg2 = cll->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, A, 0.5, B, 0.5 );
-		// when *cll is discarded, we do not want seg1 and seg2 to be discarded
-		seg1.cut_from_bdry_of ( *cll );
-		seg2.cut_from_bdry_of ( *cll );
-		// we do not cut AB.reverse() from the boundary of *cll
-		// thus, when *cll is discarded, AB will be discarded, too
-		// bu we do not want A or B to be discarded
+		Cell & seg2 = cll_p->boundary().cell_in_front_of (ver);
+		coord->interpolate ( ver, A, 0.5, B, 0.5 ); // useless if epsi == 0.
+		// when *cll_p is discarded, we do not want seg1 and seg2 to be discarded
+		// so we detach them from *cll_p
+		seg1.cut_from_bdry_of ( *cll_p );
+		seg2.cut_from_bdry_of ( *cll_p );
+		// we do not cut AB.reverse() from the boundary of *cll_p
+		// thus, when *cll_p is discarded, AB will be discarded, too
+		// but we do not want A or B to be discarded so we detach them from AB
+		// (alternatively, we could cut AB.reverse() from the boundary of *cll_p
+		//  and discard it afterwards; anyway, we have to detach A and B first)
 		A.reverse().cut_from_bdry_of ( AB );
 		B.cut_from_bdry_of ( AB );
-		cll->discard(); // removes cll from all meshes above
+		cll_p->discard(); // removes *cll_p from all meshes above
 		AB1_p = & seg1;
 		AB2_p = & seg2;                                                        }
 		break;
 
-	case 3 : // we are on the boundary of the ambient mesh
+	case boundary : // we are on the boundary of the ambient mesh
 	         // we split the segment but there is no need for a new triangle
 	{	Cell & AB2 = AB.split ( tag::in_two_segments, tag::cell_is_segment );
 		// after split, AB will be the first half of the segment, AB2 the second half

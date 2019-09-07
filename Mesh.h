@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.h 2019.08.20
+﻿// src/manifem/Mesh.h 2019.09.05
 
 #include <list>
 #include <map>
@@ -260,18 +260,14 @@ class ManiFEM::Cell
 	// state that 'this' cell must belong to all meshes where 'cll' belongs
 	// used when we split a cell
 
-	void discard ();
-	// first discard the boundary of 'this'
+	void discard ( bool first_time = true );
+	// begin by discarding the boundary of 'this'
 	// then remove 'this' from all meshes above it
 	// finally, keep 'this' cell in a pool of cells for future use (to do)
 
 	static Cell & cartesian_product_orient ( Cell & cell1, Cell & cell2,
 		std::map < Cell*, std::map < Cell*, std::pair < Cell*, bool > > > & cartesian, bool revert );
 	// do not use directly; use Mesh::cartesian_product
-
-	// these two are invoked from 'glue_on_bdry_of' and 'cut_from_bdry_of'
-	void glue_on_bdry_core ( Cell & cll );
-	void cut_from_bdry_core ( Cell & cll );
 
 	inline MeshIterator iter_over ( const tag::Meshes &, const tag::Above &, const tag::OfSameDim &, const tag::Oriented & );
 	// defined after class ManiFEM::MeshIterator
@@ -539,8 +535,8 @@ class ManiFEM::Mesh
 	// gives the other cell, neighbour to 'cll', having 'f' as common face.
 	// This is exactly what cell_in_front_of implements.
 	// Interpretation : the faces are looking outwards, to the neighbour cells.
-	inline Cell * cell_in_front_of ( Cell *, const tag::MayNotExist & );
-	inline Cell * cell_behind ( Cell *, const tag::MayNotExist & );
+	inline Cell * cell_in_front_of ( Cell &, const tag::MayNotExist & );
+	inline Cell * cell_behind ( Cell &, const tag::MayNotExist & );
 	// return nullpointer if there is no cell (we are on the boundary of the mesh)
 	inline Cell & cell_in_front_of ( Cell &, const tag::SurelyExists & se = tag::surely_exists );
 	inline Cell & cell_behind ( Cell&, const tag::SurelyExists & se = tag::surely_exists );
@@ -566,14 +562,8 @@ class ManiFEM::Mesh
 	// they are passed to 'deep_connections' from  Cell::add_to and Cell::remove_from
 	static void action_add ( Cell&, Mesh&, short int, short int );
 	static void action_remove ( Cell&, Mesh&, short int, short int );
-
-	static inline void action_add_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
-	// we just switch the two counters
-	{	Mesh::action_add ( cll, msh, cn, cp );  }
-	
-	static inline void action_remove_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
-	// we just switch the two counters
-	{	Mesh::action_remove ( cll, msh, cn, cp );    }
+	static void action_add_rev ( Cell & cll, Mesh & msh, short int, short int );
+	static void action_remove_rev ( Cell & cll, Mesh & msh, short int, short int );
 
 	// here is the core linking between cells and meshes
 	// do not use directly; this is called from add_to and remove_from
@@ -715,18 +705,18 @@ inline Mesh & Mesh::reverse ( const tag::OnTheFly & otf )
 	else return * ( this->hidden_reverse );                 }
 
 
-inline Cell * Mesh::cell_behind ( Cell * face, const tag::MayNotExist & )
+inline Cell * Mesh::cell_behind ( Cell & face, const tag::MayNotExist & )
 
 // return the cell behind 'face'
 // recall that the faces of a cell are looking outwards
 
-{	short int d = this->dim, dm1 = d - 1;
-	assert ( dm1 == face->dim );
+{	short int d = this->dim;
+	assert ( d == face.dim + 1 );
 	if ( this->is_positive() )
-	{	// optimizar !
-		if ( face->cell_behind_within.find(this) == face->cell_behind_within.end() )
-			return NULL;
-		return face->cell_behind_within[this];                 }
+	{	std::map<Mesh*,Cell*>::iterator it = face.cell_behind_within.find(this);
+		if ( it == face.cell_behind_within.end() ) return NULL;
+		return it->second;                                                        }
+		// face.cell_behind_within[this]
 	else
 	{	assert ( this->hidden_reverse != NULL );
 		Cell *cll = this->hidden_reverse->cell_in_front_of ( face, tag::may_not_exist );
@@ -739,27 +729,27 @@ inline Cell & Mesh::cell_behind ( Cell & face, const tag::SurelyExists & se )
 
 // usually called with one argument only ('se' defaults to tag::surely_exists)
 
-{	Cell * cll = this->cell_behind ( & face, tag::may_not_exist );
+{	Cell * cll = this->cell_behind ( face, tag::may_not_exist );
 	assert ( cll != NULL );
 	return *cll;                                                    }
 
 
-inline Cell * Mesh::cell_in_front_of ( Cell * face, const tag::MayNotExist & )
+inline Cell * Mesh::cell_in_front_of ( Cell & face, const tag::MayNotExist & )
 
 // return the cell towards which 'face' is looking
 // recall that the faces of a cell are looking outwards
 
-{	Cell *fr = face->hidden_reverse;
+{	Cell * fr = face.hidden_reverse;
 	if ( fr == NULL ) return NULL;
-	else return this->cell_behind ( fr, tag::may_not_exist );
-} // end of *Mesh::cell_in_front_of
+	else return this->cell_behind ( * fr, tag::may_not_exist );
+} // end of Mesh::cell_in_front_of
 
 
 inline Cell & Mesh::cell_in_front_of ( Cell & face, const tag::SurelyExists & se )
 
 // usually called with one argument only ('se' defaults to tag::surely_exists)
 
-{	Cell * cll = this->cell_in_front_of ( & face, tag::may_not_exist );
+{	Cell * cll = this->cell_in_front_of ( face, tag::may_not_exist );
 	assert ( cll != NULL );
 	return *cll;                                                         }
 

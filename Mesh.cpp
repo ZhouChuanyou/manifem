@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.cpp 2019.08.23
+﻿// src/manifem/Mesh.cpp 2019.09.05
 
 #include <list>
 #include <map>
@@ -74,6 +74,7 @@ Cell::Cell ( short int d, bool is_segment )
 Cell::Cell ( const tag::ReverseOf &, Cell & direct_cell )
 
 // for building the reverse cell
+// do not use directly, let 'reverse' do the job
 
 :	dim ( direct_cell.dim ),
 	real_heap ( Cell::real_heap_size_r[direct_cell.dim] ),
@@ -97,18 +98,16 @@ Cell::Cell ( const tag::ReverseOf &, Cell & direct_cell )
 	{	assert ( it_dat != dat->end() );
 		(*it_ini) ( this, *it_dat );       }
 	assert ( it_dat == dat->end() );                             }
-// shouldn't we give special treatment to segments ?
+// Should we give special treatment to segments ?
+// No. Method Cell::reverse does this.
 
 
 Mesh::Mesh ( const tag::ReverseOf &, Mesh & direct_mesh )
 
 // for building the reverse mesh
+// do not use directly, let 'reverse' do the job
 
 :	dim ( direct_mesh.dim ), hidden_reverse ( &direct_mesh ), positive ( &direct_mesh )
-
-// there is no reason to ever call this constructor directly
-// it is invoked from Mesh::reverse(), which in turn is
-// usually called from Cell::Cell(tag::ReverseOf,Cell&) above
 
 {	assert ( direct_mesh.is_positive() );
 	direct_mesh.hidden_reverse = this;
@@ -120,18 +119,8 @@ Mesh::Mesh ( const tag::ReverseOf &, Mesh & direct_mesh )
 	// Instead, we use an iterator over the direct_mesh and then
 	// we call the 'reverse' method on each cell.
 	CellIterator it = direct_mesh.iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
-	for ( it.reset(); it.in_range(); it++ )
-	{	Cell & rev_cll = (*it).reverse();
-		// now we are sure the reverse cell exists
-		if (this->dim == 0) continue;
-		CellIterator itt = rev_cll.boundary().iter_over
-			( tag::cells, tag::of_max_dim, tag::oriented );
-		// is this really necessary ?
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	// optimizar !
-			Cell & face = *itt;
-			assert ( face.cell_behind_within.find(this) == face.cell_behind_within.end() );
-			face.cell_behind_within[this] = & rev_cll;                                       }  }
+	for ( it.reset(); it.in_range(); it++ ) (*it).reverse();
+	// now we are sure the reverse cells exist
 }
 
 
@@ -360,32 +349,17 @@ void Mesh::print_everything ()
 
 void Cell::glue_on_bdry_of ( Cell & cll )
 
-// glue 'this' face on the boundary of cell 'cll'
+// glue '*this' face on the boundary of cell 'cll'
+// any of them may be negative
 
 {	assert ( cll.hidden_boundary != NULL );
 	assert ( cll.dim == this->dim + 1 );
 
 	this->add_to ( cll.boundary() );
 
-	// perhaps we should do this only to 'this->positive'
-	this->glue_on_bdry_core ( cll );
-	if ( cll.hidden_reverse != NULL )
-		this->reverse().glue_on_bdry_core ( * ( cll.hidden_reverse ) );   }
-
-
-void Cell::glue_on_bdry_core ( Cell & cll )
-
-// used only in Cell::glue_on_bdry_of
-
-{	short int cll_d = cll.dim;
-	bool cll_pos = cll.is_positive();
-	std::map <Mesh*, Cell::field_to_meshes> * cmd;
-	if ( cll_pos ) cmd = cll.meshes[cll_d];
-	else // when cll is negative
-	{	assert ( cll.hidden_reverse != NULL );
-		cmd = cll.hidden_reverse->meshes[cll_d];  }
-	std::map <Mesh*, Cell::field_to_meshes> :: iterator it = cmd->begin(), e = cmd->end();
-	for ( ; it != e; ++it)
+	std::map <Mesh*, Cell::field_to_meshes> *	cmd = cll.positive->meshes[cll.dim];
+	std::map<Mesh*,Cell::field_to_meshes>::iterator it = cmd->begin(), e = cmd->end();
+	for ( ; it != e; ++it )
 	{	Mesh * msh_p = it->first;
 		assert ( msh_p->is_positive() );
 		Cell::field_to_meshes & field = it->second;
@@ -393,20 +367,20 @@ void Cell::glue_on_bdry_core ( Cell & cll )
 		if ( field.counter_pos != 0 )
 		{	assert ( field.counter_pos == 1 );
 			assert ( field.counter_neg == 0 );
-			reverse = not cll_pos;              }
+			reverse = not cll.is_positive();     }
 		else
 		{	assert ( field.counter_pos == 0 );
 			assert ( field.counter_neg == 1 );
-			reverse = cll_pos;                  }
+			reverse = cll.is_positive();         }
 		if ( reverse )
 		{	assert ( this->hidden_reverse != NULL );
 			assert ( cll.hidden_reverse != NULL );
 			assert ( this->hidden_reverse->cell_behind_within.find(msh_p) ==
-		           this->hidden_reverse->cell_behind_within.end()         );
+		           this->hidden_reverse->cell_behind_within.end()          );
 			this->hidden_reverse->cell_behind_within[msh_p] = cll.hidden_reverse;  }
 		else
 		{	assert ( this->cell_behind_within.find(msh_p) ==
-		           this->cell_behind_within.end()         );
+		           this->cell_behind_within.end()          );
 			this->cell_behind_within[msh_p] = & cll;              }
 	} // end of for
 	
@@ -416,58 +390,44 @@ void Cell::glue_on_bdry_core ( Cell & cll )
 		if ( this->is_positive() ) seg.hidden_tip = this;
 		else seg.hidden_base = this;                        }
 			
-} // end of Cell::glue_on_bdry_core
+} // end of Cell::glue_on_bdry
 
 
 void Cell::cut_from_bdry_of ( Cell & cll )
 
-// cut 'this' face from the boundary of cell 'cll'
+// cut '*this' face from the boundary of cell 'cll'
+// any of them may be negative
 
 {	assert ( cll.hidden_boundary != NULL );
 	assert ( cll.dim == this->dim + 1 );
 
 	this->remove_from ( * ( cll.hidden_boundary ) );
 	
-	this->cut_from_bdry_core ( cll );
-	if ( cll.hidden_reverse != NULL )
-		this->reverse().cut_from_bdry_core ( * ( cll.hidden_reverse ) );    }
-
-
-void Cell::cut_from_bdry_core ( Cell & cll )
-
-// used only in Cell::cut_from_bdry_of
-
-{	short int cll_d = cll.dim;
-	bool cll_pos = cll.is_positive();
-	std::map <Mesh*, Cell::field_to_meshes> *cmd;
-	if ( cll_pos ) cmd = cll.meshes[cll_d];
-	else // when cll is negative
-	{	assert ( cll.hidden_reverse != NULL );
-		cmd = cll.hidden_reverse->meshes[cll_d];  }
-	std::map <Mesh*, Cell::field_to_meshes> :: iterator it = cmd->begin(), e = cmd->end();
-	for ( ; it != e; ++it)
-	{	Mesh *msh = it->first;
-		assert ( msh->is_positive() );
+	std::map <Mesh*, Cell::field_to_meshes> *	cmd = cll.positive->meshes[cll.dim];
+	std::map<Mesh*,Cell::field_to_meshes>::iterator it = cmd->begin(), e = cmd->end();
+	for ( ; it != e; ++it )
+	{	Mesh * msh_p = it->first;
+		assert ( msh_p->is_positive() );
 		Cell::field_to_meshes &field = it->second;
 		bool reverse;
 		if (field.counter_pos != 0)
-		{	assert (field.counter_pos == 1);
-			assert (field.counter_neg == 0);
-			reverse = !cll_pos;                 }
+		{	assert ( field.counter_pos == 1 );
+			assert ( field.counter_neg == 0 );
+			reverse = not cll.is_positive();    }
 		else
-		{	assert (field.counter_pos == 0);
-			assert (field.counter_neg == 1);
-			reverse = cll_pos;                 }
+		{	assert ( field.counter_pos == 0 );
+			assert ( field.counter_neg == 1 );
+			reverse = cll.is_positive();        }
 		if (reverse)
 		{	assert ( this->hidden_reverse != NULL );
 			assert ( cll.hidden_reverse != NULL );
-			assert ( this->hidden_reverse->cell_behind_within.find(msh) !=
-		           this->hidden_reverse->cell_behind_within.end()         );
-			this->hidden_reverse->cell_behind_within.erase (msh);               }
+			assert ( this->hidden_reverse->cell_behind_within.find(msh_p) !=
+		           this->hidden_reverse->cell_behind_within.end()          );
+			this->hidden_reverse->cell_behind_within.erase (msh_p);               }
 		else
-		{	assert ( this->cell_behind_within.find(msh) !=
-		           this->cell_behind_within.end()         );
-			this->cell_behind_within.erase (msh);               }
+		{	assert ( this->cell_behind_within.find(msh_p) !=
+		           this->cell_behind_within.end()          );
+			this->cell_behind_within.erase (msh_p);               }
 	} // end of for
 	
 	// special treatment is given to segments :
@@ -475,12 +435,13 @@ void Cell::cut_from_bdry_core ( Cell & cll )
 	{	Segment & seg = * ( (Segment*) (&cll) );
 		if ( this->is_positive() ) seg.hidden_tip = NULL;
 		else seg.hidden_base = NULL;                       }
-} // end of Cell::cut_from_bdry_core
+
+} // end of Cell::cut_from_bdry
 
 
 void Cell::add_to ( Mesh & msh )
 
-// add 'this' cell to the mesh 'msh'
+// add '*this' cell to the mesh 'msh'
 // four possible orientation combinations are taken into account
 // (two directly and two through recursivity)
 
@@ -488,20 +449,19 @@ void Cell::add_to ( Mesh & msh )
 	if ( ! ( msh.is_positive() ) )
 	{	assert ( msh.hidden_reverse != NULL );
 		this->reverse().add_to ( * ( msh.hidden_reverse ) );
-		return;                                         }
+		return;                                               }
 
 	if ( this->is_positive() )
 	{	// assert that 'this' cell does not belong yet to the mesh 'msh'
 		assert ( this->meshes[msh.dim]->find(&msh) == this->meshes[msh.dim]->end() );
-		// optimizar !
 		msh.deep_connections ( *this, Mesh::action_add );                               }
 	else // when 'this' is negative
 	{	// assert that the reverse of 'this' cell does not belong yet to the mesh 'msh'
 		assert ( this->hidden_reverse->meshes[msh.dim]->find(&msh)
-			== this->hidden_reverse->meshes[msh.dim]->end() );
-		// optimizar !
+		         == this->hidden_reverse->meshes[msh.dim]->end()    );
 		msh.deep_connections ( * ( this->hidden_reverse ), Mesh::action_add_rev );    }
 
+	// we are confident 'msh' is a positive mesh (see at the beginning)
 	if ( this->dim > 0 )
 	{	Mesh & bdry = this->boundary();
 		// 'bdry' may be a negative mesh, so we use a MeshIterator.
@@ -516,7 +476,7 @@ void Cell::add_to ( Mesh & msh )
 
 void Cell::remove_from (Mesh & msh)
 
-// remove 'this' cell from the mesh 'msh'
+// remove '*this' cell from the mesh 'msh'
 // four possible orientation combinations are taken into account
 // (two directly and two through recursivity)
 
@@ -547,6 +507,7 @@ void Cell::remove_from (Mesh & msh)
 #endif
 		msh.deep_connections ( * ( this->hidden_reverse ), Mesh::action_remove_rev );  }
 	
+	// we are confident 'msh' is a positive mesh (see at the beginning)
 	if ( this->dim != 0 )
 	{	Mesh & bdry = this->boundary();
 		// 'bdry' may be a negative mesh, so we use a CellIterator.
@@ -612,21 +573,32 @@ void Mesh::action_remove ( Cell & cll, Mesh & msh, short int cp, short int cn ) 
 {	typedef std::map <Mesh*, Cell::field_to_meshes> maptype;
 	maptype* cmd = cll.meshes[msh.dim];
 	maptype::iterator cmdm = cmd->find(&msh);
-	assert (cmdm != cmd->end());
+	assert ( cmdm != cmd->end() );
 	short int c_p = cmdm->second.counter_pos -= cp;
 	short int c_n = cmdm->second.counter_neg -= cn;
-	assert ( (c_p >= 0) && (c_n >= 0) );
-	if ( (c_p == 0) && (c_n == 0) )
+	assert ( ( c_p >= 0 ) and ( c_n >= 0 ) );
+	if ( ( c_p == 0 ) and ( c_n == 0 ) )
 	{	std::list <Cell*>::iterator w = cmdm->second.where;
 		msh.cells[cll.dim]->erase(w);
-		cmd->erase(&msh);                                }
+		cmd->erase(&msh);                                    }
 } // end of Mesh::action_remove
+
+
+void Mesh::action_add_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
+// static
+// we just switch the two counters
+{	Mesh::action_add ( cll, msh, cn, cp );  }
+	
+void Mesh::action_remove_rev ( Cell & cll, Mesh & msh, short int cp, short int cn )
+// static
+// we just switch the two counters
+{	Mesh::action_remove ( cll, msh, cn, cp );    }
 
 
 void Mesh::deep_connections ( Cell & cell,
 	void (*action)(Cell&, Mesh&, short int, short int) )
 
-// make or destroy connections when addin or removing a cell,
+// make or destroy connections when adding or removing a cell,
 // according to the 'action' argument
 
 {	// We build two lists, a list of cells "below" 'cell'
@@ -634,6 +606,9 @@ void Mesh::deep_connections ( Cell & cell,
 	// and a list of meshes "above" 'this' mesh
 	// (that is, meshes to which 'this->cell_enclosed' belongs).
 	// We then use these two lists to create or destroy all connections.
+
+	assert ( this->is_positive() );
+	assert ( cell.is_positive() );
 	
 	struct triplet_cell
 	{	Cell *obj;
@@ -755,68 +730,86 @@ void Cell::is_part_of ( Cell & cll )
 } // end of Cell::is_part_of
 
 
-void Mesh::discard ()
+void Cell::discard ( bool first_time )
 
-// first discard all cells
-// then keep 'this' mesh in a pool of cells for future use (to do)
-
-{	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
-	for ( it.reset(); it.in_range(); it++ )
-	{	Cell & cll = * it;
-		cll.discard();      }
-
-	// what about the reverse mesh ?
+// 'first_time' defaults to 'true'
 	
-	// to do : keep mesh in a pool for future use
-	
-} // end of Cell::discard
-
-
-void Cell::discard ()
-
-// first discard the boundary of 'this'
+// begin by discarding the boundary of 'this'
 // then remove 'this' from all meshes above it
 // finally, keep 'this' cell in a pool of cells for future use (to do)
 	
 {	if(  this->dim > 0 ) this->boundary().discard();
 
+	std::list < Cell* > cells_above;
+	std::list < Mesh* > meshes_above;
 	{ // just a block of code for hiding 'it'
 	MeshIterator it = this->iter_over
 		( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
 	for ( it.reset(); it.in_range(); it++ )
 	{	Mesh & msh = *it;
+		Cell * encl = msh.cell_enclosed;
+		if ( encl ) cells_above.push_back(encl);
+		else meshes_above.push_back(&msh);        }
+	} { // just a block of code for hiding 'it', 'it_e'
+	std::list<Cell*>::iterator it   = cells_above.begin(),
+	                           it_e = cells_above.end();
+	for ( ; it != it_e; it++ )
+	{	Cell & cll = *(*it);
+		this->cut_from_bdry_of (cll);  }
+	} { // just a block of code for hiding 'it', 'it_e'
+	std::list<Mesh*>::iterator it   = meshes_above.begin(),
+	                           it_e = meshes_above.end();
+	for ( ; it != it_e; it++ )
+	{	Mesh & msh = *(*it);
 		this->remove_from (msh);  }
-	} // just a block of code for hiding 'it'
+	} // just a block of code
 
-	// if the cell has a reverse, and the mesh above has a reverse as well,
-	// then the above 'remove_from' has done the job for the reverse pair
-	// BUT the reverse cell may belong to other meshes, not reverses of
-	// meshes above 'this' and those must be taken care of separately
-	
-	if ( this->hidden_reverse ) // there is a reverse
-	{	MeshIterator it = this->hidden_reverse->iter_over
-			( tag::meshes, tag::above, tag::of_same_dim, tag::oriented );
-		for ( it.reset(); it.in_range(); it++ )
-		{	Mesh & msh = *it;
-			this->remove_from (msh);  }                                     }
-
-	// to do : keep cell in a pool for future use
+	// to do : keep cell (and its reverse, if it exists) in a pool for future use
+	// or destroy them
 	
 } // end of Cell::discard
+
+
+void Mesh::discard ()
+
+// first discard all cells
+// then keep 'this' mesh in a pool of cells for future use (to do)
+
+{	std::list < Cell* > cells;
+	{ // just a block of code for hiding 'it'
+	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+	for ( it.reset(); it.in_range(); it++ )
+	{	Cell & cll = * it;
+		cells.push_back (&cll);  }
+	} { // just a block of code for hiding 'it', 'it_e'
+	std::list<Cell*>::iterator it   = cells.begin(),
+	                           it_e = cells.end();
+	for ( ; it != it_e; it++ )
+	{	Cell & cll = *(*it);
+		cll.discard();        }
+	} // just a block of code
+
+	// what about the reverse mesh ?  nothing to do.
+	// its cells are reverses of cells discarded above
+	
+	// to do : keep mesh (and its reverse, if it exists) in a pool for future use
+	// or destroy them
+	
+} // end of Mesh::discard
 	
 
-////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                        //
-//     H  HHHHHHHHH  HHHHHHH   HHHH        H    HHHHHHHHH   HHH     HHHH       HHHH       //
-//     H      H      H         H   HH     HHH       H      H   H    H   HH    H    H      //
-//     H      H      H         H    H    H   H      H     H     H   H     H   H           //
-//     H      H      HHHH      HHHHH     H   H      H     H     H   HHHHHH     H          //
-//     H      H      H         H H      HHHHHHH     H     H     H   H H         HH        //
-//     H      H      H         H  H     H     H     H     H     H   H  H          H       //
-//     H      H      H         H   H   H       H    H      H   H    H   H     H    H      //
-//     H      H      HHHHHHH   H    H  H       H    H       HHH     H    H     HHHH       //
-//                                                                                        //
-////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                       //
+//     H  HHHHHHHHH  HHHHHHH   HHHH        H    HHHHHHHHH   HHH     HHHH       HHHH      //
+//     H      H      H         H   HH     HHH       H      H   H    H   HH    H    H     //
+//     H      H      H         H    H    H   H      H     H     H   H     H   H          //
+//     H      H      HHHH      HHHHH     H   H      H     H     H   HHHHHH     H         //
+//     H      H      H         H H      HHHHHHH     H     H     H   H H         HH       //
+//     H      H      H         H  H     H     H     H     H     H   H  H          H      //
+//     H      H      H         H   H   H       H    H      H   H    H   H     H    H     //
+//     H      H      HHHHHHH   H    H  H       H    H       HHH     H    H     HHHH      //
+//                                                                                       //
+///////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Iterators are classified into two types.
@@ -1009,11 +1002,11 @@ void Mesh::reset_iter_along_seg ( CellIterator *it, Cell *p )  // static
 	// (or "last point") thus we need to search for it
 	// if the chain is not open (if it's a loop) this search may last forever !
 	{	p = *(msh->cells[0]->begin());
-	 	Cell *s = omsh->cell_behind ( p, tag::may_not_exist );
+	 	Cell *s = omsh->cell_behind ( *p, tag::may_not_exist );
 	 	while ( s )
 	 	{	p = s->base().hidden_reverse;
 	 		assert ( p != NULL );
-	 		s = omsh->cell_behind( p, tag::may_not_exist );  }
+	 		s = omsh->cell_behind( *p, tag::may_not_exist );  }
 		msh->hook[key] = (void*) p;                             }
 	Mesh::reset_iter_around ( it, p );                                             }
 
@@ -1040,10 +1033,10 @@ void Mesh::reset_iter_along_seg_rev ( CellIterator *it, Cell *p )  // static
 	// (or "last point") thus we need to search for it
 	// if the chain is not open (if it's a loop) this search may last forever !
 	{	p = *(msh->cells[0]->begin());
-	 	Cell *s = omsh->cell_in_front_of ( p, tag::may_not_exist );
+	 	Cell *s = omsh->cell_in_front_of ( *p, tag::may_not_exist );
 	 	while ( s )
 		{	p = & ( s->tip() );
-	 		s = omsh->cell_in_front_of ( p, tag::may_not_exist );      }
+	 		s = omsh->cell_in_front_of ( *p, tag::may_not_exist );      }
 		msh->hook[key] = (void*) p;                                        }
 	Mesh::reset_iter_around_rev ( it, p );                                   }
 
@@ -1067,7 +1060,7 @@ void Mesh::reset_iter_around ( CellIterator *it, Cell * p )  // static
 	assert ( p->is_positive() );
 	data->current_vertex = p;
 	data->current_seg = data->first_seg
-	                  = omsh->cell_in_front_of ( p, tag::may_not_exist );
+	                  = omsh->cell_in_front_of ( *p, tag::may_not_exist );
 	data->first_try = ( data->first_seg != NULL );
 	// data->first_try might be false if we come from reset_iter_along
 	data->seg_got_out = false;                                                }
@@ -1090,7 +1083,7 @@ void Mesh::reset_iter_around_rev ( CellIterator *it, Cell * p )  // static
 	assert ( p->dim == 0 );
 	data->current_vertex = p;
 	data->current_seg = data->first_seg
-	                  = omsh->cell_behind ( p, tag::may_not_exist );
+	                  = omsh->cell_behind ( *p, tag::may_not_exist );
 	data->first_try = ( data->first_seg != NULL );
 	// data->first_try might be false if we come from reset_iter_along
 	data->seg_got_out = false;                                             }
@@ -1103,9 +1096,9 @@ void Mesh::advance_iter_contour ( CellIterator *it )  // static
 	{	data->seg_got_out = false; return;  }
 	data->first_try = false;
 	Mesh *omsh = data->oriented_base;
-	data->current_vertex = & ( data->current_seg->tip() );
-	data->current_seg = omsh->cell_in_front_of
-		( data->current_vertex, tag::may_not_exist );
+	Cell & cv = data->current_seg->tip();
+	data->current_vertex = & cv;
+	data->current_seg = omsh->cell_in_front_of ( cv, tag::may_not_exist );
 	if ( data->current_seg == NULL ) data->seg_got_out = 1;                        }
 
 
@@ -1118,7 +1111,7 @@ void Mesh::advance_iter_contour_rev ( CellIterator *it )  // static
 	Mesh *omsh = data->oriented_base;
 	data->current_vertex = data->current_seg->base().hidden_reverse;
 	data->current_seg = omsh->cell_behind
-		( data->current_vertex, tag::may_not_exist );
+		( * ( data->current_vertex ), tag::may_not_exist );
 	if ( data->current_seg == NULL ) data->seg_got_out = 1;                          }
 
 
@@ -1207,7 +1200,7 @@ void Mesh::reset_iter_along_dual ( CellIterator *it, Cell *seg )  // static
 		// what if 'data->center' is a negative cell ?
 		Cell * P = data->center;
 	 	while ( true )
-	 	{	seg = tri->boundary().cell_in_front_of ( data->center, tag::may_not_exist );
+	 	{	seg = tri->boundary().cell_in_front_of ( * ( data->center ), tag::may_not_exist );
 	 		assert ( seg != NULL );
 			Cell * rev_seg = seg->hidden_reverse;
 			// 'rev_seg' (if not NULL) points towards 'data->center'
@@ -1215,11 +1208,11 @@ void Mesh::reset_iter_along_dual ( CellIterator *it, Cell *seg )  // static
 			// if seg has a reverse, we cannot be sure - we must check further
 			// because, for instance, there may be another, adjacent, mesh
 			if ( rev_seg == NULL ) break;
-			Cell * next_tri = ambient_mesh->cell_behind ( rev_seg, tag::may_not_exist );
+			Cell * next_tri = ambient_mesh->cell_behind ( * rev_seg, tag::may_not_exist );
 			if ( next_tri == NULL ) break;  // 'seg' is on the boundary of ambient_mesh
-			tri = next_tri;                                                                }
-		seg = tri->boundary().cell_behind ( data->center, tag::may_not_exist );
-		assert ( seg != NULL );                                                             }
+			tri = next_tri;                                                                     }
+		seg = tri->boundary().cell_behind ( * ( data->center ), tag::may_not_exist );
+		assert ( seg != NULL );                                                                 }
 	Mesh::reset_iter_around_dual ( it, seg );
 }	// end of Mesh::reset_iter_along_dual
 
@@ -1242,7 +1235,7 @@ void Mesh::reset_iter_along_dual_rev ( CellIterator *it, Cell *seg )  // static
 		// a triangle having 'data->center' as vertex, within ambient_mesh
 		// what if 'data->center' is a negative cell ?
 	 	while ( true )
-	 	{	seg = tri->boundary().cell_behind ( data->center, tag::may_not_exist );
+	 	{	seg = tri->boundary().cell_behind ( * ( data->center ), tag::may_not_exist );
 	 		assert ( seg != NULL );
 			// 'seg' points towards 'data->center'
 			Cell * rev_seg = seg->hidden_reverse;
@@ -1250,11 +1243,11 @@ void Mesh::reset_iter_along_dual_rev ( CellIterator *it, Cell *seg )  // static
 			// if seg has a reverse, we cannot be sure - we must check further
 			// because, for instance, there may be another, adjacent, mesh
 			if ( rev_seg == NULL ) break;
-			Cell * next_tri = ambient_mesh->cell_behind ( rev_seg, tag::may_not_exist );
+			Cell * next_tri = ambient_mesh->cell_behind ( * rev_seg, tag::may_not_exist );
 			if ( next_tri == NULL ) break;  // 'seg' is on the boundary of ambient_mesh
-			tri = next_tri;                                                               }
-		seg = tri->boundary().cell_behind ( data->center, tag::may_not_exist );
-		assert ( seg != NULL );                                                            }
+			tri = next_tri;                                                                 }
+		seg = tri->boundary().cell_behind ( * ( data->center ), tag::may_not_exist );
+		assert ( seg != NULL );                                                             }
 	Mesh::reset_iter_around_dual ( it, seg );
 }	// end of Mesh::reset_iter_along_dual_rev
 
@@ -1274,17 +1267,17 @@ void Mesh::reset_iter_around_dual ( CellIterator *it, Cell * seg )  // static
 	{	Cell *tri = ambient_mesh->get_tri_for_iter_dual ( data->center );
 		// a triangle having 'data->center' as vertex, within ambient_mesh
 		// what if 'data->center' is a negative cell ?
-		seg = tri->boundary().cell_behind ( data->center, tag::may_not_exist );  }
+		seg = tri->boundary().cell_behind ( * ( data->center ), tag::may_not_exist );  }
   else if ( seg->dim == data->center->dim + 2 )
 	{	Cell * & tri = seg;
 		assert ( & ( ambient_mesh->orient_cell(*tri) ) == tri );
-		seg = tri->boundary().cell_behind ( data->center, tag::may_not_exist );  }
+		seg = tri->boundary().cell_behind ( * ( data->center ), tag::may_not_exist );  }
 	assert ( seg != NULL );
 	assert ( seg->dim == data->center->dim + 1 );
 	assert ( & ( seg->boundary().orient_cell(*(data->center)) ) == data->center );
 	data->current_vertex = seg;  // segment or higher; names misleading
 	data->current_seg = data->first_seg  // triangle or higher; names misleading
-	       = ambient_mesh->cell_behind ( seg, tag::may_not_exist );
+	       = ambient_mesh->cell_behind ( * seg, tag::may_not_exist );
 	assert ( data->current_seg != NULL );
 	data->first_try = true;
 } // end of Mesh::reset_iter_around_dual
@@ -1300,11 +1293,11 @@ void Mesh::advance_iter_dual ( CellIterator *it )  // static
 	// data->current_vertex is a face of data->current_seg
 	// and data->center is a face of data->current_vertex (so, it's a subface)
 	data->current_seg = ambient_mesh->cell_in_front_of
-		( data->current_vertex, tag::may_not_exist );
+		( * ( data->current_vertex ), tag::may_not_exist );
 	if ( data->current_seg == NULL ) return;
 	//	data->seg_got_out = 1;
 	data->current_vertex = data->current_seg->boundary().cell_behind
-		( data->center, tag::may_not_exist );
+		( * ( data->center ), tag::may_not_exist );
 	assert ( data->current_vertex != NULL );	                                }
 
 
@@ -1318,13 +1311,13 @@ void Mesh::advance_iter_dual_rev ( CellIterator *it )  // static
 	// data->current_vertex is a face of data->current_seg
 	// and data->center is a face of data->current_vertex (so, it's a subface)
 	Cell * seg = data->current_seg->boundary().cell_in_front_of
-		( data->center, tag::may_not_exist );
+		( * ( data->center ), tag::may_not_exist );
 	assert ( seg != NULL );
 	Cell * rev_seg = seg->hidden_reverse;
 	if ( rev_seg == NULL )  // we're stuck
 	{	data->current_seg = NULL;  return;  } 
 	data->current_vertex = rev_seg;
-	data->current_seg = ambient_mesh->cell_behind ( rev_seg, tag::may_not_exist );  }
+	data->current_seg = ambient_mesh->cell_behind ( * rev_seg, tag::may_not_exist );   }
 	// if ( data->current_seg == NULL ) data->seg_got_out = 1;
 
 

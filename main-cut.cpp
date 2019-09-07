@@ -1,4 +1,4 @@
-// src/manifem/current/main-cut.cpp  2019.08.22
+// src/manifem/current/main-cut.cpp  2019.08.28
 
 #include <fstream>
 #include "Mesh.h"
@@ -7,7 +7,7 @@
 using namespace std;
 
 // we consider a mesh and a cut (an interface) which is a level set of
-// a scalar function
+// a scalar function psi
 // we then deform locally the mesh, adjusting it to the cut
 
 
@@ -124,7 +124,7 @@ void analyse_angles_left ( Mesh & square, Mesh & interface, Cell & seg )
 		Cell & Q = seg1.tip();
 		double dx = x(Q) - x(P), dy = y(Q) - y(P),
 			norm = std::sqrt(dx*dx+dy*dy), cos_angle;
-		Cell * cll_ptr = square.cell_behind ( &seg1, tag::may_not_exist );
+		Cell * cll_ptr = square.cell_behind ( seg1, tag::may_not_exist );
 		if ( cll_ptr == NULL ) return;
 		Cell & cll= *cll_ptr;
 		if ( not cll.belongs_to(square) ) return;
@@ -133,11 +133,6 @@ void analyse_angles_left ( Mesh & square, Mesh & interface, Cell & seg )
 		Cell & R = seg2.base().reverse();
 		double dx2 = x(R) - x(P), dy2 = y(R) - y(P),
 			norm2 = std::sqrt(dx2*dx2+dy2*dy2);
-		// Cell * pos_seg2 = seg2.positive;
-//		if ( seg_2.belongs_to(interface) and first_pass )
-//			return; // very wide angle; deal with it later
-//		// if ( ( pos_seg2->meshes[1]->find(&interface) != pos_seg2->meshes[1]->end() )
-//		// 		 and ( first_pass ) ) return; // very wide angle; deal with it later
 		if ( cll.boundary().cells[1]->size() == 3 ) goto next_neighbour_cell;
 		assert ( cll.boundary().cells[1]->size() == 4 );
 		cos_angle = ( dx*dx2 + dy*dy2 ) / norm / norm2;
@@ -173,7 +168,7 @@ void analyse_angles_right ( Mesh & square, Mesh & interface, Cell & seg )
 		Cell & Q = seg1.tip();
 		double dx = x(Q) - x(P), dy = y(Q) - y(P),
 			norm = std::sqrt(dx*dx+dy*dy), cos_angle;
-		Cell * cll_ptr = square.cell_in_front_of ( &seg1, tag::may_not_exist );
+		Cell * cll_ptr = square.cell_in_front_of ( seg1, tag::may_not_exist );
 		if ( cll_ptr == NULL ) return;
 		Cell & cll= *cll_ptr;
 		if ( not cll.belongs_to(square) ) return;
@@ -182,11 +177,6 @@ void analyse_angles_right ( Mesh & square, Mesh & interface, Cell & seg )
 		Cell & R = seg2.tip();
 		double dx2 = x(R) - x(P), dy2 = y(R) - y(P),
 			norm2 = std::sqrt(dx2*dx2+dy2*dy2);
-		// Cell * pos_seg2 = seg2.positive;
-//		if ( seg_2.belongs_to(interface) and first_pass )
-//			return; // very wide angle; deal with it later
-//		// if ( ( pos_seg2->meshes[1]->find(&interface) != pos_seg2->meshes[1]->end() )
-//		// 		 and ( first_pass ) ) return; // very wide angle; deal with it later
 		if ( cll.boundary().cells[1]->size() == 3 ) goto next_neighbour_cell;
 		assert ( cll.boundary().cells[1]->size() == 4 );
 		cos_angle = ( dx*dx2 + dy*dy2 ) / norm / norm2;
@@ -204,7 +194,18 @@ void analyse_angles_right ( Mesh & square, Mesh & interface, Cell & seg )
 
 
 Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
-                       FunctionOnMesh::Function & psi                     )
+                         FunctionOnMesh::Function & psi                     )
+
+// 'ambient' is a mesh of rectangles, or at least in the neighbourhood of
+// the set  psi == 0  it is composed of rectangles only
+	
+// within the mesh 'ambient', look for vertices close to the level set  psi == 0
+// slightly change the position of these vertices to satisfy  psi == 0
+// in some cases, split a rectangle in two triangles
+
+// the search starts on 'bdry' which is the boundary of 'ambient'
+// and stops on 'bdry', too
+// the algorithm will only detect one connected component of the level set
 
 {	FunctionOnMesh::Function & xy = * ( Mesh::environment->coord_func );
 	FunctionOnMesh::Function & x = xy[0], & y = xy[1];
@@ -233,16 +234,16 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		if ( ( opposite_signs ( psi1, psi2 ) ) and
 				 ( psi_x(AA)*delta_x + psi_y(AA)*delta_y >= 0. ) )
 			keep = & seg;                                         }
+	} // just a block for making 'it' local
 	if ( keep == NULL )
 	{	cerr << "cannot start process of building the interface" << endl;
 		cout << "cannot start process of building the interface" << endl;
 		exit (0);                                                          }
-	} // just a block for making 'it' local
 	Cell & first_seg = * keep;
 
 	// below we build a chain of rectangles approximating the cut (interface)
 	while ( keep != NULL )
-	{	Cell * current_sq = ambient.cell_behind ( keep, tag::may_not_exist );
+	{	Cell * current_sq = ambient.cell_behind ( * keep, tag::may_not_exist );
 		if ( current_sq == NULL ) break;
 		assert ( current_sq->boundary().number_of ( tag::cells, tag::of_max_dim ) == 4 );
 		CellIterator it1 = current_sq->boundary().iter_over ( tag::vertices, tag::around );
@@ -402,7 +403,6 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	} // end of 'for i'
 
 	// apply Newton's method only
-	{ // a block for hiding variables
 	for ( short int i = 0; i < 2; i++ )
 	{	CellIterator it = interface.iter_over ( tag::segments, tag::along );
 		it.reset(); assert ( it.in_range() );
@@ -417,73 +417,70 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 			double norm__grad_sq = gx*gx + gy*gy;
 			Px -= val_psi * gx / norm__grad_sq;
 			Py -= val_psi * gy / norm__grad_sq;
-			FunctionOnMesh::prescribe_on (P); x == Px; y == Py;
-		}  // end of for it
-	} // end of 'for i'
-	} // just a block of code for hiding variables
+			FunctionOnMesh::prescribe_on (P); x == Px; y == Py;  }                  }
 	
 	// apply baricenter for the first layer of neighbours
 	set < Cell * > layer;
-	{	// just a block of code for hiding variables
-		CellIterator it = interface.iter_over ( tag::segments, tag::along );
-		it.reset(); assert ( it.in_range() );
-		{ // inner block of code for hiding variables
-		Cell & seg = *it;
+	{	// outer block of code for hiding variables
+	CellIterator it = interface.iter_over ( tag::segments, tag::along );
+	it.reset(); assert ( it.in_range() );
+	{ // intermediate block of code for hiding variables
+	Cell & seg = *it;
+	Cell & P = seg.base().reverse();
+	assert ( P.belongs_to(bdry) );
+	assert ( P.belongs_to(interface) );
+	assert ( P.belongs_to(ambient) );
+	// assert ( P.meshes[1]->find(&bdry) != P.meshes[1]->end() );
+	// assert ( P.meshes[1]->find(&interface) != P.meshes[1]->end() );
+	// assert ( P.meshes[2]->find(&ambient) != P.meshes[2]->end() );
+	{ // inner block of code for hiding variables
+	Cell & sseg = bdry.cell_in_front_of (P);
+	Cell & PP = sseg.tip();
+	assert ( not PP.belongs_to(interface) );
+	// assert ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() );
+	layer.insert (&PP);
+	} // inner block of code for hiding variables
+	CellIterator itt = ambient.iter_over ( tag::cells, tag::above, P,
+																				 tag::of_dim_plus_one, tag::along );
+	for ( itt.reset(); itt.in_range(); itt++ )
+	{	Cell & sseg = *itt;
+		Cell & PP = sseg.base().reverse();
+		if ( not PP.belongs_to(interface) )
+			// if ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() )
+			layer.insert (&PP);                                         }
+	} // intermediate block of code for hiding variables
+	Cell * last_seg;
+	for ( it++; it.in_range(); it++ )
+	{	Cell & seg = *it;
+		last_seg = & seg;
 		Cell & P = seg.base().reverse();
-		assert ( P.belongs_to(bdry) );
-		assert ( P.belongs_to(interface) );
-		assert ( P.belongs_to(ambient) );
-		// assert ( P.meshes[1]->find(&bdry) != P.meshes[1]->end() );
-		// assert ( P.meshes[1]->find(&interface) != P.meshes[1]->end() );
-		// assert ( P.meshes[2]->find(&ambient) != P.meshes[2]->end() );
-		{ // yet another block of code
-		Cell & sseg = bdry.cell_in_front_of (P);
-		Cell & PP = sseg.tip();
-		assert ( not PP.belongs_to(interface) );
-		// assert ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() );
-		layer.insert (&PP);
-		} // yet another block of code
 		CellIterator itt = ambient.iter_over ( tag::cells, tag::above, P,
-	                     tag::of_dim_plus_one, tag::along );
+																					 tag::of_dim_plus_one, tag::around );
 		for ( itt.reset(); itt.in_range(); itt++ )
 		{	Cell & sseg = *itt;
 			Cell & PP = sseg.base().reverse();
 			if ( not PP.belongs_to(interface) )
-			// if ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() )
-				layer.insert (&PP);                                         }
-		} // inner block of code for hiding variables
-		Cell * last_seg;
-		for ( it++; it.in_range(); it++ )
-		{	Cell & seg = *it;
-			last_seg = & seg;
-			Cell & P = seg.base().reverse();
-			CellIterator itt = ambient.iter_over ( tag::cells, tag::above, P,
-			               tag::of_dim_plus_one, tag::around );
-			for ( itt.reset(); itt.in_range(); itt++ )
-			{	Cell & sseg = *itt;
-				Cell & PP = sseg.base().reverse();
-				if ( not PP.belongs_to(interface) )
 				// if ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() )
-					layer.insert (&PP);                                              }   }
-		{ // inner block of code for hiding variables
-		Cell & P = last_seg->tip();
-		{ // yet another block of code
-		Cell & sseg = bdry.cell_in_front_of (P);
-		Cell & PP = sseg.tip();
-		assert ( not PP.belongs_to(interface) );
-		// assert ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() );
-		layer.insert (&PP);
-		} // yet another block of code
-		CellIterator itt = ambient.iter_over ( tag::cells, tag::above, P,
-	                     tag::of_dim_plus_one, tag::along );
-		for ( itt.reset(); itt.in_range(); itt++ )
-		{	Cell & sseg = *itt;
-			Cell & PP = sseg.base().reverse();
-			if ( not PP.belongs_to(interface) )
-			// if ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() )
-				layer.insert (&PP);                                             }
-		} // inner block of code for hiding variables
-	}	// just a block of code for hiding variables
+				layer.insert (&PP);                                              }   }
+	{ // intermediate block of code for hiding variables
+	Cell & P = last_seg->tip();
+	{ // inner block of code for hiding variables
+	Cell & sseg = bdry.cell_in_front_of (P);
+	Cell & PP = sseg.tip();
+	assert ( not PP.belongs_to(interface) );
+	// assert ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() );
+	layer.insert (&PP);
+	} // inner block of code for hiding variables
+	CellIterator itt = ambient.iter_over ( tag::cells, tag::above, P,
+                     tag::of_dim_plus_one, tag::along );
+	for ( itt.reset(); itt.in_range(); itt++ )
+	{	Cell & sseg = *itt;
+		Cell & PP = sseg.base().reverse();
+		if ( not PP.belongs_to(interface) )
+		// if ( PP.meshes[1]->find(&interface) == PP.meshes[1]->end() )
+			layer.insert (&PP);                                             }
+	} // intermediate block of code for hiding variables
+	}	// outer block of code for hiding variables
 	for ( short int i = 0; i < 3; i++ )
 	for ( set<Cell*>::iterator itt = layer.begin(); itt != layer.end(); itt++ )
 	{	Cell & P = * (*itt);
@@ -510,7 +507,7 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 		FunctionOnMesh::prescribe_on (P); x == xx; y == yy;                               }
 
 	// cut wide angles
-	{	// just a block of code for hiding 'it'
+	{	// just a block of code for hiding variables
 	CellIterator it = interface.iter_over ( tag::segments, tag::along );
 	Cell * last_seg;
 	for ( it.reset(); it.in_range(); it++ )
@@ -522,7 +519,7 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 	// como se fosse o primeiro segmento da interface revertida
 	analyse_angles_right ( ambient, interface, seg );
 	analyse_angles_left ( ambient, interface, seg );
-	}	// just a block of code for hiding 'it'
+	}	// just a block of code for hiding variables
 	
 	// apply baricenter for the first layer of neighbours
 	for ( short int i = 0; i < 3; i++ )
@@ -547,10 +544,10 @@ Mesh & build_interface ( Mesh & ambient, Mesh & bdry, set<Cell*> & corners,
 
 void hanging_nodes ( Mesh & square, FunctionOnMesh::Function & psi, short int layers )
 
-// splits square cells in four, near the level set psi == 0
+// splits square cells in four, near the level set  psi == 0
 // 'layers' tells us how many squares we want to be split
 // layers == 0  means only those where psi changes sign will be split
-// layers == 1  means we also add their immediate neighbours
+// layers == 1  means we also split their immediate neighbours
 // layers == 2  means one more layer of neighbours, and so on
 	
 {	set < Cell * > set_of_sq;
@@ -584,7 +581,7 @@ void hanging_nodes ( Mesh & square, FunctionOnMesh::Function & psi, short int la
 			CellIterator itt = sq->boundary().iter_over ( tag::segments, tag::around );
 			for ( itt.reset(); itt.in_range(); itt++ )
 			{	Cell & face = *itt;
-				Cell * neigh = square.cell_in_front_of ( &face, tag::may_not_exist );
+				Cell * neigh = square.cell_in_front_of ( face, tag::may_not_exist );
 				if ( neigh ) set_of_sq_2.insert ( neigh );                             }   }
 		set<Cell*>::iterator it_2;
 		for ( it_2 = set_of_sq_2.begin(); it_2 != set_of_sq_2.end(); it_2++ )
@@ -617,19 +614,20 @@ int main ()
 	auto & BC = Mesh::segment ( B, C, 12 );
 	auto & CD = Mesh::segment ( C, D, 24 );
 	auto & DA = Mesh::segment ( D, A, 12 );
-	auto & bdry = Mesh::join ( list<Mesh*>{&AB,&BC,&CD,&DA} );
+	auto & bdry = Mesh::join ( AB, BC, CD, DA );
+	// auto & bdry = Mesh::join ( list<Mesh*>{&AB,&BC,&CD,&DA} );
 	set < Cell * > corners { &A, &B, &C, &D };
 
 	auto & rect_mesh = Mesh::rectangle ( AB, BC, CD, DA );
 	// rect_mesh.draw_ps ("square.eps");
 
-	double radius = 0.55;
+	double radius = 0.35;
 	FunctionOnMesh::Function psi = 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius );
 
 	// 0.5 * ( ( x*x + (y-0.2)*(y-0.2) ) / radius - radius )  circulo
 
-	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.35*x*x*y*y  triangulos esquisitos
-	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y  angulo muito aberto
+	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.35*x*x*y*y
+	// x*x + (y-0.2)*(y-0.2) - 0.3 + 0.2*x*y - 1.5*x*x*y*y
 	
 	hanging_nodes ( rect_mesh, psi, 1 );
 	hanging_nodes ( rect_mesh, psi, 1 );
@@ -638,7 +636,7 @@ int main ()
 	// (how far from the level set)
 
 	Mesh & cut = build_interface ( rect_mesh, bdry, corners, psi );
-	// deforms the mesh near the level set psi == 0, splits some rectangles in two traingles
+	// deforms the mesh near the level set psi == 0, splits some rectangles in two triangles
 
 	special_draw ( rect_mesh, cut, "square-cut.eps" );
 	// rect_mesh.draw_ps ("square-cut.eps");
