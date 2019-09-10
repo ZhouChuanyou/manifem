@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.h 2019.09.05
+﻿// src/manifem/Mesh.h 2019.09.08
 
 #include <list>
 #include <map>
@@ -16,7 +16,7 @@ namespace ManiFEM
 {
 	class Cell; class Segment; class Mesh; class AnyCell;
 	class CellIterator; class MeshIterator;
-	class Manifold;
+	class Manifold; class ImplicitManifold;
 	class NumericField; class BlockFieldBase; class OneDimField; class BlockField;
 	class ComposedField; class MultiDimField; template <class VT> class PointerVector;
 	class RelationFunc; class RelationFuncField; class RelationFuncConst;
@@ -503,24 +503,17 @@ class ManiFEM::Mesh
 	inline static void build_boundary ( Cell& );
 
 	// 'segment' builds a one-dimensional mesh with two extremities
-	inline static Mesh & segment ( Cell&, Cell&, size_t );
-	inline static Mesh & segment ( Cell&, Cell&, size_t, NumericField& );
-	// defined after class ManiFEM::Manifold
+	static Mesh & segment ( Cell&, Cell&, size_t );  // in global.cpp
 	// 'loop' builds a closed one-dimensional mesh
 	inline static Mesh & loop ( size_t );
 	inline static Mesh & loop ( size_t, NumericField& );
 	// defined after class ManiFEM::Manifold
 
 	// 'rectangle' builds a two-dimensional mesh
-	// arguments are : the four sides, in correct order
-	inline static Mesh & rectangle ( Mesh&, Mesh&, Mesh&, Mesh& );
-	inline static Mesh & rectangle ( Mesh&, Mesh&, Mesh&, Mesh&, NumericField& );
-	inline static Mesh & rectangle ( Mesh&, Mesh&, Mesh&, Mesh&,
-                                   const tag::WithTriangles & );
-	inline static Mesh & rectangle ( Mesh&, Mesh&, Mesh&, Mesh&,
-                                   NumericField&, const tag::WithTriangles & );
-	// defined after class ManiFEM::Manifold
-
+	// arguments are : the four sides, in correct order and correctly oriented
+	static Mesh & rectangle  // defined in global.cpp
+		( Mesh&, Mesh&, Mesh&, Mesh&, const tag::WithTriangles & wt = tag::not_with_triangles );
+	
 	// join several meshes :
 	inline static Mesh & join ( Mesh & a, Mesh & b );
 	inline static Mesh & join ( Mesh & a, Mesh & b, Mesh & c );
@@ -1811,200 +1804,6 @@ template <typename VT> class ManiFEM::PointerVector
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                             //
-//      H       H      H      H      H   H   HHHHHHH   HHH     H        HHHH       HHHH        //
-//      HH     HH      H      HH     H   H   H        H   H    H        H   HH    H    H       //
-//      H H   H H     H H     H H    H   H   H       H     H   H        H     H    H           //
-//      H  H H  H    H   H    H  H   H   H   H       H     H   H        H     H     HHH        //
-//      H   H   H   HHHHHHH   H   H  H   H   HHHHH   H     H   H        H     H        H       //
-//      H       H   H     H   H    H H   H   H       H     H   H        H     H         H      //
-//      H       H  H       H  H     HH   H   H        H   H    H        H   HH    H   HH       //
-//      H       H  H       H  H      H   H   H         HHH     HHHHHHH  HHHH       HHH         //
-//                                                                                             //
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// Manifolds are objects which mimick the idea of a Riemannian manifold.
-// A little bit of theory : a Riemannian manifold is a differentiable manifold
-// endowed with a Riemannian metric. That is, for each point of the manifold
-// an inner product is given on the tangent space to that manifold at that point.
-// This induces a structure of metric space (a distance) on the tangent space and
-// (through geodesics) on the manifold itself.
-
-
-class ManiFEM::Manifold
-
-{	public :
-
-	// 'dim' is the dimension of the manifold
-	// Might be immersed in R^n, with dim <= n. n is the size of the vectors received and returned
-	// by 'project' and by 'rotate_vector_with_90_deg'.
-	short int dim;
-
-	MultiDimField * coord_field;
-	FunctionOnMesh::Function * coord_func;
-
-	// 'inner_prod_pointer' computes the inner product between two vectors belonging to
-	// the space tangent to the manifold at a certain point. Used in 'inner_prod'.
-	double (*inner_prod_pointer) (const std::vector <double> & P, 
-		const std::vector <double> & vec1, const std::vector <double> & vec2 );
-	
-	// 'distance_pointer' computes the distance bewteen two points of the manifold.
-	// Note that this is not necessarily the geodesic distance.
-	// It should probably be the Euclidean distance in the immersion space. Used in 'distance'.
-	double (*distance_pointer) ( const std::vector <double> & P, const std::vector <double> & Q );
-
-	// 'project_pointer' computes, for some point x in the immersion space, e.g. R^n,
-	// a projected point belonging to the manifold. Used in 'project'.
-	// It is assumed that x is not far away from the manifold, so a Newton method should do.
-	std::vector <double> & (*project_pointer) ( const std::vector <double> & x );
-
-	// 'rotate90_pointer' rotates 'vec' positively with 90º in the two-dimensional space
-	// tangent to 'this' manifold at the given 'point' (which means that the tangent space is oriented).
-	// Plus, the resulting vector will have (Riemannian) norm equal to the argument 'norm'.
-	// More precisely, the returned vector will be a norm-one vector times the argument 'norm'.
-	// This is important since 'norm' may be negative, in which case we get a negative 90º rotation.
-	// Used in 'rotate_vector_with_90_deg'.
-	std::vector <double> & (*rotate_90_pointer) ( const std::vector <double> & point, 
-		const std::vector <double> & vec, double desired_norm );
-
-	// constructors
-	
-	inline Manifold ()
-	{	Mesh::environment = this;  }
-	
-	Manifold ( short int d );
-
-	// 'inner_prod' computes the inner product between two vectors belonging to 
-	// the space tangent to the manifold at a certain point.
-	// The user should provide this function through 'inner_prod_pointer'.
-	// This function may be invoked with PointerVectors instead of vector<double>,
-	// based on the conversion operator defined in class PointerVector.
-	// Not very efficient; is there another solution ?
-	inline double inner_prod (const std::vector <double> & P, const std::vector <double> & vec1, const std::vector <double> & vec2 )
-	{	return inner_prod_pointer ( P, vec1, vec2 );  }
-
-	// 'distance' computes the distance bewteen two points of the manifold.
-	// Note that this is not necessarily the geodesic distance.
-	// In some cases it should be the Euclidean distance in the immersion space,
-	// but this depends on the user's intention.
-	// The user should provide this function through 'distance_pointer'.
-	// This function may be invoked with PointerVectors instead of vector<double>,
-	// based on the conversion operator defined in class PointerVector.
-	// Not very efficient; is there another solution ?
-	inline double distance ( const std::vector <double> & P, const std::vector <double> & Q )
-	{	return distance_pointer ( P, Q );  }
-
-	// 'project' computes, for some point x in the immersion space, e.g. R^n,
-	// a projected point belonging to the manifold.
-	// The user should provide this function through 'project_pointer'.
-	// It is assumed that x is not far away from the manifold, so a Newton method should do.
-	// This function may be invoked with PointerVectors instead of vector<double>,
-	// based on the conversion operator defined in class PointerVector.
-	// Not very efficient; is there another solution ?
-	inline std::vector <double> & project ( const std::vector <double> & x )
-	{	return project_pointer (x);  }
-
-	// 'rotate_vector' rotates 'vec' positively with 90º in the two-dimensional space
-	// tangent to 'this' manifold at the given 'point' (which means that the tangent space is oriented).
-	// Plus, the resulting vector will have (Riemannian) norm equal to the argument 'norm'.
-	// More precisely, the returned vector will be a norm-one vector times the argument 'norm'.
-	// This is important since 'norm' may be negative, in which case we get a negative 90º rotation.
-	// The user should provide this function through 'rotate90_pointer'.
-	// This function may be invoked with PointerVectors instead of vector<double>,
-	// based on the conversion operator defined in class PointerVector.
-	// Not very efficient; is there another solution ?
-	inline std::vector <double> & rotate_vector_with_90_deg
-		( const std::vector <double> & point, const std::vector <double> & vec, double norm )
-	{	assert ( dim == 2 );
-		return rotate_90_pointer ( point, vec, norm );  };
-
-	// factory function	
-
-	static Manifold & euclid (short int d );
-		
-	// the following functions are used by the trivial manifold R^d (Euclidean space)
-	static double trivial_inner_prod ( const std::vector <double> & P,
-		const std::vector <double> & vec1, const std::vector <double> & vec2 );
-	static double trivial_distance ( const std::vector <double> & P, const std::vector <double> & Q );
-	static std::vector <double> & trivial_projection (const std::vector <double> & x);
-	static std::vector <double> & trivial_rotate_90 (const std::vector <double> & point,
-		const std::vector <double> & vec, double desired_norm);
-
-	// builds a FunctionOnMesh, with a MultiDimField associated
-	// 's' may be "Lagrange degree one" for instance
-	FunctionOnMesh::Function & coordinate_system ( std::string s );
-	
-}; // end of class ManiFEM::Manifold
-
-
-// In Mesh::segment, the arguments are two positive points.
-// This is not consistent with Cell::segment, where the user
-// must provide a negative point (the base) then a positive point (the tip).
-
-inline Mesh & Mesh::segment ( Cell & a, Cell & b, size_t n ) // static
-// no coordinates to interpolate
-{	if  ( Mesh::environment == NULL )
-	{	NumericField *fake_field = NULL; // dangerous !
-		return Mesh::segment_interpolate_yes_or_no ( a, b, n, false, *fake_field );  }
-	NumericField * field = Mesh::environment->coord_field;
-	return Mesh::segment_interpolate_yes_or_no ( a, b, n, true, *field );             }
-
-inline Mesh & Mesh::segment ( Cell & a, Cell & b, size_t n, NumericField &coord )
-// static
-// with interpolation
-{	return Mesh::segment_interpolate_yes_or_no ( a, b, n, true, coord );  }
-
-inline Mesh & Mesh::loop ( size_t n ) // static
-// no coordinates to interpolate
-{	if  ( Mesh::environment == NULL )
-	{	NumericField *fake_field = NULL; // dangerous !
-		return Mesh::loop_interpolate_yes_or_no ( n, false, *fake_field );  }
-	NumericField * field = Mesh::environment->coord_field;
-	return Mesh::loop_interpolate_yes_or_no ( n, true, *field );             }
-
-inline Mesh & Mesh::loop (size_t n, NumericField &coord ) // static
-// with interpolation
-{	return Mesh::loop_interpolate_yes_or_no ( n, true, coord );  }
-
-inline Mesh & Mesh::rectangle ( Mesh & south, Mesh & east, Mesh & north, Mesh & west )
-// static
-// no coordinates to interpolate; uses quadrilaterals
-{	if  ( Mesh::environment == NULL )
-	{	NumericField *fake_field = NULL; // dangerous !
-		return Mesh::rectangle_interpolate_yes_or_no
-			( south, east, north, west, false, *fake_field, false );  }
-	NumericField * field = Mesh::environment->coord_field;
-	return Mesh::rectangle_interpolate_yes_or_no
-		( south, east, north, west, true, *field, false );             }
-	
-inline Mesh & Mesh::rectangle // static
-	( Mesh & south, Mesh & east, Mesh & north, Mesh & west, NumericField &coord )
-// with interpolation, using quadrilaterals
-{	return Mesh::rectangle_interpolate_yes_or_no
-		( south, east, north, west, true, coord, false );  }
-
-inline Mesh & Mesh::rectangle // static
-	( Mesh & south, Mesh & east, Mesh & north, Mesh & west,
-	  const tag::WithTriangles & t                          )
-// no coordinates to interpolate; uses triangles
-{	if  ( Mesh::environment == NULL )
-	{	NumericField *fake_field = NULL; // dangerous !
-		return Mesh::rectangle_interpolate_yes_or_no
-			( south, east, north, west, false, *fake_field, true );  }
-	NumericField * field = Mesh::environment->coord_field;
-	return Mesh::rectangle_interpolate_yes_or_no
-		( south, east, north, west, true, *field, true );              }
-	
-inline Mesh & Mesh::rectangle // static
-	( Mesh & south, Mesh & east, Mesh & north, Mesh & west,
-	  NumericField &coord, const tag::WithTriangles & t )
-// with interpolation, using triangles
-{	return Mesh::rectangle_interpolate_yes_or_no
-		( south, east, north, west, true, coord, true );  }
-
-	
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -2397,7 +2196,7 @@ class FunctionOnMesh::Unknown
 
 {	public:
 
-	Manifold * manifold;
+	// Manifold * manifold;
 	NumericField * field;
 	FunctionOnMesh::Test * test;
 	
@@ -2407,7 +2206,8 @@ class FunctionOnMesh::Unknown
 	{	size_t d = f.size();
 		type = "unknown";
 		field = & f;
-		manifold = new Manifold (d);  }
+		// manifold = new Manifold (d);
+  }
 
 	inline virtual FunctionOnMesh::baseFunction * deriv
 		( FunctionOnMesh::baseFunction * var );
@@ -3206,6 +3006,219 @@ inline FunctionOnMesh::combinIntegrals &
 {	assert ( this->components.size() == 1 );
 	return this->components[0]->integrate(msh); } 
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                             //
+//      H       H      H      H      H   H   HHHHHHH   HHH     H        HHHH       HHHH        //
+//      HH     HH      H      HH     H   H   H        H   H    H        H   HH    H    H       //
+//      H H   H H     H H     H H    H   H   H       H     H   H        H     H    H           //
+//      H  H H  H    H   H    H  H   H   H   H       H     H   H        H     H     HHH        //
+//      H   H   H   HHHHHHH   H   H  H   H   HHHHH   H     H   H        H     H        H       //
+//      H       H   H     H   H    H H   H   H       H     H   H        H     H         H      //
+//      H       H  H       H  H     HH   H   H        H   H    H        H   HH    H   HH       //
+//      H       H  H       H  H      H   H   H         HHH     HHHHHHH  HHHH       HHH         //
+//                                                                                             //
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// Manifolds are objects which mimick the idea of a Riemannian manifold.
+// A little bit of theory : a Riemannian manifold is a differentiable manifold
+// endowed with a Riemannian metric. That is, for each point of the manifold
+// an inner product is given on the tangent space to that manifold at that point.
+// This induces a structure of metric space (a distance) on the tangent space and
+// (through geodesics) on the manifold itself.
+
+
+class ManiFEM::Manifold
+
+{	public :
+
+	// 'dim' is the dimension of the manifold
+	// Might be immersed in R^n, with dim <= n. n is the size of the vectors received and returned
+	// by 'project' and by 'rotate_vector_with_90_deg'.
+	short int dim;
+
+	MultiDimField * coord_field;
+	FunctionOnMesh::Function * coord_func;
+
+	// 'inner_prod_pointer' computes the inner product between two vectors belonging to
+	// the space tangent to the manifold at a certain point. Used in 'inner_prod'.
+	double (*inner_prod_pointer) ( void * data, const std::vector <double> & P, 
+		const std::vector <double> & vec1, const std::vector <double> & vec2 );
+	
+	// 'distance_pointer' computes the distance bewteen two points of the manifold.
+	// Note that this is not necessarily the geodesic distance.
+	// It should probably be the Euclidean distance in the immersion space. Used in 'distance'.
+	double (*distance_pointer) ( void * data, const std::vector <double> & P, const std::vector <double> & Q );
+
+	// 'project_pointer' computes, for some point x in the immersion space, e.g. R^n,
+	// a projected point belonging to the manifold. Used in 'project'.
+	// It is assumed that x is not far away from the manifold, so a Newton method should do.
+	std::vector <double> & (*project_pointer) ( void * data, const std::vector <double> & x );
+
+	// 'rotate90_pointer' rotates 'vec' positively with 90º in the two-dimensional space
+	// tangent to 'this' manifold at the given 'point'
+	// (which means that the tangent space is oriented).
+	// Plus, the resulting vector will have (Riemannian) norm equal to the argument 'norm'.
+	// More precisely, the returned vector will be a norm-one vector times the argument 'norm'.
+	// This is important since 'norm' may be negative, in which case we get a negative 90º rotation.
+	// Used in 'rotate_vector_with_90_deg'.
+	std::vector <double> & (*rotate_90_pointer) ( void * data, const std::vector <double> & point, 
+		const std::vector <double> & vec, double desired_norm );
+
+	// constructor
+	
+	inline Manifold ()
+	{	Mesh::environment = this;  }
+	
+	inline Manifold ( short int d ) : Manifold ()
+	{	this->dim = d;  }
+
+	// 'inner_prod' computes the inner product between two vectors belonging to 
+	// the space tangent to the manifold at a certain point.
+	// The user should provide this function through 'inner_prod_pointer'.
+	// This function may be invoked with PointerVectors instead of vector<double>,
+	// based on the conversion operator defined in class PointerVector.
+	// Not very efficient; is there another solution ?
+	inline double inner_prod (const std::vector <double> & P,
+	  const std::vector <double> & vec1, const std::vector <double> & vec2 )
+	{	return inner_prod_pointer ( (void*) this, P, vec1, vec2 );  }
+
+	// 'distance' computes the distance bewteen two points of the manifold.
+	// Note that this is not necessarily the geodesic distance.
+	// In some cases it could be the Euclidean distance in the immersion space,
+	// but this depends on the user's intention.
+	// The user should provide this function through 'distance_pointer'.
+	// This function may be invoked with PointerVectors instead of vector<double>,
+	// based on the conversion operator defined in class PointerVector.
+	// Not very efficient; is there another solution ?
+
+	inline double distance ( const std::vector <double> & P, const std::vector <double> & Q )
+	{	return distance_pointer ( (void*) this, P, Q );  }
+
+	// 'project' computes, for some point x in the immersion space, e.g. R^n,
+	// a projected point belonging to the manifold.
+	// The user should provide this function through 'project_pointer'.
+	// It is assumed that x is not far away from the manifold, so a Newton method should do.
+	// This function may be invoked with PointerVectors instead of vector<double>,
+	// based on the conversion operator defined in class PointerVector.
+	// Not very efficient; is there another solution ?
+
+	inline std::vector <double> & project ( const std::vector <double> & x )
+	{	return project_pointer ( (void*) this, x );  }
+
+	// 'rotate_vector' rotates 'vec' positively with 90º in the two-dimensional space
+	// tangent to 'this' manifold at the given 'point'
+	// (which means that the tangent space is oriented).
+	
+	// Plus, the resulting vector will have (Riemannian) norm equal to the argument 'norm'.
+	// More precisely, the returned vector will be a norm-one vector times the argument 'norm'.
+	// This is important since 'norm' may be negative, in which case we get a negative 90º rotation.
+	// The user should provide this function through 'rotate_90_pointer'.
+	// This function may be invoked with PointerVectors instead of vector<double>,
+	// based on the conversion operator defined in class PointerVector.
+	// Not very efficient; is there another solution ?
+
+	inline std::vector <double> & rotate_vector_with_90_deg
+		( const std::vector <double> & point, const std::vector <double> & vec, double norm )
+	{	assert ( dim == 2 );
+		return rotate_90_pointer ( (void*) this, point, vec, norm );  };
+
+	// factory functions
+
+	static Manifold euclid ( short int d );
+	Manifold & implicit ( FunctionOnMesh::Function & psi );
+		
+	inline void interpolate
+	( Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2 )
+	{	MultiDimField & coord = * coord_field;
+		coord.interpolate ( final, cell_1, frac_1, cell_2, frac_2 );
+		PointerVector<double> & cf = coord(final);
+		std::vector<double> cfp = project ( coord(final) );
+		for ( size_t i = 0; i < cfp.size(); i++ ) cf[i] = cfp[i];       }
+	
+	inline void interpolate
+	( Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2,
+	               Cell &cell_3, double frac_3                               )
+	{	MultiDimField & coord = * coord_field;
+		coord.interpolate ( final, cell_1, frac_1, cell_2, frac_2, cell_3, frac_3 );
+		PointerVector<double> & cf = coord(final);
+		std::vector<double> cfp = project ( coord(final) );
+		for ( size_t i = 0; i < cfp.size(); i++ ) cf[i] = cfp[i];                    }
+	
+	inline void interpolate
+	( Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2,
+	               Cell &cell_3, double frac_3, Cell &cell_4, double frac_4 )
+	{	MultiDimField & coord = * coord_field;
+		coord.interpolate ( final, cell_1, frac_1, cell_2, frac_2,
+		                           cell_3, frac_3, cell_4, frac_4 );
+		PointerVector<double> & cf = coord(final);
+		std::vector<double> cfp = project ( coord(final) );
+		for ( size_t i = 0; i < cfp.size(); i++ ) cf[i] = cfp[i];       }
+	
+	// the following functions are used by the trivial manifold R^d (Euclidean space)
+	static double trivial_inner_prod ( void*, const std::vector <double> & P,
+		const std::vector <double> & vec1, const std::vector <double> & vec2 );
+	static double trivial_distance ( void*, const std::vector <double> & P, const std::vector <double> & Q );
+	static std::vector <double> & trivial_projection ( void*, const std::vector <double> & x );
+	static std::vector <double> & trivial_rotate_90 ( void*, const std::vector <double> & point,
+		const std::vector <double> & vec, double desired_norm );
+
+	// the following functions are used by a submanifold defined through an implicit equation
+	// (level set)
+	static double implicit_mani_inner_prod ( void*, const std::vector <double> & P,
+		const std::vector <double> & vec1, const std::vector <double> & vec2 );
+	static double implicit_mani_distance
+		( void*, const std::vector <double> & P, const std::vector <double> & Q );
+	static std::vector <double> & implicit_mani_projection ( void*, const std::vector <double> & x );
+	static std::vector <double> & implicit_mani_rotate_90 ( void*, const std::vector <double> & point,
+		const std::vector <double> & vec, double desired_norm );
+	
+	// builds a FunctionOnMesh, with a MultiDimField associated
+	// 's' may be "Lagrange degree one" for instance
+	FunctionOnMesh::Function & coordinate_system ( std::string s );
+
+}; // end of class ManiFEM::Manifold
+
+
+class ManiFEM::ImplicitManifold : public Manifold
+
+// a manifold defined by an implicit equation
+// it's like a regular manifold plus a level function
+
+{	public :
+	
+	Manifold * outer_space;
+
+	// the projection will be done by means of the Newton method
+	static const short int steps_for_Newton = 4;
+
+	// '*level_function' should be an expression depending on the coordinates in '*outer_space'
+	
+	FunctionOnMesh::Function * level_function;
+	FunctionOnMesh::Function deriv_lev_func;
+
+	// constructor
+
+	ImplicitManifold ( size_t n ) : Manifold(), deriv_lev_func(n)  { }
+	
+}; // end of class ManiFEM::ImplicitManifold
+
+
+inline Mesh & Mesh::loop ( size_t n ) // static
+// no coordinates to interpolate
+{	if  ( Mesh::environment == NULL )
+	{	NumericField *fake_field = NULL; // dangerous !
+		return Mesh::loop_interpolate_yes_or_no ( n, false, *fake_field );  }
+	NumericField * field = Mesh::environment->coord_field;
+	return Mesh::loop_interpolate_yes_or_no ( n, true, *field );             }
+
+inline Mesh & Mesh::loop (size_t n, NumericField &coord ) // static
+// with interpolation
+{	return Mesh::loop_interpolate_yes_or_no ( n, true, coord );  }
+
+	
+
 //////////////////////////////////////////////////////////////////////////////////
 ////////////////        variational problems     /////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -3388,7 +3401,7 @@ inline void FunctionOnMesh::Function::operator== ( double c )
 // the equality operator between a function and a constant number
 // can be used for two different purposes :
 // either for imposing Dirichlet boundary conditions in a variational problem
-// or for defining coordinates on the master element
+// or for defining coordinates of a cell (e.g. a point)
 
 {	if ( VariationalProblem::current_var_pb )
 	{	(*this) == FunctionOnMesh::constant(c);  return;  }

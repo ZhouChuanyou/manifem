@@ -15,6 +15,9 @@ exe: Mesh.o Field.o global.o main.o
 exe-cut: Mesh.o Field.o global.o main-cut.o
 	g++ -o $@ -std=c++17 $^
 
+exe-sphere: Mesh.o Field.o global.o main-sphere.o
+	g++ -o $@ -std=c++17 $^
+
 exe-cartesian: Mesh.o Field.o global.o main-cartesian.o
 	g++ -o $@ -std=c++17 $^
 
@@ -39,6 +42,9 @@ run: exe
 run-cut: exe-cut
 	./exe-cut
 
+run-sphere: exe-sphere
+	./exe-sphere
+
 run-cartesian: exe-cartesian
 	./exe-cartesian
 
@@ -54,4 +60,4 @@ run-1.4: exe-1.4
 run-2.2: exe-2.2
 	./exe-2.2
 
-PHONY: run run-cut run-1.1 run-1.3 run-1.4 run-2.2 clean
+PHONY: run run-cut run-sphere run-cartesian run-1.1 run-1.3 run-1.4 run-2.2 clean

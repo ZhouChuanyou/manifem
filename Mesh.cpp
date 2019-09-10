@@ -133,6 +133,9 @@ Cell & Cell::point ()
 	
 {	return * ( new Cell ( 0 ) );  }
 
+// unlike in Mesh::segment, in Cell::segment we must provide
+// a negative point (first) and a positive one (second)
+
 Cell & Cell::segment ( Cell & a, Cell & b )
 
 {	assert ( ! ( a.is_positive() ) );

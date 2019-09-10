@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.09.04
+// manifem/global.cpp 2019.09.08
 
 #include <list>
 #include <map>
@@ -9,27 +9,43 @@
 #include "Mesh.h"
 
 
-Mesh & Mesh::segment_interpolate_yes_or_no  // static
-	( Cell & a, Cell & b, size_t n, bool interpolate, NumericField &coord )
+// In Mesh::segment, the first two arguments are positive points.
+// This is not consistent with Cell::segment, where the user
+// must provide a negative point (the base) then a positive point (the tip).
+// It is also inconsistent with other factory functions like Mesh::rectangle
+// where we provide faces with orientation compatible with the orientation
+// of the future mesh.
+// However, we think it is easier for the user to build chains of segments like
+//   auto & A = Cell::point(); auto & B = Cell::point();
+//   auto & AB = Mesh::segment ( A, B, 10 );
+// rather than
+//   auto & A = Cell::point(); auto & B = Cell::point();
+//   auto & AB = Mesh::segment ( A.reverse(), B, 10 );
 
-{	assert ( a.is_positive() );
+Mesh & Mesh::segment ( Cell & a, Cell & b, size_t n ) // static
+
+{	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
+	
+	assert ( a.is_positive() );
 	assert ( b.is_positive() );
+	
 	Mesh & malha = * ( new Mesh (1) );
 	malha.hook["first point"] = (void*) &a;
 	malha.hook["last point"] = (void*) &b;
 	Cell * prev_point = &a;
 	for ( size_t i=1; i < n; ++i )
 	{	Cell & p = Cell::point();
-		if (interpolate)
-		{	double frac = double(i)/double(n);
-			coord.interpolate ( p, a, 1.-frac, b, frac );  }
+		double frac = double(i)/double(n);
+		space.interpolate ( p, a, 1.-frac, b, frac );
 		Cell & seg = Cell::segment ( prev_point->reverse(), p );
 		seg.add_to (malha); 
 		prev_point = &p;                                         }
 	Cell & seg = Cell::segment ( prev_point->reverse(), b );
 	seg.add_to (malha);
-	return malha;
-}
+	return malha;                                                         }
+
 
 Mesh & Mesh::loop_interpolate_yes_or_no  // static
 ( size_t n, bool interpolate, NumericField &coord )
@@ -50,11 +66,19 @@ Mesh & Mesh::loop_interpolate_yes_or_no  // static
 	return malha;                                                    }
 
 
-Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
-( Mesh & south, Mesh & east, Mesh & north, Mesh & west,
-  bool interpolate, NumericField &coord, bool with_triangles )
+Mesh & Mesh::rectangle  // static
+( Mesh & south, Mesh & east, Mesh & north, Mesh & west, const tag::WithTriangles & wt )
 
-{ // recover the corners from the sides
+// 'wt' defaults to 'tag::not_with_triangles',
+// which means 'cut_rectangles_in_half' defaults to 'false'
+
+{	bool cut_rectangles_in_half = ( wt == tag::with_triangles );
+
+	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
+
+	// recover the corners from the sides
 	Cell *SE, *NE, *SW, *NW;
 	size_t N_horiz, N_vert;
 	// we get the first and last points of each side using freshly reset iterators
@@ -132,17 +156,16 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 			Cell & C = Cell::point();
 			Cell & ver_south = *it_south;
 			Cell & ver_north = *it_north;
-			if (interpolate)
-			{	double frac_E = double(j) / double(N_horiz),
-					beta = frac_E * (1-frac_E);
-				beta = beta*beta*beta;
-				double sum = alpha + beta,
-					aa = alpha/sum,  bb = beta/sum;
-				coord.interpolate ( C, ver_south, bb*(1-frac_N), ver_east, aa*frac_E,     
-				                       ver_north, bb*frac_N,     ver_west, aa*(1-frac_E));  }
+			double frac_E = double(j) / double(N_horiz),
+				beta = frac_E * (1-frac_E);
+			beta = beta*beta*beta;
+			double sum = alpha + beta,
+				aa = alpha/sum,  bb = beta/sum;
+			space.interpolate ( C, ver_south, bb*(1-frac_N), ver_east, aa*frac_E,     
+			                    ver_north, bb*frac_N,     ver_west, aa*(1-frac_E));
 			Cell & s2 = Cell::segment ( B.reverse(), C );
 			Cell & s3 = Cell::segment ( C.reverse(), *D_p );
-			if ( with_triangles )
+			if ( cut_rectangles_in_half )
 			{	Cell & BD = Cell::segment ( B.reverse(), *D_p );
 				Cell & T1 = Cell::triangle ( BD.reverse(), s2, s3 );
 				Cell & T2 = Cell::triangle ( BD, *s4_p, *s1_p );
@@ -164,7 +187,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 		Cell & s2 = east.cell_in_front_of (B);
 		Cell & C = s2.tip();
 		Cell & s3 = Cell::segment ( C.reverse(), *D_p );
-		if ( with_triangles )
+		if ( cut_rectangles_in_half )
 		{	Cell & BD = Cell::segment ( B.reverse(), *D_p );
 			Cell & T1 = Cell::triangle ( BD.reverse(), s2, s3 );
 			Cell & T2 = Cell::triangle ( BD, *s4_p, *s1_p );
@@ -187,7 +210,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 		Cell & s3 = north.cell_behind ( *D_p );
 		Cell & C = s3.base().reverse();
 		Cell & s2 = Cell::segment ( B.reverse(), C );
-		if ( with_triangles )
+		if ( cut_rectangles_in_half )
 		{	Cell & BD = Cell::segment ( B.reverse(), *D_p );
 			Cell & T1 = Cell::triangle ( BD.reverse(), s2, s3 );
 			Cell & T2 = Cell::triangle ( BD, *s4_p, *s1_p );
@@ -205,7 +228,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 	Cell & C = s2.tip();
 	assert ( &C == NE );
 	Cell & s3 = north.cell_behind ( *D_p );
-	if ( with_triangles )
+	if ( cut_rectangles_in_half )
 	{	Cell & BD = Cell::segment ( B.reverse(), *D_p );
 		Cell & T1 = Cell::triangle ( BD.reverse(), s2, s3 );
 		Cell & T2 = Cell::triangle ( BD, *s4_p, *s1_p );
@@ -216,7 +239,7 @@ Mesh & Mesh::rectangle_interpolate_yes_or_no  // static
 		Q.add_to (rectangle);                                 }
 	return rectangle;
 
-} // end of Mesh::rectangle_interpolate_yes_or_no
+} // end of Mesh::rectangle
 
 
 Mesh & Mesh::join ( const std::list<Mesh*> & l ) // static
@@ -676,13 +699,15 @@ Cell & Cell::split ( const tag::InTwoSegments &, const tag::CellIsSegment & )
 // after split, 'this' will be the first half of the segment
 // return the second half
 
-{	NumericField * coord = Mesh::environment->coord_field;
-
+{	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
+	
 	Cell & A = this->base().reverse();
 	Cell & B = this->tip();
 	
 	Cell & middle = Cell::point();
-	coord->interpolate ( middle, A, 0.5, B, 0.5 );
+	space.interpolate ( middle, A, 0.5, B, 0.5 );
 	B. cut_from_bdry_of ( *this );
 	middle.glue_on_bdry_of ( *this );
 	Cell & AB2 = Cell::segment ( middle.reverse(), B );
@@ -742,7 +767,9 @@ Cell & Cell::split ( const tag::InTwoTriangles &, const tag::At &,
 void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
   Cell & AB, Cell * & AB1_p, Cell * & AB2_p, Cell & center, double epsi )
 
-{	NumericField * coord = Mesh::environment->coord_field;
+{	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
 	
 	// there are three cases
 	// 1: the neighbour square is the same size (or even larger)
@@ -774,7 +801,7 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 		
 	case create_tri : // we need to create a (degenerated) triangle
 	{	Cell & middle_of_AB = Cell::point();
-		coord->interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
+		space.interpolate ( middle_of_AB, A, 0.5-epsi, B, 0.5-epsi, center, 2.*epsi );
 		Cell & AB1 = Cell::segment ( A.reverse(), middle_of_AB );
 		Cell & AB2 = Cell::segment ( middle_of_AB.reverse(), B );
 		Cell & AB_tri = Cell::triangle ( AB, AB2.reverse(), AB1.reverse() );
@@ -792,7 +819,7 @@ void hidden::for_hanging_nodes_2d ( Mesh & ambient_mesh, Cell & square,
 		Cell & seg1 = cll_p->boundary().cell_in_front_of (A);
 		Cell & ver = seg1.tip();
 		Cell & seg2 = cll_p->boundary().cell_in_front_of (ver);
-		coord->interpolate ( ver, A, 0.5, B, 0.5 ); // useless if epsi == 0.
+		space.interpolate ( ver, A, 0.5, B, 0.5 ); // useless if epsi == 0.
 		// when *cll_p is discarded, we do not want seg1 and seg2 to be discarded
 		// so we detach them from *cll_p
 		seg1.cut_from_bdry_of ( *cll_p );
@@ -829,7 +856,9 @@ void Cell::split ( const tag::InFourRectangles &, const tag::CellIsRectangle &,
 // epsi defaults to 0.; represents a slight deformation which turns
 // the degenerated triangles visible (less degenerate)
 
-{	NumericField * coord = Mesh::environment->coord_field;
+{	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
 
 	CellIterator it = this->boundary().iter_over ( tag::segments, tag::around );
 	it.reset(); assert ( it.in_range() );
@@ -853,7 +882,7 @@ void Cell::split ( const tag::InFourRectangles &, const tag::CellIsRectangle &,
 	// 'this' square has now empty boundary, stays wide open
 
 	Cell & center = Cell::point();
-	coord->interpolate ( center, A, 0.25, B, 0.25, C, 0.25, D, 0.25 );
+	space.interpolate ( center, A, 0.25, B, 0.25, C, 0.25, D, 0.25 );
 
 	Cell * AB1_p, * AB2_p;
 	hidden::for_hanging_nodes_2d ( ambient_mesh, *this, AB, AB1_p, AB2_p, center, epsi );

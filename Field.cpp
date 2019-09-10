@@ -1,4 +1,4 @@
-// src/manifem/Field.cpp 2019.07.09
+// src/manifem/Field.cpp 2019.09.08
 
 #include <cmath>
 #include <list>
@@ -477,18 +477,18 @@ void MultiDimField::interpolate
 		cell_3, frac_3, cell_4, frac_4 );                                    }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                            //
-//        H       H     H     H    H   H   HHHHHHH   HHH     H        HHHH       HHHH         //
-//        HH     HH     H     HH   H   H   H        H   H    H        H   HH    H    H        //
-//        H H   H H    H H    HH   H   H   H       H     H   H        H     H    H            //
-//        H  H H  H    H H    H H  H   H   H       H     H   H        H     H     HHH         //
-//        H   H   H   HHHHH   H H  H   H   HHHHH   H     H   H        H     H        H        //
-//        H       H   H   H   H  H H   H   H       H     H   H        H     H         H       //
-//        H       H  H     H  H   HH   H   H        H   H    H        H   HH    H   HH        //
-//        H       H  H     H  H    H   H   H         HHH     HHHHHHH  HHHH       HHH          //
-//                                                                                            //
-////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                         //
+//       H       H     H     H    H   H   HHHHHHH   HHH     H       HHHH       HHHH        //
+//       HH     HH     H     HH   H   H   H        H   H    H       H   HH    H    H       //
+//       H H   H H    H H    HH   H   H   H       H     H   H       H     H    H           //
+//       H  H H  H    H H    H H  H   H   H       H     H   H       H     H     HHH        //
+//       H   H   H   HHHHH   H H  H   H   HHHHH   H     H   H       H     H        H       //
+//       H       H   H   H   H  H H   H   H       H     H   H       H     H         H      //
+//       H       H  H     H  H   HH   H   H        H   H    H       H   HH    H   HH       //
+//       H       H  H     H  H    H   H   H         HHH     HHHHHH  HHHH       HHH         //
+//                                                                                         //
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Manifolds are objects which mimick the idea of a Riemannian manifold.
@@ -499,31 +499,54 @@ void MultiDimField::interpolate
 
 
 ///////////////////////////////////////////////////////////////
-////////////////      constructors      ///////////////////////
-///////////////////////////////////////////////////////////////
-
-// do not use directly, use pseudo-constructors instead : Manifold::euclid
-
-Manifold::Manifold ( short int d ) : Manifold ()
-// used for trivial manifolds (Euclidean space of dimension d)
-{	this->dim = d;
-	this->inner_prod_pointer = Manifold::trivial_inner_prod;
-	this->distance_pointer = Manifold::trivial_distance;
-	this->project_pointer = Manifold::trivial_projection;
-	this->rotate_90_pointer = Manifold::trivial_rotate_90;      }
-
-
-///////////////////////////////////////////////////////////////
-///////////////    pseudo-constructors    /////////////////////
+///////////////     factory functions     /////////////////////
 ///////////////////////////////////////////////////////////////
 
 
-Manifold & Manifold::euclid (short int d )
+Manifold Manifold::euclid ( short int d )  // static
+
 // trivial manifold (Euclidean space of dimension d)
-{	return * ( new Manifold (d) );  }
 
-double Manifold::trivial_inner_prod
-( const std::vector <double> & P, const std::vector <double> & vec1, const std::vector <double> & vec2 )
+{	Manifold res (d);
+	res.dim = d;
+	res.inner_prod_pointer = Manifold::trivial_inner_prod;
+	res.distance_pointer = Manifold::trivial_distance;
+	res.project_pointer = Manifold::trivial_projection;
+	res.rotate_90_pointer = Manifold::trivial_rotate_90;
+	return res;                                             }
+
+
+Manifold & Manifold::implicit ( FunctionOnMesh::Function & psi )
+
+// a manifold defined implicitly by the equation psi == 0
+// (level set)
+
+{	size_t n = this->coord_field->size(),
+	       m = psi.components.size();
+	assert ( m == 1 );
+	ImplicitManifold * that = new ImplicitManifold ( n*m );
+	that->outer_space = this;
+	that->coord_field = this->coord_field;
+	that->coord_func = this->coord_func;
+	that->level_function = & psi;
+	// deriv_lev_func is initialized as a vector field of dimension n
+	// in the constructor of ImplicitManifold
+	for ( size_t j = 0; j < m; j++ )
+	for ( size_t i = 0; i < n; i++ )
+		that->deriv_lev_func.components[i+j*n] =
+			psi.components[j]->deriv(this->coord_func->components[i]);
+	that->inner_prod_pointer = Manifold::implicit_mani_inner_prod;
+	that->distance_pointer = Manifold::implicit_mani_distance;
+	that->project_pointer = Manifold::implicit_mani_projection;
+	that->rotate_90_pointer = Manifold::implicit_mani_rotate_90;
+	Manifold & th = * ( (Manifold*) that );
+	return th;                                                    }
+
+
+double Manifold::trivial_inner_prod  // static
+
+( void * that, const std::vector <double> & P, const std::vector <double> & vec1,
+                                  const std::vector <double> & vec2 )
 {	assert ( vec1.size() == vec2.size() );
 	assert ( P.size() == vec1.size() );
 	double res = 0.0;
@@ -532,7 +555,10 @@ double Manifold::trivial_inner_prod
 	for ( ; it1 != it1_e; it1++, it2++ ) res += (*it1) * (*it2);
 	return res;                                                    }
 	
-double Manifold::trivial_distance ( const std::vector <double> & P, const std::vector <double> & Q )
+
+double Manifold::trivial_distance  // static
+( void * that, const std::vector <double> & P, const std::vector <double> & Q )
+
 {	assert ( P.size() == Q.size() );
 	double res = 0.0;
 	std::vector<double>::const_iterator it1 = P.begin(),
@@ -542,12 +568,87 @@ double Manifold::trivial_distance ( const std::vector <double> & P, const std::v
 		res += dif * dif;           }
 	return sqrt(res);                                     }
 
-std::vector <double> & Manifold::trivial_projection (const std::vector <double> & x)
-{	std::vector <double> *y = new std::vector <double> (x);
-	return *y;  }
 
-std::vector <double> & Manifold::trivial_rotate_90
-	( const std::vector <double> & point, const std::vector <double> & vec, double desired_norm )
+std::vector <double> & Manifold::trivial_projection  // static
+( void * that, const std::vector <double> & x )
+
+{	std::vector <double> *y = new std::vector <double> (x);
+	return *y;                                                  }
+
+
+std::vector <double> & Manifold::trivial_rotate_90  // static
+( void * that, const std::vector <double> & point, const std::vector <double> & vec, double desired_norm )
+
+{	assert ( point.size() == 2 );
+	assert ( vec.size() == 2 );
+	std::vector <double> * res = new std::vector<double> (2);
+	(*res)[0] = vec[1];  (*res)[1] = -vec[0];
+	double norm = 0.0;
+	std::vector<double>::iterator it = res->begin(), it_e = res->end();
+	for ( ; it != it_e; it++ ) norm += (*it) * (*it);
+	norm = sqrt ( norm );
+	double frac = desired_norm / norm;
+	it = res->begin(), it_e = res->end();
+	for ( ; it != it_e; it++ ) *it *= frac;
+	return * res;                                                       }
+
+
+double Manifold::implicit_mani_inner_prod  // static
+( void * that, const std::vector <double> & P, const std::vector <double> & vec1,
+                                  const std::vector <double> & vec2 )
+// copied from trivial
+{	assert ( vec1.size() == vec2.size() );
+	assert ( P.size() == vec1.size() );
+	double res = 0.0;
+	std::vector<double>::const_iterator it1 = vec1.begin(),
+		it1_e = vec1.end(), it2 = vec2.begin();
+	for ( ; it1 != it1_e; it1++, it2++ ) res += (*it1) * (*it2);
+	return res;                                                    }
+	
+
+double Manifold::implicit_mani_distance  // static
+( void * that, const std::vector <double> & P, const std::vector <double> & Q )
+// copied from trivial
+{	assert ( P.size() == Q.size() );
+	double res = 0.0;
+	std::vector<double>::const_iterator it1 = P.begin(),
+		it1_e = P.end(), it2 = Q.begin();
+	for ( ; it1 != it1_e; it1++, it2++ )
+	{	double dif = *it2 - *it1;
+		res += dif * dif;           }
+	return sqrt(res);                                     }
+
+
+std::vector <double> & Manifold::implicit_mani_projection  // static
+( void * that, const std::vector <double> & x )
+
+{	ImplicitManifold & manif = * ( (ImplicitManifold*) that );
+	std::vector <double> & y = * ( new std::vector <double> (x) );
+	// we project using Newton's method for undetermined systems
+	FunctionOnMesh::Function & psi = * ( manif.level_function );
+	assert ( psi.components.size() == 1 );
+	size_t n = manif.coord_field->size();
+	assert ( n == x.size() );
+	FunctionOnMesh::Function & coord = * ( manif.coord_func );
+	Cell & P = Cell::point();
+	for ( short int k = 0; k < ImplicitManifold::steps_for_Newton; k++ )
+	{	for ( size_t i = 0; i < n; i++ ) coord[i] == y[i];  // at P
+		double psi_at_P = psi(P);
+		std::vector <double> gradpsi_at_P(n);
+		for ( size_t i = 0; i < n; i++ )
+			gradpsi_at_P[i] = manif.deriv_lev_func[i](P);
+		double norm2 = 0.;
+		for ( size_t i = 0; i < n; i++ )
+			norm2 += gradpsi_at_P[i]*gradpsi_at_P[i];
+		double coef = psi(P) / norm2;
+		for ( size_t i = 0; i < n; i++ )
+			y[i] -= coef * gradpsi_at_P[i];                        }
+	return y;                                                                   }
+
+
+std::vector <double> & Manifold::implicit_mani_rotate_90  // static
+( void * data, const std::vector <double> & point, const std::vector <double> & vec, double desired_norm )
+// copied from trivial
 {	assert ( point.size() == 2 );
 	assert ( vec.size() == 2 );
 	std::vector <double> * res = new std::vector<double> (2);
@@ -576,5 +677,5 @@ FunctionOnMesh::Function & Manifold::coordinate_system ( std::string s )
 	Cell::init_cell[0]->push_back ( & Mesh::prescribe_on );
 	Cell::data_for_init[0]->push_back ( NULL );
 	// what if we call this more than once ? damn ...
-	return fu;                                                                                  }
+	return fu;                                                                                }
 

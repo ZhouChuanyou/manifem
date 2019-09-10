@@ -1,4 +1,4 @@
-// src/manifem/Util.h 2019.08.22
+// src/manifem/Util.h 2019.09.08
 
 #ifndef util_h
 #define util_h
@@ -44,7 +44,7 @@ namespace ManiFEM { namespace tag {
 		struct MayNotExist {}; static const MayNotExist may_not_exist;
 		struct SurelyExists {}; static const SurelyExists surely_exists;
 		struct OnTheFly {}; static const OnTheFly on_the_fly;
-		struct WithTriangles {}; static const WithTriangles with_triangles;
+		enum WithTriangles { with_triangles, not_with_triangles };
 		struct CellIsSegment {}; static const CellIsSegment cell_is_segment;
 		struct CellIsRectangle {}; static const CellIsRectangle cell_is_rectangle;
 		struct At {}; static const At at;
