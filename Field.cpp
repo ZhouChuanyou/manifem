@@ -1,4 +1,4 @@
-// src/manifem/Field.cpp 2019.09.08
+// src/manifem/Field.cpp 2019.09.11
 
 #include <cmath>
 #include <list>
@@ -43,7 +43,8 @@ void MultiDimField::hidden_build ( BlockFieldBase *b )
 	this->join_multi_this = MultiDimField::join_multi_wrappedblock;
 	this->interpolate2 = MultiDimField::interpolate_block_2;
 	this->interpolate3 = MultiDimField::interpolate_block_3;
-	this->interpolate4 = MultiDimField::interpolate_block_4;                 }
+	this->interpolate4 = MultiDimField::interpolate_block_4;
+	this->interpolate6 = MultiDimField::interpolate_block_6;                 }
 
 void MultiDimField::hidden_build ( ComposedField *b )
 {	this->base = (void*) b;
@@ -57,7 +58,8 @@ void MultiDimField::hidden_build ( ComposedField *b )
 	this->join_multi_this = MultiDimField::join_multi_wrappedcomposed;
 	this->interpolate2 = MultiDimField::interpolate_composed_2;
 	this->interpolate3 = MultiDimField::interpolate_composed_3;
-	this->interpolate4 = MultiDimField::interpolate_composed_4;                }
+	this->interpolate4 = MultiDimField::interpolate_composed_4;
+	this->interpolate6 = MultiDimField::interpolate_composed_6;                }
 
 
 ///////////////////////////////////////////////////////////////
@@ -354,6 +356,9 @@ void NumericField::interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, dou
 void NumericField::interpolate
 	( Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double )
 {	assert (0);  }
+void NumericField::interpolate
+	( Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double, Cell&, double, Cell&, double )
+{	assert (0);  }
 
 
 void BlockFieldBase::interpolate
@@ -390,6 +395,25 @@ void BlockFieldBase::interpolate ( Cell &final, Cell &cell_1, double frac_1,
 			+ frac_2 * cell_2.real_heap[i]
 			+ frac_3 * cell_3.real_heap[i]
 			+ frac_4 * cell_4.real_heap[i];                                     }
+
+void BlockFieldBase::interpolate ( Cell &final, Cell &cell_1, double frac_1,
+	Cell &cell_2, double frac_2, Cell &cell_3, double frac_3,
+  Cell &cell_4, double frac_4, Cell &cell_5, double frac_5, Cell &cell_6, double frac_6 )
+{	assert ( (frac_1 >= 0.) && (frac_1 <= 1.) );
+	assert ( (frac_2 >= 0.) && (frac_2 <= 1.) );
+	assert ( (frac_3 >= 0.) && (frac_3 <= 1.) );
+	assert ( (frac_4 >= 0.) && (frac_4 <= 1.) );
+	assert ( (frac_5 >= 0.) && (frac_5 <= 1.) );
+	assert ( (frac_6 >= 0.) && (frac_6 <= 1.) );
+	// assert (frac_1 + frac_2 + frac_3 + frac_4 + frac_5 + frac_6 == 1.);
+	// does not work for floating point numbers
+	for ( size_t i = this->index_min; i < this->index_max_plus_one; i++ )
+		final.real_heap[i] = frac_1 * cell_1.real_heap[i]
+			+ frac_2 * cell_2.real_heap[i]
+			+ frac_3 * cell_3.real_heap[i]
+			+ frac_4 * cell_4.real_heap[i]
+			+ frac_5 * cell_5.real_heap[i]
+			+ frac_6 * cell_6.real_heap[i];                                     }
 
 
 void ComposedField::interpolate
@@ -459,6 +483,38 @@ void ComposedField::interpolate
 			+ frac_3 * cell_3.real_heap[i]
 			+ frac_4 * cell_4.real_heap[i];                   }   }
 
+void ComposedField::interpolate ( Cell &final, Cell &cell_1, double frac_1,
+	Cell &cell_2, double frac_2, Cell &cell_3, double frac_3,
+  Cell &cell_4, double frac_4, Cell &cell_5, double frac_5, Cell &cell_6, double frac_6 )
+{	assert ( (frac_1 >= 0.) && (frac_1 <= 1.) );
+	assert ( (frac_2 >= 0.) && (frac_2 <= 1.) );
+	assert ( (frac_3 >= 0.) && (frac_3 <= 1.) );
+	assert ( (frac_4 >= 0.) && (frac_4 <= 1.) );
+	assert ( (frac_5 >= 0.) && (frac_5 <= 1.) );
+	assert ( (frac_6 >= 0.) && (frac_6 <= 1.) );
+	// assert (frac_1 + frac_2 + frac_3 + frac_4 + frac_5 + frac_6 == 1.);
+	// does not work for floating point numbers
+	std::vector <BlockFieldBase*> :: iterator
+		it = this->fields.begin(),
+		e = this->fields.end();
+	for ( ; it != e; it++ )
+	{	BlockFieldBase &f = **it;
+		assert (f.size() == 1);
+		assert (final.dim == f.lives_on_cells_of_dim);
+		assert (cell_1.dim == f.lives_on_cells_of_dim);
+		assert (cell_2.dim == f.lives_on_cells_of_dim);
+		assert (cell_3.dim == f.lives_on_cells_of_dim);
+		assert (cell_4.dim == f.lives_on_cells_of_dim);
+		assert (cell_5.dim == f.lives_on_cells_of_dim);
+		assert (cell_6.dim == f.lives_on_cells_of_dim);
+		size_t i = f.index_min;
+		final.real_heap[i] = frac_1 * cell_1.real_heap[i]
+			+ frac_2 * cell_2.real_heap[i]
+			+ frac_3 * cell_3.real_heap[i]
+			+ frac_4 * cell_4.real_heap[i]
+			+ frac_5 * cell_5.real_heap[i]
+			+ frac_6 * cell_6.real_heap[i];                   }   }
+
 
 void MultiDimField::interpolate
 	( Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2 )
@@ -471,10 +527,16 @@ void MultiDimField::interpolate
 		( this, final, cell_1, frac_1, cell_2, frac_2, cell_3, frac_3 );  }
 
 void MultiDimField::interpolate
-(	Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2,
-	Cell &cell_3, double frac_3, Cell &cell_4, double frac_4                )
-{	MultiDimField::interpolate4 ( this, final, cell_1, frac_1, cell_2, frac_2,
-		cell_3, frac_3, cell_4, frac_4 );                                    }
+(	Cell &final, Cell &cell_1, double frac_1, Cell &cell_2,
+	double frac_2, Cell &cell_3, double frac_3, Cell &cell_4, double frac_4 )
+{	MultiDimField::interpolate4
+		( this, final, cell_1, frac_1, cell_2, frac_2, cell_3, frac_3, cell_4, frac_4 );  }
+
+void MultiDimField::interpolate ( Cell &final, Cell &cell_1, double frac_1,
+	Cell &cell_2, double frac_2, Cell &cell_3, double frac_3,
+  Cell &cell_4, double frac_4, Cell &cell_5, double frac_5, Cell &cell_6, double frac_6 )
+{	MultiDimField::interpolate6 ( this, final, cell_1, frac_1, cell_2, frac_2,
+		cell_3, frac_3, cell_4, frac_4, cell_5, frac_5, cell_6, frac_6 );                      }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////

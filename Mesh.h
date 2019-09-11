@@ -1,4 +1,4 @@
-﻿// src/manifem/Mesh.h 2019.09.08
+﻿// src/manifem/Mesh.h 2019.09.11
 
 #include <list>
 #include <map>
@@ -504,15 +504,17 @@ class ManiFEM::Mesh
 
 	// 'segment' builds a one-dimensional mesh with two extremities
 	static Mesh & segment ( Cell&, Cell&, size_t );  // in global.cpp
-	// 'loop' builds a closed one-dimensional mesh
-	inline static Mesh & loop ( size_t );
-	inline static Mesh & loop ( size_t, NumericField& );
-	// defined after class ManiFEM::Manifold
 
 	// 'rectangle' builds a two-dimensional mesh
 	// arguments are : the four sides, in correct order and correctly oriented
+	// the last argument chooses between rectangular cells and triangular ones
+	// (triangles are obtained by cutting a rectangle in halves)
 	static Mesh & rectangle  // defined in global.cpp
 		( Mesh&, Mesh&, Mesh&, Mesh&, const tag::WithTriangles & wt = tag::not_with_triangles );
+	
+	// 'triangle' builds a two-dimensional mesh
+	// arguments are : the three sides, in correct order and correctly oriented
+	static Mesh & triangle ( Mesh&, Mesh&, Mesh& );  // defined in global.cpp
 	
 	// join several meshes :
 	inline static Mesh & join ( Mesh & a, Mesh & b );
@@ -561,13 +563,6 @@ class ManiFEM::Mesh
 	// here is the core linking between cells and meshes
 	// do not use directly; this is called from add_to and remove_from
 	void deep_connections ( Cell&, void (*action) ( Cell&, Mesh&, short int, short int ) );
-
-	static Mesh & segment_interpolate_yes_or_no ( Cell & a, Cell & b, size_t n,
-		bool, NumericField& );
-	static Mesh & loop_interpolate_yes_or_no ( size_t n, bool, NumericField& );
-	static Mesh & rectangle_interpolate_yes_or_no
-		( Mesh & seg1, Mesh & seg2, Mesh & seg3, Mesh & seg4,
-			bool interpolate, NumericField & coords, bool with_triangles );
 
 	static Mesh & cartesian_product ( Mesh & mesh1, Mesh & mesh2 );
 
@@ -1394,7 +1389,10 @@ class ManiFEM::NumericField
 	// interpolation on the Mesh
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double );
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double );
-	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double, Cell&, double, Cell&, double );
   
 }; // end of class ManiFEM::NumericField
 
@@ -1440,7 +1438,10 @@ class ManiFEM::BlockFieldBase : public NumericField
 	// interpolation on the Mesh
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double );
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double );
-	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double, Cell&, double, Cell&, double );
 
 }; // end of class ManiFEM::BlockFieldBase
 
@@ -1561,7 +1562,10 @@ class ManiFEM::ComposedField : public NumericField
 	// interpolation on the Mesh
 	virtual void interpolate (Cell&, Cell&, double, Cell&, double);
 	virtual void interpolate (Cell&, Cell&, double, Cell&, double, Cell&, double);
-	virtual void interpolate (Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double);
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double, Cell&, double, Cell&, double );
 
 }; // end of class ManiFEM::ComposedField
 
@@ -1596,6 +1600,8 @@ class ManiFEM::MultiDimField : public NumericField
 	void (*interpolate3) ( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double );
 	void (*interpolate4)
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	void (*interpolate6) ( MultiDimField*, Cell&, Cell&, double, Cell&, double,
+     Cell&, double, Cell&, double, Cell&, double, Cell&, double );
 
 	// (we are still in class MultiDimField) constructors :
 
@@ -1716,19 +1722,28 @@ class ManiFEM::MultiDimField : public NumericField
 
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double );
 	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double );
-	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double );
+	virtual void interpolate ( Cell&, Cell&, double, Cell&, double, Cell&, double,
+                                    Cell&, double, Cell&, double, Cell&, double );
 	static inline void interpolate_block_2
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double );
 	static inline void interpolate_block_3
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double );
 	static inline void interpolate_block_4
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	static inline void interpolate_block_6 ( MultiDimField*, Cell&,
+		Cell&, double, Cell&, double, Cell&, double,
+	  Cell&, double, Cell&, double, Cell&, double );
 	static inline void interpolate_composed_2
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double );
 	static inline void interpolate_composed_3
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double );
 	static inline void interpolate_composed_4
 		( MultiDimField*, Cell&, Cell&, double, Cell&, double, Cell&, double, Cell&, double );
+	static inline void interpolate_composed_6 ( MultiDimField*, Cell&,
+		Cell&, double, Cell&, double, Cell&, double,
+	  Cell&, double, Cell&, double, Cell&, double );
 
 }; // end of class MultiDimField
 
@@ -1751,6 +1766,14 @@ void inline MultiDimField::interpolate_block_4
 	b->interpolate
 		( final, cell_1, frac_1, cell_2, frac_2, cell_3, frac_3, cell_4, frac_4 );  }
 	
+void inline MultiDimField::interpolate_block_6
+(	MultiDimField *that, Cell & final, Cell &cell_1, double frac_1, Cell & cell_2,
+	double frac_2, Cell & cell_3, double frac_3, Cell & cell_4, double frac_4,
+	Cell & cell_5, double frac_5, Cell & cell_6, double frac_6                   )
+{	BlockFieldBase *b = (BlockFieldBase*) that->base;
+	b->interpolate ( final, cell_1, frac_1, cell_2, frac_2,
+		cell_3, frac_3, cell_4, frac_4, cell_5, frac_5, cell_6, frac_6 );  }
+	
 void inline MultiDimField::interpolate_composed_2
 (	MultiDimField *that, Cell & final, Cell & cell_1, double frac_1,
 	Cell & cell_2, double frac_2                                     )
@@ -1769,6 +1792,15 @@ void inline MultiDimField::interpolate_composed_4
 {	ComposedField *b = (ComposedField*) that->base;
 	b->interpolate
 		( final, cell_1, frac_1, cell_2, frac_2, cell_3, frac_3, cell_4, frac_4 );  }
+
+void inline MultiDimField::interpolate_composed_6
+(	MultiDimField *that, Cell & final, Cell &cell_1, double frac_1, Cell & cell_2,
+	double frac_2, Cell & cell_3, double frac_3, Cell & cell_4, double frac_4,
+	Cell & cell_5, double frac_5, Cell & cell_6, double frac_6                   )
+{	ComposedField *b = (ComposedField*) that->base;
+	b->interpolate ( final, cell_1, frac_1, cell_2, frac_2,
+		cell_3, frac_3, cell_4, frac_4, cell_5, frac_5, cell_6, frac_6 );  }
+	
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -3156,6 +3188,18 @@ class ManiFEM::Manifold
 		std::vector<double> cfp = project ( coord(final) );
 		for ( size_t i = 0; i < cfp.size(); i++ ) cf[i] = cfp[i];       }
 	
+	inline void interpolate
+	( Cell &final, Cell &cell_1, double frac_1, Cell &cell_2, double frac_2,
+	               Cell &cell_3, double frac_3, Cell &cell_4, double frac_4,
+	               Cell &cell_5, double frac_5, Cell &cell_6, double frac_6 )
+	{	MultiDimField & coord = * coord_field;
+		coord.interpolate ( final, cell_1, frac_1, cell_2, frac_2,
+		                           cell_3, frac_3, cell_4, frac_4,
+		                           cell_5, frac_5, cell_6, frac_6 );
+		PointerVector<double> & cf = coord(final);
+		std::vector<double> cfp = project ( coord(final) );
+		for ( size_t i = 0; i < cfp.size(); i++ ) cf[i] = cfp[i];       }
+	
 	// the following functions are used by the trivial manifold R^d (Euclidean space)
 	static double trivial_inner_prod ( void*, const std::vector <double> & P,
 		const std::vector <double> & vec1, const std::vector <double> & vec2 );
@@ -3205,19 +3249,6 @@ class ManiFEM::ImplicitManifold : public Manifold
 }; // end of class ManiFEM::ImplicitManifold
 
 
-inline Mesh & Mesh::loop ( size_t n ) // static
-// no coordinates to interpolate
-{	if  ( Mesh::environment == NULL )
-	{	NumericField *fake_field = NULL; // dangerous !
-		return Mesh::loop_interpolate_yes_or_no ( n, false, *fake_field );  }
-	NumericField * field = Mesh::environment->coord_field;
-	return Mesh::loop_interpolate_yes_or_no ( n, true, *field );             }
-
-inline Mesh & Mesh::loop (size_t n, NumericField &coord ) // static
-// with interpolation
-{	return Mesh::loop_interpolate_yes_or_no ( n, true, coord );  }
-
-	
 
 //////////////////////////////////////////////////////////////////////////////////
 ////////////////        variational problems     /////////////////////////////////

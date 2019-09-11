@@ -47,25 +47,133 @@ Mesh & Mesh::segment ( Cell & a, Cell & b, size_t n ) // static
 	return malha;                                                         }
 
 
-Mesh & Mesh::loop_interpolate_yes_or_no  // static
-( size_t n, bool interpolate, NumericField &coord )
-// we cannot interpolate actually, how could we ?
-{	Mesh & malha = * ( new Mesh (1) );
-	Cell & first = Cell::point();
-	Cell * prev_point = &first;
-	// we prefer do deal always with positive points
-	for ( size_t i=1; i < n; ++i )
-	{	Cell & p = Cell::point();
-		if (interpolate)
-		{	double frac = double(i)/double(n);  }
-		Cell & seg = Cell::segment ( prev_point->reverse(), p );
-		seg.add_to (malha); 
-		prev_point = &p;                                         }
-	Cell & seg = Cell::segment ( prev_point->reverse(), first );
-	seg.add_to (malha);
-	return malha;                                                    }
+Mesh & Mesh::triangle ( Mesh & AB, Mesh & BC, Mesh & CA )  // static
 
+{	// we use the environement manifold
+	assert ( Mesh::environment != NULL );
+	Manifold & space = * ( Mesh::environment );
 
+	// sides must be split in the same number of segments :
+	size_t N = AB.number_of ( tag::cells, tag::of_max_dim );
+	assert ( N == BC.number_of ( tag::cells, tag::of_max_dim ) );
+	assert ( N == CA.number_of ( tag::cells, tag::of_max_dim ) );
+
+	Cell * A_p, * B_p, * C_p;
+	{ // just a block of code for hiding 'it'
+	CellIterator it = AB.iter_over ( tag::vertices, tag::along );
+	it.reset(); A_p = & (*it);
+	} { // just a block of code for hiding 'it'
+	CellIterator it = AB.iter_over ( tag::vertices, tag::along, tag::reverse );
+	it.reset(); B_p = & (*it);
+	} { // just a block of code for hiding 'it'
+	CellIterator it = BC.iter_over ( tag::vertices, tag::along );
+	it.reset(); assert ( B_p == & (*it) );
+	} { // just a block of code for hiding 'it'
+	CellIterator it = BC.iter_over ( tag::vertices, tag::along, tag::reverse );
+	it.reset(); C_p = & (*it);
+	} { // just a block of code for hiding 'it'
+	CellIterator it = CA.iter_over ( tag::vertices, tag::along );
+	it.reset(); assert ( C_p == & (*it) );
+	} { // just a block of code for hiding 'it'
+	CellIterator it = CA.iter_over ( tag::vertices, tag::along, tag::reverse );
+	it.reset(); assert ( A_p == & (*it) );
+	} // just a block of code for hiding 'it'
+
+	// we keep a list of horizontal segments (parallel to AB)
+	// useful for the next layer of triangles
+	std::list <Cell*> ground, ceiling;
+	{ // just a block of code for hiding 'it'
+	CellIterator it = AB.iter_over ( tag::segments, tag::along );
+	for ( it.reset(); it.in_range(); it++ ) ground.push_back ( & (*it) );
+	} // just a block of code for hiding 'it'
+
+	// we shall use six (pointers to) points, two on AB, two on BC, two on CA
+	// like shadows of the point currently buing built
+	Cell * P_AB_p, * Q_AB_p = A_p, * P_BC_p = B_p,
+		* Q_BC_p, * P_CA_p, * Q_CA_p = A_p;
+
+	// empty two-dimensional mesh :
+	Mesh & tri_mesh = * ( new Mesh (2) );
+
+	for ( short int i = 1; i <= N; i++ ) // "vertical" movement
+	{	// advance one level upwards and slightly right (parallel to CA)
+		{ // just a block of code for hiding 'seg'
+		Cell & seg = AB.cell_in_front_of ( * Q_AB_p );
+		Q_AB_p = & ( seg.tip() );
+		} { // just a block of code for hiding 'seg'
+		Cell & seg = BC.cell_in_front_of ( * P_BC_p );
+		P_BC_p = & ( seg.tip() );
+		} { // just a block of code for hiding 'seg'
+		Cell & seg = CA.cell_behind ( * Q_CA_p );
+		P_CA_p = Q_CA_p = & ( seg.base().reverse() );
+		} // just a block of code for hiding 'seg'
+		P_AB_p = A_p;  Q_BC_p = C_p;
+		Cell * Q_AB_pc = Q_AB_p;  // keep a copy of Q_AB_p
+		std::list<Cell*>::iterator it_ground = ground.begin();
+		Cell * previous_seg_p, * ground_ver_p;
+		// build the first triangle on this layer
+		{ // just a block of code for hiding variables
+		Cell & AS = * ( * it_ground );
+		Cell & S = AS.tip();
+		ground_ver_p = &S;
+		Cell & ST = Cell::segment ( S.reverse(), * P_CA_p );
+		previous_seg_p = & ST;
+		Cell & tri = Cell::triangle ( AS, ST, CA.cell_in_front_of(*P_CA_p) );
+		tri.add_to(tri_mesh);
+		} // just a block of code for hiding variables
+		Cell * previous_ver_p = Q_CA_p;
+		ceiling.clear();
+		for ( short int j = i+1; j <= N; j++ ) // "horizontal" movement
+		{	// advance one step horizontally (parallel to AB)
+			{ // just a block of code for hiding 'seg'
+			Cell & seg = AB.cell_in_front_of ( * P_AB_p );
+			P_AB_p = & ( seg.tip() );
+			} { // just a block of code for hiding 'seg'
+			Cell & seg = AB.cell_in_front_of ( * Q_AB_pc );
+			Q_AB_pc = & ( seg.tip() );
+			} { // just a block of code for hiding 'seg'
+			Cell & seg = BC.cell_behind ( * Q_BC_p );
+			Q_BC_p = & ( seg.base().reverse() );
+			} { // just a block of code for hiding 'seg'
+			Cell & seg = CA.cell_behind ( * P_CA_p );
+			P_CA_p = & ( seg.base().reverse() );
+			} // just a block of code for hiding 'seg'
+			Cell * new_ver_p;
+			if ( j == N ) new_ver_p = P_BC_p;
+			else
+			{	// we prepare for building a new point and we need fractions
+				// distance to AB : i
+				// distance to BC : N-j
+				// distance to CA : j-i
+				double frac_AB = 1. / double(i),
+				       frac_BC = 1. / double(N-j),
+				       frac_CA = 1. / double(j-i);
+				double s = frac_AB + frac_BC + frac_CA;  s *= 2.;
+				frac_AB /= s;  frac_BC /= s;  frac_CA /= s;
+				new_ver_p = & ( Cell::point() );
+				space.interpolate ( *new_ver_p, *P_AB_p, frac_AB, *Q_AB_pc, frac_AB,
+														            *P_BC_p, frac_BC, *Q_BC_p,  frac_BC,
+														            *P_CA_p, frac_CA, *Q_CA_p,  frac_CA  );  }
+			Cell & new_seg = Cell::segment ( ground_ver_p->reverse(), *new_ver_p );
+			Cell & horizontal_seg = Cell::segment ( new_ver_p->reverse(), *previous_ver_p );
+			Cell & tri_1 = Cell::triangle ( previous_seg_p->reverse(), new_seg, horizontal_seg );
+			tri_1.add_to ( tri_mesh );
+			it_ground++; assert ( it_ground != ground.end() );
+			Cell & ground_seg = * (*it_ground);
+			ground_ver_p = & ( ground_seg.tip() );
+			previous_seg_p = & ( Cell::segment ( ground_ver_p->reverse(), *new_ver_p ) );
+			Cell & tri_2 = Cell::triangle ( ground_seg, *previous_seg_p, new_seg.reverse() );
+			tri_2.add_to ( tri_mesh );
+			previous_ver_p = new_ver_p;
+			// add horizontal_seg.reverse() to future ground
+			ceiling.push_back ( & ( horizontal_seg.reverse() ) );                              	  }
+		ground = ceiling;                                                                         }
+
+	return tri_mesh;
+	
+} // end of Mesh::triangle
+
+	
 Mesh & Mesh::rectangle  // static
 ( Mesh & south, Mesh & east, Mesh & north, Mesh & west, const tag::WithTriangles & wt )
 
@@ -110,6 +218,7 @@ Mesh & Mesh::rectangle  // static
 	} // just to keep it1 and it2 local
 		
 	// prepare the mesh
+	// empty two-dimensional mesh :
 	Mesh & rectangle = * ( new Mesh (2) );
 	std::map <std::string, Mesh*> * sides_p = new std::map <std::string, Mesh*>;
 	std::map <std::string, Mesh*> & sides = * sides_p;
