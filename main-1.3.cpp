@@ -5,8 +5,8 @@ using namespace std;
 
 int main () {
 
-   auto & environment = Manifold::euclid (2);  // Manifold & environment
-   auto & xy = environment.coordinate_system ("Lagrange degree one");
+   auto RR2 = Manifold::euclid (2);  // Manifold RR2
+   auto & xy = RR2.coordinate_system ("Lagrange degree one");
    // FunctionOnMesh::Function & xy
    auto & x = xy[0], & y = xy[1];  // FuncionOnMesh::Function & x, & y
    auto & A = Cell::point ("A");  x == -1;  y == 0;   // Cell & A
@@ -29,10 +29,10 @@ int main () {
    auto & HC = Mesh::segment ( H, C, 12 );
    auto & ABCD = Mesh::rectangle ( AB, BC, CD, DA );   // Mesh & ABCD
    auto & CEFD = Mesh::rectangle ( CE, EF, FD, CD.reverse() );
-   auto & BGHC = Mesh::rectangle ( GH, HC, BC.reverse(), BG, tag::with_triangles );
+   auto & BGHC = Mesh::rectangle ( GH, HC, BC.reverse(), BG );
    auto & L_shaped = Mesh::join ( ABCD, CEFD, BGHC );   // Mesh & L_shaped
 
-	 L_shaped.export_msh ("L-shaped-tri.msh");
+   L_shaped.export_msh ("L-shaped.msh");
 	
-	 cout << "reached end" << endl;
+   cout << "reached end" << endl;
 }

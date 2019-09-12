@@ -1,56 +1,38 @@
 
 #include "Mesh.h"
-#include <cmath>
 
 using namespace std;
 
-// builds a ring-shaped mesh
-
 int main () {
 
-	Manifold & environment = Manifold::euclid (2);
-	FunctionOnMesh::Function & xy =
-		environment.coordinate_system ("Lagrange degree one");
-	FunctionOnMesh::Function & x = xy[0], & y = xy[1];
+   auto RR2 = Manifold::euclid (2);  // Manifold RR2
+   auto & xy = RR2.coordinate_system ("Lagrange degree one");
+   // FunctionOnMesh::Function & xy
+   auto & x = xy[0], & y = xy[1];  // FuncionOnMesh::Function & x, & y
+   auto & A = Cell::point ("A");  x == -1;  y == 0;   // Cell & A
+   auto & B = Cell::point ("B");  x ==  0;  y == 0;
+   auto & C = Cell::point ("C");  x ==  0;  y == 0.5;
+   auto & D = Cell::point ("D");  x == -1;  y == 0.5;
+   auto & E = Cell::point ("E");  x ==  0;  y == 1;
+   auto & F = Cell::point ("F");  x == -1;  y == 1;
+   auto & G = Cell::point ("G");  x ==  1;  y == 0;
+   auto & H = Cell::point ("H");  x ==  1;  y == 0.5;
+   auto & AB = Mesh::segment ( A, B, 10 );   // Mesh & AB
+   auto & BC = Mesh::segment ( B, C, 8 );
+   auto & CD = Mesh::segment ( C, D, 10 );
+   auto & DA = Mesh::segment ( D, A, 8 );
+   auto & CE = Mesh::segment ( C, E, 7 );
+   auto & EF = Mesh::segment ( E, F, 10 );
+   auto & FD = Mesh::segment ( F, D, 7 );
+   auto & BG = Mesh::segment ( B, G, 12 );
+   auto & GH = Mesh::segment ( G, H, 8 );
+   auto & HC = Mesh::segment ( H, C, 12 );
+   auto & ABCD = Mesh::rectangle ( AB, BC, CD, DA );   // Mesh & ABCD
+   auto & CEFD = Mesh::rectangle ( CE, EF, FD, CD.reverse() );
+   auto & BGHC = Mesh::rectangle ( BG, GH, HC, BC.reverse(), tag::with_triangles );
+   auto & L_shaped = Mesh::join ( ABCD, CEFD, BGHC );   // Mesh & L_shaped
 
-	short int n_sectors = 15;
-	double step_theta = 8*atan(1.)/n_sectors;
-	short int radial_divisions = 10;
-	short int rot_divisions = 5;
+   L_shaped.export_msh ("L-shaped-tri.msh");
 	
-	// start the process by building a segment
-	Cell & A = Cell::point (); x == 1.; y == 0.;
-	Cell & B = Cell::point (); x == 2.; y == 0.;
-	Mesh & ini_seg = Mesh::segment ( A, B, radial_divisions );
-	// we will need to vary ini_seg, A and B, so we use pointers :
-	Mesh * prev_seg_p = & ini_seg;
-	Cell * A_p = &A, * B_p = &B;
-	// 'l' will be a list of trapezoidal meshes
-	list <Mesh*> l;
-
-	for ( short int i = 1; i < n_sectors; i++ )
-	{	double theta = i * step_theta;
-		// we build two new points
-		Cell & C = Cell::point (); x == cos(theta);    y == sin(theta);
-		Cell & D = Cell::point (); x == 2.*cos(theta); y == 2.*sin(theta);
-		// and three new segments
-		Mesh & BD = Mesh::segment ( *B_p, D, rot_divisions );
-		Mesh & DC = Mesh::segment ( D, C, radial_divisions );
-		Mesh & CA = Mesh::segment ( C, *A_p, rot_divisions );
-		Mesh & rect = Mesh::rectangle ( *prev_seg_p, BD, DC, CA );
-		l.push_back ( &rect );
-		prev_seg_p = & ( DC.reverse() );
-		A_p = &C; B_p = &D;                                                  	}
-
-	// let's build the last sector, and close the ring
-	// prev_seg_p, A_p and B_p have rotated during the construction process
-	// but ini_seg, A and B are the same, initial, ones
-	Mesh & outer = Mesh::segment ( *B_p, B, rot_divisions );
-	Mesh & inner = Mesh::segment ( A, *A_p, rot_divisions );
-	Mesh & rect = Mesh::rectangle ( outer, ini_seg.reverse(), inner, *prev_seg_p );
-	l.push_back ( &rect );
-	
-	Mesh & ring = Mesh::join ( l );
-	ring.export_msh ("ring.msh");
-	
+   cout << "reached end" << endl;
 }

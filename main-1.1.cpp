@@ -9,12 +9,12 @@ void do_test ();
 int main () {
 
 	// we choose our (geometric) space dimension :
-	auto & environment = Manifold::euclid (3);
+	auto RR3 = Manifold::euclid (3);
 	// for now, the constructor Manifold() sets Mesh::environment to 'this'
 	// this may change in the future
 	
 	// xyz is a map defined on our future mesh with values in 'environment' :
-	auto & xyz = environment.coordinate_system ("Lagrange degree one");
+	auto & xyz = RR3.coordinate_system ("Lagrange degree one");
 
 	// we can extract components of xyz using the [] operator :
 	auto & x = xyz[0], & y = xyz[1], & z = xyz[2];

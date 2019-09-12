@@ -7,12 +7,12 @@ using namespace std;
 int main () {
 
 	// we choose our (geometric) space dimension :
-	auto R3 = Manifold::euclid (3);
+	auto RR3 = Manifold::euclid (3);
 	// for now, the constructor Manifold() sets Mesh::environment to 'this'
 	// this may change in the future
 	
 	// xyz is a map defined on our future mesh with values in 'R3' :
-	auto & xyz = R3.coordinate_system ("Lagrange degree one");
+	auto & xyz = RR3.coordinate_system ("Lagrange degree one");
 	xyz.components[0]->name = "x";
 	xyz.components[1]->name = "y";
 	xyz.components[2]->name = "z";
