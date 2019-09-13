@@ -1,4 +1,4 @@
-// manifem/global.cpp 2019.09.08
+// manifem/global.cpp 2019.09.13
 
 #include <list>
 #include <map>
@@ -48,6 +48,8 @@ Mesh & Mesh::segment ( Cell & a, Cell & b, size_t n ) // static
 
 
 Mesh & Mesh::triangle ( Mesh & AB, Mesh & BC, Mesh & CA )  // static
+
+// see fig-triangle.eps
 
 {	// we use the environement manifold
 	assert ( Mesh::environment != NULL );
@@ -660,7 +662,19 @@ void Mesh::export_msh ( std::string f, std::map<Cell*,size_t> & ver_numbering )
 	file_msh << "$Elements" << std::endl;
 	file_msh << this->number_of ( tag::cells, tag::of_max_dim ) << std::endl;
 
-	if ( this->dim == 2 )
+	if ( this->dim == 1 )
+	{	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
+		size_t counter = 0;
+		for ( it.reset() ; it.in_range(); it++)
+		{	++counter;
+			Cell & elem = *it;
+			assert ( elem.boundary().number_of ( tag::cells, tag::of_max_dim ) == 2 ); // a segment
+			file_msh << counter << " 1 0 ";
+			Cell & A = elem.base().reverse();
+			file_msh << ver_numbering [&A] << " ";
+			Cell & B = elem.tip();
+			file_msh << ver_numbering [&B] << std::endl;                                   }  }
+	else if ( this->dim == 2 )
 	{	CellIterator it = this->iter_over ( tag::cells, tag::of_max_dim, tag::oriented );
 		size_t counter = 0;
 		for ( it.reset() ; it.in_range(); it++)

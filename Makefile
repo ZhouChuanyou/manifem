@@ -39,10 +39,22 @@ exe-1.4: Mesh.o Field.o global.o main-1.4.o
 exe-1.5: Mesh.o Field.o global.o main-1.5.o
 	g++ -o $@ -std=c++17 $^
 
+exe-2.1: Mesh.o Field.o global.o main-2.1.o
+	g++ -o $@ -std=c++17 $^
+
 exe-2.2: Mesh.o Field.o global.o main-2.2.o
 	g++ -o $@ -std=c++17 $^
 
-exe-2.1: Mesh.o Field.o global.o main-2.1.o
+exe-2.3: Mesh.o Field.o global.o main-2.3.o
+	g++ -o $@ -std=c++17 $^
+
+exe-2.4: Mesh.o Field.o global.o main-2.4.o
+	g++ -o $@ -std=c++17 $^
+
+exe-2.5: Mesh.o Field.o global.o main-2.5.o
+	g++ -o $@ -std=c++17 $^
+
+exe-2.6: Mesh.o Field.o global.o main-2.6.o
 	g++ -o $@ -std=c++17 $^
 
 exe-3.2: Mesh.o Field.o global.o main-3.2.o
@@ -87,7 +99,19 @@ run-2.1: exe-2.1
 run-2.2: exe-2.2
 	./exe-2.2
 
+run-2.3: exe-2.3
+	./exe-2.3
+
+run-2.4: exe-2.4
+	./exe-2.4
+
+run-2.5: exe-2.5
+	./exe-2.5
+
+run-2.6: exe-2.6
+	./exe-2.6
+
 run-3.2: exe-3.2
 	./exe-3.2
 
-PHONY: run run-cut run-tri run-sphere-tri run-sphere-quad run-cartesian run-1.1 run-1.3 run-1.4 run-1.5 run-2.1 run-2.2 run-3.2 clean
+PHONY: run run-cut run-tri run-sphere-tri run-sphere-quad run-cartesian run-1.1 run-1.3 run-1.4 run-1.5 run-2.1 run-2.2 run-2.3 run-2.4 run-2.5 run-2.6 run-3.2 clean
