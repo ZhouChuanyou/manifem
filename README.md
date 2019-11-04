@@ -7,12 +7,13 @@ Also, ManiFEM has been written with the goal of being conceptually clear and eas
 We hope it will prove particularly useful for people who want a fine control over the mesh, 
 e.g. for implementing their own meshing or remeshing algorithms.
 
-
 ManiFEM is written in C++ and uses the Standard Template Library (STL). 
 It uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for storing matrices and solving systems of linear equations.
 
-To learn ManiFEM, you should begin by reading the document [manual.pdf](./manual.pdf).
+ManiFEM is being developped by Cristian Barbarosie, Sérgio Lopes and Anca-Maria Toader.
 
-To use ManiFEM, copy all `.cpp` and `.h` files to some directory in your computer, together with `Makefile`.
+To learn maniFEM, you should begin by reading the [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
+
+To use maniFEM, copy all `.cpp` and `.h` files to some directory in your computer, together with `Makefile`.
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
 
