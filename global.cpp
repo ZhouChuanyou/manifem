@@ -1,5 +1,5 @@
 
-// maniFEM global.cpp 2019.10.30
+// maniFEM global.cpp 2019.11.09
 
 #include <fstream>
 #include "maniFEM.h"
@@ -25,7 +25,7 @@ void Mesh::pretty_constructor ( const tag::Segment &, const Cell & A, const Cell
 // see paragraph 6.2 in the manual
 	
 {	// we use the current manifold
-	Manifold space = Manifold::current;
+	Manifold space = Manifold::working;
 	assert ( space.exists() );
 	
 	assert ( A.is_positive() );
@@ -54,7 +54,7 @@ Mesh::OneDim::Positive::Positive
 :	Positive()
 
 {	// we use the current manifold
-	Manifold::Core * space = Manifold::current.core;
+	Manifold::Core * space = Manifold::working.core;
 	assert ( space );
 	
 	assert ( A->is_positive() );
@@ -85,7 +85,7 @@ void Mesh::pretty_constructor
 // see paragraph 6.4 in the manual
 	
 {	// we use the current manifold
-	Manifold space = Manifold::current;
+	Manifold space = Manifold::working;
 	assert ( space.exists() );
 
 	// sides must be split in the same number of segments :
@@ -208,7 +208,7 @@ void Mesh::pretty_constructor ( const tag::Quadrangle &, const Mesh & south,
 {	bool cut_rectangles_in_half = ( wt == tag::with_triangles );
 
 	// we use the current manifold
-	Manifold space = Manifold::current;
+	Manifold space = Manifold::working;
 	assert ( space.exists() );
 
 	// recover corners from the sides
@@ -358,7 +358,7 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
   const Mesh & north, const Mesh & west, bool cut_rectangles_in_half )
 
 {	// we use the current manifold
-	Manifold::Core * space = Manifold::current.core;
+	Manifold::Core * space = Manifold::working.core;
 	assert ( space );
 	
 	// recover corners from the sides
@@ -527,7 +527,7 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
 void Mesh::draw_ps ( std::string file_name )
 	
 {	// we use the current manifold
-	Manifold space = Manifold::current;
+	Manifold space = Manifold::working;
 	assert ( space.exists() );
 	Function coord = space.coordinates();
 	assert ( coord.nb_of_components() == 2 );
@@ -589,7 +589,7 @@ void Mesh::draw_ps ( std::string file_name )
 	} // just a block for hiding variables
 																					
 	file_ps << "grestore" << std::endl;
-	file_ps << "grestore" << std::endl;
+	file_ps << "grestore" << std::endl << std::endl;
 	file_ps << "showpage" << std::endl;
 	file_ps << "%%Trailer" << std::endl;
 	file_ps << "%EOF" << std::endl;
@@ -603,10 +603,107 @@ void Mesh::draw_ps ( std::string file_name )
 //----------------------------------------------------------------------------------//
 
 
+void Mesh::draw_ps_3d ( std::string file_name )
+	
+{	// we use the current manifold
+	Manifold space = Manifold::working;
+	assert ( space.exists() );
+	Function coord = space.coordinates();
+	assert ( coord.nb_of_components() == 3 );
+	// we split 'coord' into its components
+	Function x = coord[0],  y = coord[1],  z = coord[2];
+
+	double xmin, xmax, ymin, ymax, zmin, zmax, maxside;
+	
+	{ // just a block for hiding variables
+	CellIterator it = this->iter_over ( tag::cells_of_dim, 0 );
+	it.reset();  assert( it.in_range() );
+	Cell Vfirst = *it;
+	xmin = xmax = x(Vfirst);
+	ymin = ymax = y(Vfirst);	
+	zmin = zmax = z(Vfirst);	
+	for ( it++ ; it.in_range(); it++ )
+	{ Cell V = *it; 
+		double xV = x(V), yV = y(V), zV = z(V);
+		if ( xV < xmin ) xmin = xV;
+	  if ( xV > xmax ) xmax = xV;
+	  if ( yV < ymin ) ymin = yV;
+	  if ( yV > ymax ) ymax = yV;
+	  if ( zV < zmin ) zmin = zV;
+	  if ( zV > zmax ) zmax = zV;      }
+	} // just a block for hiding variables 
+	// we look at the object along the y axis, so values of y do not count
+	if ( xmax-xmin < zmax-zmin ) maxside = zmax-zmin;
+	else maxside = xmax-xmin;
+	double border = 0.02*maxside;
+	double scale_factor = 500/maxside;
+	double translation_x = -scale_factor*xmin;
+	double translation_y = -scale_factor*zmin;
+
+	std::ofstream file_ps ( file_name );
+
+	file_ps << "%!PS-Adobe-3.0 EPSF-3.0" << std::endl;
+	file_ps << "%%Title:                     maniFEM" << std::endl;
+	file_ps << "%%BoundingBox:  0 0 " << " " << scale_factor*(xmax-xmin+2*border)
+	        << "   " << scale_factor*(zmax-zmin+2*border) << std::endl;
+	file_ps << "%%EndComments" << std::endl;
+	file_ps << "%%BeginSetup" << std::endl;
+	file_ps << "<< /PageSize [" << scale_factor*(xmax-xmin+2*border) << " "
+	        << scale_factor*(zmax-zmin+2*border) << "] >> setpagedevice" << std::endl;
+	file_ps << "%%EndSetup" << std::endl << std::endl;
+
+	file_ps << "5 rotxy" << std::endl << "-8 rotyz" << std::endl
+          << "0.7 rotxz" << std::endl << std::endl;
+
+	file_ps << "gsave" << std::endl;
+	file_ps << translation_x + scale_factor*border << " "
+	        << translation_y + scale_factor*border << " translate" << std::endl;
+	file_ps << scale_factor << " dup scale" << std::endl << std::endl;
+
+	file_ps << 1. / scale_factor << " setlinewidth" << std::endl;
+	file_ps << xmin << " " << ymin << " " << zmin << " " << " proj moveto ";
+	file_ps << xmax << " " << ymin << " " << zmin
+          << " proj Lineto^ stroke" << std::endl;
+	file_ps << xmin << " " << ymin << " " << zmin << " " << " proj moveto ";
+	file_ps << xmin << " " << ymax << " " << zmin
+          << " proj Lineto^ stroke" << std::endl;
+	file_ps << xmin << " " << ymin << " " << zmin << " " << " proj moveto ";
+	file_ps << xmin << " " << ymin << " " << zmax
+          << " proj Lineto^ stroke" << std::endl << std::endl;
+	
+	file_ps << "gsave " << 1.5 / scale_factor << " setlinewidth" << std::endl;
+	
+	{ // just a block for hiding variables
+	CellIterator it = this->iter_over ( tag::cells_of_dim, 1 );
+	for ( it.reset() ; it.in_range(); it++ )
+	{	Cell seg = *it;
+		Cell base = seg.base().reverse();
+		Cell tip  = seg.tip();
+		file_ps << x(base) << " " << y(base) << " " << z(base)
+	          << " proj moveto" << std::endl;
+		file_ps << x(tip) << " " << y(tip) << " " << z(tip)
+	          << " proj lineto stroke" << std::endl;           }
+	} // just a block for hiding variables
+																					
+	file_ps << "grestore" << std::endl;
+	file_ps << "grestore" << std::endl << std::endl;
+	file_ps << "showpage" << std::endl;
+	file_ps << "%%Trailer" << std::endl;
+	file_ps << "%EOF" << std::endl;
+
+	if ( ! file_ps.good() )
+	{	std::cerr << "error writing postscript file" << std::endl;
+		exit (1);                                                   }
+
+} // end of  Mesh::draw_ps_3d
+
+//----------------------------------------------------------------------------------//
+
+
 void Mesh::export_msh ( std::string f, std::map<Cell::Core*,size_t> & ver_numbering )
 
 {	// we use the current manifold
-	Manifold space = Manifold::current;
+	Manifold space = Manifold::working;
 	assert ( space.exists() );
 	Function coord = space.coordinates();
 

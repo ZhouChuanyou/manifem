@@ -22,7 +22,7 @@ int main () {
 	Mesh SE ( tag::segment, S, E, 10 );
 	Mesh EN ( tag::segment, E, N, 10 );
 
-	Manifold::current = RR2;
+	RR2.set_as_working_manifold();
 
 	Mesh disk ( tag::rectangle, NW, WS, SE, EN );
 

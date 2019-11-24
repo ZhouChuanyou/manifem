@@ -24,7 +24,8 @@ int main () {
 	Manifold fourth_arc = RR2.implicit ( x*y + x + y ==  1. );
 	Mesh EN ( tag::segment, E, N, 10 );
 
-	Manifold::current = RR2;
+	RR2.set_as_working_manifold();
+
 	Mesh diamond ( tag::rectangle, NW, WS, SE, EN );
 
 	diamond.draw_ps ("diamond.eps");

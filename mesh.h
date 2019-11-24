@@ -1,5 +1,5 @@
 
-// maniFEM mesh.h 2019.11.03
+// maniFEM mesh.h 2019.11.09
 
 #ifndef MANIFEM_MESH_H
 #define MANIFEM_MESH_H
@@ -51,6 +51,7 @@ namespace tag {
 	struct OverCellsOf { };  static const OverCellsOf over_cells_of;
 	struct ForcePositive { };  static const ForcePositive force_positive;
 	struct HasSize { };  static const HasSize has_size;
+	struct ReserveSize { };  static const ReserveSize reserve_size;
 	struct lagrange { };  static const lagrange Lagrange;
 	struct Pretty { };  static const Pretty pretty;
 	struct OfDegree { };  static const OfDegree of_degree;
@@ -344,6 +345,7 @@ class Mesh
 	// methods draw_ps and export_msh defined in global.cpp
 
 	void draw_ps ( std::string file_name );
+	void draw_ps_3d ( std::string file_name );
 	void export_msh ( std::string f, std::map<Cell::Core*,size_t> & ver_numbering );
 	void export_msh ( std::string f );
 	

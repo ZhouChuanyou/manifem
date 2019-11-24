@@ -1,5 +1,5 @@
 
-// maniFEM function.cpp 2019.11.03
+// maniFEM function.cpp 2019.11.09
 
 #include "math.h"
 #include <sstream>
@@ -7,10 +7,6 @@
 #include "function.h"
 
 using namespace maniFEM;
-
-std::shared_ptr < Function::Constant > Function::Zero ( new Function::Constant ( 0. ) );
-std::shared_ptr < Function::Constant > Function::One ( new Function::Constant ( 1. ) );
-std::shared_ptr < Function::Constant > Function::MinusOne ( new Function::Constant ( -1. ) );
 
 size_t Function::Scalar::nb_of_components ( ) const  // virtual from Function::Core
 {	return 1;  }
@@ -24,25 +20,18 @@ size_t Function::CoupledWithField::Vector::nb_of_components ( ) const
 {	return this->field->nb_of_components();  }
 
 
-std::shared_ptr<Function::Scalar> Function::Aggregate::component ( size_t i )
+Function Function::Aggregate::component ( size_t i )
 // virtual from Function::Vector
 {	assert ( i < this->components.size() );
 	return components[i];                    }
 
-std::shared_ptr<Function::Scalar> Function::CoupledWithField::Vector::component ( size_t i )
+Function Function::CoupledWithField::Vector::component ( size_t i )
 // virtual from Function::Vector
 {	size_t n = this->field->nb_of_components();
 	assert ( i < n );
-	if ( this->components.size() )
-	{	assert ( this->components.size() == n );
-		return this->components[i];               }
-	// this->components.size() == 0
-	this->components.resize(n);
-	for ( size_t j = 0; j < n; j++ )
-		this->components[j] = std::shared_ptr < Function::Scalar >	
-			( new Function::CoupledWithField::Scalar ( this->field->component(j) ) );
-	return this->components[i];                                                     }
-	
+	assert ( this->components.size() == n );
+	return this->components[i];                   }
+
 	
 double Function::ArithmeticExpression::set_value_on_cell
 ( Cell::Core * cll, const double & )  // virtual from Function::Scalar
@@ -51,29 +40,43 @@ double Function::ArithmeticExpression::set_value_on_cell
 	std::cout << "Cannot assign to an arithmetic expression." << std::endl;
 	exit ( 1 );                                                              }
 	
+
 double Function::Constant::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
 { return this->val;  }
 
 double Function::Sum::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
-{ std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator
-		it = this->terms.begin();
+{ std::forward_list<Function>::const_iterator it = this->terms.begin();
 	double sum = 0.;
-	for ( ; it != this->terms.end(); it++ )  sum += (*it)->get_value_on_cell ( cll );
-	return sum;                                                                     }
-	
+	for ( ; it != this->terms.end(); it++ )
+	{	Function::Scalar * term_scalar = Function::core_to_scalar ( it->core.get() );
+		sum += term_scalar->get_value_on_cell ( cll );                               }
+	return sum;                                                                      }
+
 double Function::Product::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
-{ std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator
-		it = this->factors.begin();
+{ std::forward_list<Function>::const_iterator it = this->factors.begin();
 	double prod = 1.;
-	for ( ; it != this->factors.end(); it++ )  prod *= (*it)->get_value_on_cell ( cll );
-	return prod;                                                                      }
+	for ( ; it != this->factors.end(); it++ )
+	{	Function::Scalar * fact_scalar = Function::core_to_scalar ( it->core.get() );
+		prod *= fact_scalar->get_value_on_cell ( cll );                              }
+	return prod;                                                                     }
 	
 double Function::Power::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
-{ return pow ( this->base->get_value_on_cell(cll), this->exponent );   }
+{	Function::Scalar * base_scalar = Function::core_to_scalar ( this->base.core.get() );
+	return std::pow ( base_scalar->get_value_on_cell(cll), this->exponent );              }
+	
+double Function::Sin::get_value_on_cell ( Cell::Core * cll ) const
+// virtual from Function::Scalar, through Function::ArithmeticExpression
+{	Function::Scalar * base_scalar = Function::core_to_scalar ( this->base.core.get() );
+	return std::sin ( base_scalar->get_value_on_cell(cll) );                              }
+	
+double Function::Cos::get_value_on_cell ( Cell::Core * cll ) const
+// virtual from Function::Scalar, through Function::ArithmeticExpression
+{	Function::Scalar * base_scalar = Function::core_to_scalar ( this->base.core.get() );
+	return std::cos ( base_scalar->get_value_on_cell(cll) );                              }
 	
 double Function::JustTesting::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
@@ -84,16 +87,20 @@ std::vector<double> Function::Aggregate::set_value_on_cell
 { size_t n = this->nb_of_components();
 	assert ( n == x.size() );
 	for ( size_t i = 0; i < n; i++ )
-		this->components[i]->set_value_on_cell ( cll, x[i] );
-	return x;                                                 }
+	{	Function::Scalar * comp_scalar =
+			Function::core_to_scalar ( this->components[i].core.get() );
+		comp_scalar->set_value_on_cell ( cll, x[i] );                  }
+	return x;                                                          }
 
 std::vector<double> Function::Aggregate::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Vector
 { size_t n = this->nb_of_components();
 	std::vector<double> result ( n );
 	for ( size_t i = 0; i < n; i++ )
-		result[i] = this->components[i]->get_value_on_cell ( cll );
-	return result;                                                 }
+	{	Function::Scalar * comp_scalar =
+			Function::core_to_scalar ( this->components[i].core.get() );
+		result[i] = comp_scalar->get_value_on_cell ( cll );            }
+	return result;                                                      }
 
 double Function::CoupledWithField::Scalar::set_value_on_cell
 ( Cell::Core * cll, const double & x )  // virtual from Function::Scalar
@@ -101,7 +108,8 @@ double Function::CoupledWithField::Scalar::set_value_on_cell
 
 double Function::CoupledWithField::Scalar::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar
-{ return this->field->on_cell(cll).reference();  }
+{ return this->field->on_cell(cll);  }
+// { return this->field->on_cell(cll).reference();  }
 	
 std::vector<double> Function::CoupledWithField::Vector::set_value_on_cell
 ( Cell::Core * cll, const std::vector<double> & x )  // virtual from Function::Vector
@@ -122,32 +130,36 @@ std::string Function::Constant::repr ( const Function::From & from ) const
 	return s;                         }
 
 std::string Function::Sum::repr ( const Function::From & from ) const
-{ std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator
-		it = this->terms.begin();
+{ std::forward_list<Function>::const_iterator it = this->terms.begin();
 	assert ( it != terms.end() );
-	std::string s = (*it)->repr ( Function::from_sum );
+	std::string s = it->core->repr ( Function::from_sum );
 	for ( it++; it != terms.end(); it++ )
-		s = s + '+' + (*it)->repr ( Function::from_sum );
-	if ( ( from == Function::from_power ) || ( from == Function::from_product ) )
+		s = s + '+' + it->core->repr ( Function::from_sum );
+	if ( ( from == Function::from_power ) or ( from == Function::from_product ) )
 		s = "(" + s + ")";
-	return s;                                                               }
+	return s;                                                                      }
 
 std::string Function::Product::repr ( const Function::From & from ) const
-{ std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator
-		it = this->factors.begin();
+{ std::forward_list<Function>::const_iterator it = this->factors.begin();
 	assert ( it != factors.end() );
-	std::string s = (*it)->repr ( Function::from_product );
+	std::string s = it->core->repr ( Function::from_product );
 	for ( it++; it != factors.end(); it++ )
-		s = s + '*' + (*it)->repr ( Function::from_product );
+		s = s + '*' + it->core->repr ( Function::from_product );
 	if ( from == Function::from_power ) s = "(" + s + ")";
 	return s;                                                    }
 
 std::string Function::Power::repr ( const Function::From & from ) const
-{	std::string s = base->repr ( Function::from_power ) + "^";
+{	std::string s = this->base.core->repr ( Function::from_power ) + "^";
 	std::stringstream ss;
 	if ( exponent >= 0. )  ss << exponent;
 	else  ss << "(" << exponent << ")";
 	return s+ss.str();                      }
+
+std::string Function::Sin::repr ( const Function::From & from ) const
+{	return "sin" + this->base.core->repr ( Function::from_function );  }
+
+std::string Function::Cos::repr ( const Function::From & from ) const
+{	return "cos" + this->base.core->repr ( Function::from_function );  }
 
 std::string Function::JustTesting::repr ( const Function::From & from ) const
 {	return this->name;  }
@@ -161,200 +173,183 @@ std::string Function::CoupledWithField::Scalar::repr ( const Function::From & fr
 #endif // DEBUG
 
 
-std::shared_ptr<Function::Core> Function::sum
-( std::shared_ptr<Function::Core> f, std::shared_ptr<Function::Core> g )
-// static
+Function maniFEM::operator+ ( const Function & f, const Function & g )
 
 {	// both should be scalar :
 	std::shared_ptr < Function::Scalar > f_scalar =
-		std::dynamic_pointer_cast < Function::Scalar > ( f );
+		std::dynamic_pointer_cast < Function::Scalar > ( f.core );
 	std::shared_ptr < Function::Scalar > g_scalar =
-		std::dynamic_pointer_cast < Function::Scalar > ( g );
+		std::dynamic_pointer_cast < Function::Scalar > ( g.core );
 	assert ( f_scalar );  assert ( g_scalar );
 
 	// if one of them is zero :
 	std::shared_ptr < Function::Constant > f_const =
-		std::dynamic_pointer_cast < Function::Constant > ( f );
+		std::dynamic_pointer_cast < Function::Constant > ( f.core );
 	if ( f_const )
-		if ( f_const == Function::Zero ) return g;
+		if ( f_const->val == 0. ) return g;
 	std::shared_ptr < Function::Constant > g_const =
-		std::dynamic_pointer_cast < Function::Constant > ( g );
+		std::dynamic_pointer_cast < Function::Constant > ( g.core );
 	if ( g_const )
-		if ( g_const == Function::Zero ) return f;
+		if ( g_const->val == 0. ) return f;
 	
 	// if one of them is a sum, or both :
 	std::shared_ptr < Function::Sum > f_sum =
-		std::dynamic_pointer_cast < Function::Sum > ( f );
+		std::dynamic_pointer_cast < Function::Sum > ( f.core );
 	std::shared_ptr < Function::Sum > g_sum =
-		std::dynamic_pointer_cast < Function::Sum > ( g );
+		std::dynamic_pointer_cast < Function::Sum > ( g.core );
 
-	std::shared_ptr < Function::Sum > result { new Function::Sum };  // empty sum
+  Function::Sum * result = new Function::Sum;  // empty sum
 	if ( g_sum )  // g is a sum
-	{	std::forward_list<std::shared_ptr<Function::Scalar>>::iterator it_g;
+	{	std::forward_list<Function>::iterator it_g;
 		for ( it_g = g_sum->terms.begin(); it_g != g_sum->terms.end(); it_g++ )
-			result->terms.push_front ( *it_g );                             }
-	else  result->terms.push_front ( g_scalar );
+			result->terms.push_front ( *it_g );                                   }
+	else  result->terms.push_front ( g );
 	if ( f_sum )  // f is a sum
-	{	std::forward_list<std::shared_ptr<Function::Scalar>>::iterator it_f;
+	{	std::forward_list<Function>::iterator it_f;
 		for ( it_f = f_sum->terms.begin(); it_f != f_sum->terms.end(); it_f++ )
-			result->terms.push_front ( *it_f );                             }
-	else  result->terms.push_front ( f_scalar );
+			result->terms.push_front ( *it_f );                                   }
+	else  result->terms.push_front ( f );
 
-	return result;                                                          }
-
-
-std::shared_ptr<Function::Core> Function::difference
-( std::shared_ptr<Function::Core> f, std::shared_ptr<Function::Core> g )
-// static
-{	return Function::sum ( f, Function::product ( Function::MinusOne, g ) );  }
+	return Function ( tag::whose_core_is, result );                              }
 
 
-std::shared_ptr<Function::Core> Function::product
-( std::shared_ptr<Function::Core> f, std::shared_ptr<Function::Core> g )
-// static
+Function maniFEM::operator* ( const Function & f, const Function & g )
 
 {	// both should be scalar
 	std::shared_ptr < Function::Scalar > f_scalar =
-		std::dynamic_pointer_cast < Function::Scalar > ( f );
+		std::dynamic_pointer_cast < Function::Scalar > ( f.core );
 	std::shared_ptr < Function::Scalar > g_scalar =
-		std::dynamic_pointer_cast < Function::Scalar > ( g );
+		std::dynamic_pointer_cast < Function::Scalar > ( g.core );
 	assert ( f_scalar );  assert ( g_scalar );
 	
 	// if any one of them is zero or one :
 	std::shared_ptr < Function::Constant > f_const =
-		std::dynamic_pointer_cast < Function::Constant > ( f );
+		std::dynamic_pointer_cast < Function::Constant > ( f.core );
 	if ( f_const )
-	{	if ( f_const == Function::Zero ) return Function::Zero;
-		if ( f_const == Function::One )  return g;                }
+	{	if ( f_const->val == 0. ) return f;
+		if ( f_const->val == 1. ) return g;  }
 	std::shared_ptr < Function::Constant > g_const =
-		std::dynamic_pointer_cast < Function::Constant > ( g );
+		std::dynamic_pointer_cast < Function::Constant > ( g.core );
 	if ( g_const )
-	{	if ( g_const == Function::Zero ) return Function::Zero;
-		if ( g_const == Function::One ) return f;                }
+	{	if ( g_const->val == 0. ) return g;
+		if ( g_const->val == 1. ) return f;  }
 	
 	// if one of them is a product, or both :
 	std::shared_ptr < Function::Product > f_prod =
-		std::dynamic_pointer_cast < Function::Product > ( f );
+		std::dynamic_pointer_cast < Function::Product > ( f.core );
 	std::shared_ptr < Function::Product > g_prod =
-		std::dynamic_pointer_cast < Function::Product > ( g );
+		std::dynamic_pointer_cast < Function::Product > ( g.core );
 
-	std::shared_ptr < Function::Product > result { new Function::Product };  // empty product
+  Function::Product * result = new Function::Product;  // empty product
 	if ( g_prod )  // g is a product
-	{	std::forward_list<std::shared_ptr<Function::Scalar>>::iterator it_g;
+	{	std::forward_list<Function>::iterator it_g;
 		for ( it_g = g_prod->factors.begin(); it_g != g_prod->factors.end(); it_g++ )
 			result->factors.push_front ( *it_g );                             }
-	else  result->factors.push_front ( g_scalar );
+	else  result->factors.push_front ( g );
 	if ( f_prod )  // f is a product
-	{	std::forward_list<std::shared_ptr<Function::Scalar>>::iterator it_f;
+	{	std::forward_list<Function>::iterator it_f;
 		for ( it_f = f_prod->factors.begin(); it_f != f_prod->factors.end(); it_f++ )
 			result->factors.push_front ( *it_f );                             }
-	else  result->factors.push_front ( f_scalar );
+	else  result->factors.push_front ( f );
 
-	return result;                                                          }
-
-
-std::shared_ptr<Function::Core> Function::division
-( std::shared_ptr<Function::Core> f, std::shared_ptr<Function::Core> g )
-// static
-{	return Function::product ( f, Function::power ( g, -1. ) );  }
+	return Function ( tag::whose_core_is, result );                              }
 
 
-std::shared_ptr<Function::Core> Function::power ( std::shared_ptr<Function::Core> f, double e )
-// static
+Function maniFEM::power ( const Function & f, double e )
 
 {	// if f is a product, return a product, otherwise return a power
 	// more simplifications can be done, but for the moment we don't go much deeper
 
 	std::shared_ptr < Function::Scalar > f_scalar =
-		std::dynamic_pointer_cast < Function::Scalar > ( f );
+		std::dynamic_pointer_cast < Function::Scalar > ( f.core );
 	assert ( f_scalar );
 	
 	std::shared_ptr < Function::Constant > f_const =
-		std::dynamic_pointer_cast < Function::Constant > ( f );
+		std::dynamic_pointer_cast < Function::Constant > ( f.core );
 	if ( f_const )
-	{	if ( f_const == Function::Zero ) return Function::Zero;
-		if ( f_const == Function::One )  return Function::One;
-		return std::shared_ptr<Function::Core>
-		{ new Function::Constant ( pow ( f_const->val, e ) ) };   }
+	{	if ( f_const->val == 0. ) return Function ( 0. );
+		if ( f_const->val == 1. ) return Function ( 1. );
+		return Function ( pow ( f_const->val, e ) );   }
 
 	std::shared_ptr < Function::Product > f_prod =
-		std::dynamic_pointer_cast < Function::Product > ( f );
+		std::dynamic_pointer_cast < Function::Product > ( f.core );
 
 	if ( f_prod )  // f is a product
-	{	std::shared_ptr < Function::Product > result { new Function::Product };  // empty product
-		std::forward_list<std::shared_ptr<Function::Scalar>>::iterator it;
+	{ Function::Product * result = new Function::Product;  // empty product
+		std::forward_list<Function>::iterator it;
 		for ( it = f_prod->factors.begin(); it != f_prod->factors.end(); it++ )
-		{	std::shared_ptr < Function::Scalar > g = *it;
-			std::shared_ptr < Function::Scalar > g_pow =
-				std::dynamic_pointer_cast < Function::Scalar > ( Function::power ( g, e ) );
-			assert ( g_pow );
-			result->factors.push_front ( g_pow );  }
-		return result;                                                                      }
+		{	Function g = *it;
+			result->factors.push_front ( power ( g, e ) );  }
+		return Function ( tag::whose_core_is, result );                              }
 
-	return std::shared_ptr<Function::Core> { new Function::Power ( f_scalar, e ) };         }
+	return Function ( tag::whose_core_is, new Function::Power ( f, e ) );              }
 
 
-std::shared_ptr<Function::Core> Function::Constant::deriv
-( std::shared_ptr<Function::Core> ) const
+Function Function::Constant::deriv
+( Function ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
-{	return Function::Zero;  }
+{	return Function ( 0. );  }
 
 
-std::shared_ptr<Function::Core> Function::Sum::deriv
-( std::shared_ptr<Function::Core> x ) const
+Function Function::Sum::deriv
+( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
-{	std::shared_ptr<Function::Core> result = Function::Zero;
-	std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator it;
-	for ( it = this->terms.begin(); it != this->terms.end(); it++ )
-		result = Function::sum ( result, (*it)->deriv(x) );
+{	std::forward_list<Function>::const_iterator it = this->terms.begin();
+	Function result = 0.;
+	for ( ; it != this->terms.end(); it++ )
+		result += it->core->deriv(x);
 	return result;                                                    }
 
-std::shared_ptr<Function::Core> Function::Product::deriv
-( std::shared_ptr<Function::Core> x ) const
+Function Function::Product::deriv
+( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
-{	std::shared_ptr<Function::Core> result = Function::Zero;
-	std::forward_list<std::shared_ptr<Function::Scalar>>::const_iterator it1, it2;
+{	Function result = 0.;
+	std::forward_list<Function>::const_iterator it1, it2;
 	size_t c1, c2;
 	for ( it1 = this->factors.begin(), c1 = 0;
         it1 != this->factors.end(); it1++, c1++ )
-	{	std::shared_ptr<Function::Core> partial_res = Function::One;
+	{ Function partial_res = 1.;
 		for ( it2 = this->factors.begin(), c2 = 0;
 	        it2 != this->factors.end(); it2++, c2++ )
 			if ( c1 == c2 )  // later we can eliminate c1 and c2
 			{	assert ( it1 == it2 );
-				partial_res = Function::product ( partial_res, (*it2)->deriv(x) );  }
+				partial_res *= it2->core->deriv(x);  }
 			else				
 			{	assert ( it1 != it2 );
-				partial_res = Function::product ( partial_res, *it2 );  }
-		result = Function::sum ( result, partial_res );                              }
-	return result;                                                                     }
+				partial_res *= *it2;  }
+		result += partial_res;                              }
+	return result;                                            }
 
-std::shared_ptr<Function::Core> Function::Power::deriv
-( std::shared_ptr<Function::Core> x ) const
+Function Function::Power::deriv
+( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
-{	// we use Function constructor as a factory function for Function::Constant
-	Function expo ( this->exponent );
-	std::shared_ptr<Function::Core> result = expo.core;
-	std::shared_ptr<Function::Core> new_power =
-		Function::power ( this->base, this->exponent - 1. );
-	result = Function::product ( result, new_power );
-	std::shared_ptr<Function::Core> deriv_base = this->base->deriv ( x );
-	result = Function::product ( result, deriv_base );
+{	Function result = this->exponent;
+	result *= power ( this->base, this->exponent - 1. );
+	result *= this->base.core->deriv ( x );
 	return result;                                                           }
 
-std::shared_ptr<Function::Core> Function::JustTesting::deriv
-( std::shared_ptr<Function::Core> x ) const
-{ if ( this == x.get() ) return Function::One;
-	return Function::Zero;                        }
+Function Function::Sin::deriv
+( Function x ) const
+//  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
+{	return cos ( this->base ) * this->base.deriv(x);  }
 
-std::shared_ptr<Function::Core> Function::CoupledWithField::Scalar::deriv
-( std::shared_ptr<Function::Core> x ) const
-{ if ( this == x.get() ) return Function::One;
-	return Function::Zero;                        }
+Function Function::Cos::deriv
+( Function x ) const
+//  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
+{	return - sin ( this->base ) * this->base.deriv(x);  }
 
-std::shared_ptr<Function::Core> Function::Vector::deriv
-( std::shared_ptr<Function::Core> x ) const
+Function Function::JustTesting::deriv
+( Function x ) const
+{ if ( this == x.core.get() ) return Function ( 1. );
+	return Function ( 0. );                        }
+
+Function Function::CoupledWithField::Scalar::deriv
+( Function x ) const
+{ if ( this == x.core.get() ) return Function ( 1. );
+	return Function ( 0. );                        }
+
+Function Function::Vector::deriv
+( Function x ) const
 { assert ( false );  }
-
 
 
