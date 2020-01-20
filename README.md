@@ -15,5 +15,5 @@ see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
 To learn maniFEM, you should begin by reading the [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
-To use maniFEM, you need a recent version of the 'g++' compiler and the 'make' utility. Under linux it should be easy to install them. It is not that easy to install and use them under windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. You should copy all `.cpp` and `.h` files to some directory in your computer, together with `Makefile`.
+To use maniFEM, you need a recent version of the `g++` compiler and the `make` utility. Under linux it should be easy to install them. It is not that easy to install and use them under windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. You should copy all `.cpp` and `.h` files to some directory in your computer, together with `Makefile`.
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
