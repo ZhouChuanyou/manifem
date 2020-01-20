@@ -99,12 +99,12 @@ class Manifold
 
 	// P = sA + sB + uC + vD,  s+t+u+v == 1
 	inline void interpolate ( const Cell & P, double s, const Cell & A,
-	  double t, const Cell & B, double u, const Cell & C, double v, const Cell & D ) const;
+		double t, const Cell & B, double u, const Cell & C, double v, const Cell & D ) const;
 
 	// P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1
 	inline void interpolate ( const Cell & P, double s, const Cell & A,
-	  double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
-	  double w, const Cell & E, double z, const Cell & F ) const;
+		double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
+		double w, const Cell & E, double z, const Cell & F ) const;
 
 	// P = sum c_k P_k,  sum c_k == 1
 	inline void interpolate
@@ -114,12 +114,12 @@ class Manifold
 	
 	inline Manifold implicit ( const Function::Equality eq ) const;
 	inline Manifold implicit ( const Function::Equality eq1,
-                             const Function::Equality eq2 ) const;
+	                           const Function::Equality eq2 ) const;
 	inline Manifold parametric ( const Function::Equality eq ) const;
 	inline Manifold parametric ( const Function::Equality eq1,
-                              const Function::Equality eq2 ) const;
+	                             const Function::Equality eq2 ) const;
 	inline Manifold parametric ( const Function::Equality eq1,
-           const Function::Equality eq2, const Function::Equality eq3 ) const;
+        	const Function::Equality eq2, const Function::Equality eq3 ) const;
 
 	static Manifold working;
 
@@ -149,18 +149,18 @@ class Manifold::Core
 
 	// P = sA + sB,  s+t == 1
 	virtual void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const = 0;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const = 0;
 
 	// P = sA + sB + uC + vD,  s+t+u+v == 1
 	virtual void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D ) const = 0;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D ) const = 0;
 
 	// P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1
 	virtual void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
-	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const = 0;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
+		double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const = 0;
 	
 	// P = sum c_k P_k,  sum c_k == 1
 	virtual void interpolate ( Cell::Positive::Vertex * P,
@@ -199,7 +199,7 @@ inline void Manifold::interpolate
 	assert ( t >= 0. );  assert ( t <= 1. );
 	// cannot assert the sum is 1. due to round-off errors
 	this->core->interpolate ( ( Cell::Positive::Vertex * ) P.core,
-	  s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core );  }
+		s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core );  }
 
 
 // P = sA + sB + uC + vD,  s+t+u+v == 1
@@ -218,8 +218,8 @@ inline void Manifold::interpolate
 	assert ( v >= 0. );  assert ( v <= 1. );
 	// cannot assert the sum is 1. due to round-off errors
 	this->core->interpolate ( ( Cell::Positive::Vertex * ) P.core,
-	  s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core,
-	  u, ( Cell::Positive::Vertex * ) C.core, v, ( Cell::Positive::Vertex * ) D.core );  }
+		s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core,
+		u, ( Cell::Positive::Vertex * ) C.core, v, ( Cell::Positive::Vertex * ) D.core );  }
 
 
 // P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1
@@ -243,9 +243,9 @@ inline void Manifold::interpolate
 	assert ( z >= 0. );  assert ( z <= 1. );
 	// cannot assert the sum is 1. due to round-off errors
 	this->core->interpolate ( ( Cell::Positive::Vertex * ) P.core,
-	  s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core,
-	  u, ( Cell::Positive::Vertex * ) C.core, v, ( Cell::Positive::Vertex * ) D.core,
-	  w, ( Cell::Positive::Vertex * ) E.core, z, ( Cell::Positive::Vertex * ) F.core );  }
+		s, ( Cell::Positive::Vertex * ) A.core, t, ( Cell::Positive::Vertex * ) B.core,
+		u, ( Cell::Positive::Vertex * ) C.core, v, ( Cell::Positive::Vertex * ) D.core,
+		w, ( Cell::Positive::Vertex * ) E.core, z, ( Cell::Positive::Vertex * ) F.core );  }
 
 
 // P = sum c_k P_k,  sum c_k == 1
@@ -309,26 +309,26 @@ class Manifold::Euclid : public Manifold::Core
 	
 	// P = sA + sB,  s+t == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const;
 	void pretty_interpolate
 		( const Cell & P, double s, const Cell & A, double t, const Cell & B ) const;
 
 	// P = sA + sB + uC + vD,  s+t+u+v == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D  ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D  ) const;
 	void pretty_interpolate
 	(	const Cell & P, double s, const Cell & A, double t, const Cell & B,
 		                double u, const Cell & C, double v, const Cell & D  ) const;
 
 	// P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
-	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
+		double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
 	void pretty_interpolate ( const Cell & P, double s, const Cell & A,
-	  double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
-	  double w, const Cell & E, double z, const Cell & F ) const;
+		double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
+		double w, const Cell & E, double z, const Cell & F ) const;
 
 	// P = sum c_k P_k,  sum c_k == 1     virtual from Manifold::Core
   void interpolate ( Cell::Positive::Vertex * P,
@@ -566,18 +566,18 @@ class Manifold::Parametric : public Manifold::Core
 
 	// P = sA + sB,  s+t == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const;
 
 	// P = sA + sB + uC + vD,  s+t+u+v == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D  ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D  ) const;
 
 	// P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
-	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
-	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
+		double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+		double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
+		double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
 
 	// P = sum c_k P_k,  sum c_k == 1     virtual from Manifold::Core
 	virtual void interpolate ( Cell::Positive::Vertex * P,
@@ -684,7 +684,4 @@ void inline Mesh::baricenter ( const Cell & ver, const Cell & seg_ini )
 
 #endif
 // ifndef MANIFEM_MANIFOLD_H
-
-
-
 

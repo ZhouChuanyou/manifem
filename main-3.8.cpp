@@ -15,7 +15,7 @@ int main ()
 	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
 
-  Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
+	Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
 
 	// build the base (a closed curve)
 	nut.implicit ( x*x + 3.*z == 0. );

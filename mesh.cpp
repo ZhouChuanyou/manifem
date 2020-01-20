@@ -419,7 +419,7 @@ void Mesh::Positive::print_everything ( )  // virtual from Mesh::Core
 	{	std::cout << "cells of dim " << d << " :" << std::endl;
 		int counter = 0;
 		std::list<Cell::Core*>::iterator it = this->cells[d].begin(),
-		                                               it_e = this->cells[d].end();
+		                                 it_e = this->cells[d].end();
 		for ( ; it != it_e; it++, counter++ ) std::cout << (*it)->get_name() << " ";
 		if ( counter > 0 )  std::cout << std::endl;                                   }  }
 
@@ -430,7 +430,7 @@ void Mesh::OneDim::Positive::print_everything ( )  // virtual from Mesh::Core
 	{	std::cout << "cells of dim " << d << " :" << std::endl;
 		int counter = 0;
 		std::list<Cell::Core*>::iterator it = this->cells[d].begin(),
-		                                               it_e = this->cells[d].end();
+		                                 it_e = this->cells[d].end();
 		for ( ; it != it_e; it++, counter++ ) std::cout << (*it)->get_name() << " ";
 		if ( counter > 0 )  std::cout << std::endl;                                   }  }
 
@@ -624,10 +624,10 @@ void Cell::Positive::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 	msh->deep_connections ( this, this, Mesh::action_add );
 	
 	assert ( this->base_p->cell_behind_within.find(msh) ==
-           this->base_p->cell_behind_within.end()         );
+	         this->base_p->cell_behind_within.end()         );
 	this->base_p->cell_behind_within[msh] = this;
 	assert ( this->tip_p->cell_behind_within.find(msh) ==
-           this->tip_p->cell_behind_within.end()         );
+	         this->tip_p->cell_behind_within.end()         );
 	this->tip_p->cell_behind_within[msh] = this;
 
 } // end of Cell::Positive::Segment::add_to
@@ -656,11 +656,11 @@ void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 	msh->deep_connections ( this, this, Mesh::action_remove );
 	
 	assert ( this->base_p->cell_behind_within.find(msh) !=
-           this->base_p->cell_behind_within.end()         );
+	         this->base_p->cell_behind_within.end()         );
 	assert ( this->base_p->cell_behind_within[msh] == this );
 	this->base_p->cell_behind_within.erase(msh);
 	assert ( this->tip_p->cell_behind_within.find(msh) !=
-           this->tip_p->cell_behind_within.end()         );
+	         this->tip_p->cell_behind_within.end()         );
 	assert ( this->tip_p->cell_behind_within[msh] == this );
 	this->tip_p->cell_behind_within.erase(msh);
 
@@ -694,11 +694,11 @@ void Cell::Negative::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 	msh->deep_connections ( pos_seg, this, Mesh::action_add_rev );
 
 	assert ( pos_seg->base_p->reverse_p->cell_behind_within.find(msh) ==
-           pos_seg->base_p->reverse_p->cell_behind_within.end()         );
-  pos_seg->base_p->reverse_p->cell_behind_within[msh] = this;
+	         pos_seg->base_p->reverse_p->cell_behind_within.end()         );
+	pos_seg->base_p->reverse_p->cell_behind_within[msh] = this;
 	assert ( pos_seg->tip_p->reverse_p->cell_behind_within.find(msh) ==
-           pos_seg->tip_p->reverse_p->cell_behind_within.end()         );
-  pos_seg->tip_p->reverse_p->cell_behind_within[msh] = this;
+	         pos_seg->tip_p->reverse_p->cell_behind_within.end()         );
+	pos_seg->tip_p->reverse_p->cell_behind_within[msh] = this;
 
 } // end of Cell::Negative::Segment::add_to
 
@@ -729,12 +729,12 @@ void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 	msh->deep_connections ( pos_seg, this, Mesh::action_remove_rev );
 	
 	assert ( pos_seg->base_p->reverse_p->cell_behind_within.find(msh) !=
-           pos_seg->base_p->reverse_p->cell_behind_within.end()         );
-  assert ( pos_seg->base_p->reverse_p->cell_behind_within[msh] == this );
+	         pos_seg->base_p->reverse_p->cell_behind_within.end()         );
+	assert ( pos_seg->base_p->reverse_p->cell_behind_within[msh] == this );
 	pos_seg->base_p->reverse_p->cell_behind_within.erase(msh);
 	assert ( pos_seg->tip_p->reverse_p->cell_behind_within.find(msh) !=
-           pos_seg->tip_p->reverse_p->cell_behind_within.end()         );
-  assert ( pos_seg->tip_p->reverse_p->cell_behind_within[msh] == this );
+	         pos_seg->tip_p->reverse_p->cell_behind_within.end()         );
+	assert ( pos_seg->tip_p->reverse_p->cell_behind_within[msh] == this );
 	pos_seg->tip_p->reverse_p->cell_behind_within.erase(msh);
 
 } // end of Cell::Negative::Segment::remove_from
@@ -878,13 +878,13 @@ void Mesh::action_add ( Cell::Core * cll, Cell::Core * o_cll,
 	assert ( msh_dim_p1 > cll_dim );
 	size_t dif_dim = msh_dim_p1 - cll_dim - 1;
 	assert ( cll_pos->meshes.size() > dif_dim );
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 	// inspired in item 24 of the book : Scott Meyers, Effective STL           //
-	typedef std::map<Mesh::Core*,Cell::field_to_meshes> maptype;     //
-	maptype & cmd = cll_pos->meshes[dif_dim];                                      //
+	typedef std::map<Mesh::Core*,Cell::field_to_meshes> maptype;               //
+	maptype & cmd = cll_pos->meshes[dif_dim];                                  //
 	maptype::iterator lb = cmd.lower_bound(msh);                               //
 	if ( ( lb == cmd.end() ) or ( cmd.key_comp()(msh,lb->first) ) )            //
-	{ std::list <Cell::Core*> & mcd = msh->cells[cll_dim];               //
+	{ std::list <Cell::Core*> & mcd = msh->cells[cll_dim];                     //
 	  mcd.push_front ( o_cll );                                                //
 	  cmd.emplace_hint ( lb, std::piecewise_construct,                         //
 	                     std::forward_as_tuple(msh),                           //
@@ -892,7 +892,7 @@ void Mesh::action_add ( Cell::Core * cll, Cell::Core * o_cll,
 	else                                                                       //
 	{ lb->second.counter_pos += cp;                                            //
 	  lb->second.counter_neg += cn;   }                                        //
-////////// code below is conceptually equivalent to the above ////////////////
+////////// code below is conceptually equivalent to the above //////////////////////
 //	if (cll->meshes[dif_dim].find(msh)==cll->meshes[dif_dim].end())     //
 //	{ msh->cells[cll->dim].push_front(o_cll);                           //
 //	  Cell::field_to_meshes field;                                      //
@@ -903,7 +903,7 @@ void Mesh::action_add ( Cell::Core * cll, Cell::Core * o_cll,
 //	else                                                                //
 //	{ cll->meshes[dif_dim][msh].counter_pos += cp;                      //
 //	  cll->meshes[dif_dim][msh].counter_neg += cn;   }                  //
-//////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 } // end of Mesh::action_add
 
@@ -1128,12 +1128,12 @@ void Mesh::Core::deep_connections
 			if ( lower_cell_tri.dim == higher_mesh_tri.dim )
 			{	assert ( lower_cell_tri.obj == cll );
 				action ( cll, o_cll, higher_mesh_tri.obj,
-								 cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-								 cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );  }
+				         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+				         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );  }
 			else
 				action ( lower_cell_tri.obj, lower_cell_tri.obj, higher_mesh_tri.obj,
-								 cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-								 cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
+				         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+				         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
 		}  }
 
 } // end of Mesh::Core::deep_connections

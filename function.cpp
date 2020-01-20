@@ -254,7 +254,7 @@ Function maniFEM::operator* ( const Function & f, const Function & g )
 	std::shared_ptr < Function::Product > g_prod =
 		std::dynamic_pointer_cast < Function::Product > ( g.core );
 
-  Function::Product * result = new Function::Product;  // empty product
+	Function::Product * result = new Function::Product;  // empty product
 	if ( g_prod )  // g is a product
 	{	std::forward_list<Function>::iterator it_g;
 		for ( it_g = g_prod->factors.begin(); it_g != g_prod->factors.end(); it_g++ )

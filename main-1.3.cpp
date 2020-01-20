@@ -27,9 +27,9 @@ int main () {
 	Cell G ( tag::vertex );  x(G) =  1.;  y(G) = 0.;
 	Cell H ( tag::vertex );  x(H) =  1.;  y(H) = 0.5;
 	Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
-  Mesh BC ( tag::segment, B, C, tag::divided_in, 8 );
+	Mesh BC ( tag::segment, B, C, tag::divided_in, 8 );
 	Mesh CD ( tag::segment, C, D, tag::divided_in, 10 );
-  Mesh DA ( tag::segment, D, A, tag::divided_in, 8 );
+	Mesh DA ( tag::segment, D, A, tag::divided_in, 8 );
 	Mesh CE ( tag::segment, C, E, tag::divided_in, 7 );
 	Mesh EF ( tag::segment, E, F, tag::divided_in, 10 );
 	Mesh FD ( tag::segment, F, D, tag::divided_in, 7 );
@@ -42,7 +42,7 @@ int main () {
 	Mesh BGHC ( tag::rectangle, GH, HC, BC.reverse(), BG );
 	Mesh L_shaped ( tag::join, ABCD, CEFD, BGHC );
 
-  L_shaped.export_msh ("L-shaped.msh");
+	L_shaped.export_msh ("L-shaped.msh");
 	L_shaped.draw_ps ( "L-shaped.eps");
 	
 	cout << "produced files L-shaped.msh and L-shaped.eps" << endl;

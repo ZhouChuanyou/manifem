@@ -21,7 +21,7 @@ int main () {
 	Mesh arc_of_hiperbola ( tag::segment, A, B, tag::divided_in, 7 );
 
 	arc_of_hiperbola.draw_ps ("hiperbola.eps");
-  arc_of_hiperbola.export_msh ("hiperbola.msh");
+	arc_of_hiperbola.export_msh ("hiperbola.msh");
 	
 	cout << "produced files hiperbola.eps and hiperbola.msh" << endl;
 }

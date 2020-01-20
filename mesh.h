@@ -52,8 +52,8 @@ namespace tag {
 	struct DividedIn { };  static const DividedIn divided_in;
 	struct Triangle { };  static const Triangle triangle;
 	struct Quadrangle { };  static const Quadrangle quadrangle;
-                          static const Quadrangle rectangle;
-                          static const Quadrangle square;
+	                        static const Quadrangle rectangle;
+	                        static const Quadrangle square;
 	struct WhoseBoundaryIs { };  static const WhoseBoundaryIs whose_bdry_is;
 	                             static const WhoseBoundaryIs whose_boundary_is;
 	struct WhoseCoreIs { };  static const WhoseCoreIs whose_core_is;
@@ -200,7 +200,7 @@ class Cell
 		inline field_to_meshes ( short int i, short int j )
 		:	counter_pos {i}, counter_neg {j} { }
 		inline field_to_meshes ( short int i, short int j,
-	                           std::list<Cell::Core*>::iterator w )
+		                         std::list<Cell::Core*>::iterator w )
 		:	counter_pos {i}, counter_neg {j}, where {w} { }                    };
 
   class Positive;  class Negative;  class Vertex;  class Segment;
@@ -296,8 +296,8 @@ class Mesh
 	                                       const Cell & NE, const Cell & NW, size_t m, size_t n,
 	              const tag::WithTriangles & wt = tag::not_with_triangles                        );
 	inline Mesh ( const tag::Pretty &, const tag::Quadrangle &,
-                const Mesh & south, const Mesh & east, const Mesh & north, const Mesh & west,
-                const tag::WithTriangles & wt = tag::not_with_triangles );
+	              const Mesh & south, const Mesh & east, const Mesh & north, const Mesh & west,
+	              const tag::WithTriangles & wt = tag::not_with_triangles );
 	inline Mesh ( const tag::Join &, const std::list<Mesh> & l );
 	inline Mesh ( const tag::Join &, const Mesh &, const Mesh & );
   inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh & );
@@ -321,10 +321,10 @@ class Mesh
 	       const tag::InherentOrientation &                                             );
 
 	Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif,
-         const tag::DesiredLength &, double desired_length, const tag::InherentOrientation & );
+	       const tag::DesiredLength &, double desired_length, const tag::InherentOrientation & );
 
 	Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
-         const tag::DesiredLength &, double desired_length                );
+	       const tag::DesiredLength &, double desired_length                );
 
 	inline Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 	              const tag::DesiredLength &, double desired_length, const tag::RandomOrientation & )
@@ -361,7 +361,7 @@ class Mesh
 	              const tag::StopAt &, const Cell & stop,
 	              const tag::DesiredLength &, double desired_length, const tag::RandomOrientation & )
 	:	Mesh ( tag::progressive, tag::start_at, start, tag::stop_at, stop,
-	         tag::desired_length, desired_length                          )  { }
+		       tag::desired_length, desired_length                          )  { }
 
 	Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	       const tag::StopAt &, const Cell & stop,
@@ -370,7 +370,7 @@ class Mesh
 	inline Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	              const tag::DesiredLength &, double desired_length, const tag::InherentOrientation & )
 	:	Mesh ( tag::progressive, tag::start_at, start, tag::stop_at, start,
-	         tag::desired_length, desired_length, tag::inherent_orientation )  { }
+		       tag::desired_length, desired_length, tag::inherent_orientation )  { }
 
 	void pretty_constructor ( const tag::Segment &, const Cell & A, const Cell & B,
                             const tag::DividedIn &, size_t n );
@@ -515,8 +515,8 @@ class Cell::Core
 	{ }
 
 	inline Core ( const tag::IsNegative& ,
-	  const tag::ReverseOf &, Cell::Core * rev, const tag::OfDimension &, size_t d )
-	: reverse_p { rev },
+		const tag::ReverseOf &, Cell::Core * rev, const tag::OfDimension &, size_t d )
+	:	reverse_p { rev },
 		double_heap ( Cell::double_heap_size_neg [d] ),
 		size_t_heap ( Cell::size_t_heap_size_neg [d] ),
 		short_int_heap ( Cell::short_int_heap_size_neg [d] )
@@ -533,7 +533,7 @@ class Cell::Core
 	virtual size_t get_dim ( ) const = 0;
 	virtual Cell::Core * reverse ( const tag::BuildIfNotExists & ) = 0;
 	virtual Cell::Core * tip ();
-  virtual Cell::Core * base ();
+	virtual Cell::Core * base ();
 
 	virtual bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const = 0;
 	virtual bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const = 0;
@@ -566,7 +566,7 @@ class Cell::Core
 
 #ifndef NDEBUG
 	std::string name;
-  virtual std::string get_name ( ) = 0;
+	virtual std::string get_name ( ) = 0;
 	virtual void print_everything ( ) = 0;
 #endif
 
@@ -595,14 +595,14 @@ class Cell::Core::Positive : public Cell::Core
 	std::vector < std::map < Mesh::Core *, Cell::field_to_meshes > > meshes;
 
 #ifndef NDEBUG
-  std::string get_name();
+	std::string get_name();
 #endif
 	
 	inline Positive ( const tag::OfDimension &, size_t d,
                             const tag::SizeMeshes &, size_t sz  )
 	:	Cell::Core ( tag::is_positive, tag::of_dim, d ),
 		meshes ( sz )
-	{ }
+	{	}
 
 	bool is_positive ( ) const;  // virtual from Cell::Core
 	Cell::Core::Positive * get_positive ( );  // virtual from Cell::Core
@@ -625,11 +625,11 @@ class Cell::Core::Negative : public Cell::Core
 	inline Negative ( const tag::OfDimension &, size_t d,
 														const tag::ReverseOf &, Cell::Core::Positive * rev )
 	: Cell::Core ( tag::is_negative, tag::reverse_of, rev, tag::of_dim, d )
-	{ }
+	{	}
 
 	inline Negative ( const tag::Ghost & )
 	: Cell::Core ( tag::ghost )
-	{ }
+	{	}
 
 	bool is_positive ( ) const;  // virtual from Cell::Core
 	Cell::Core::Positive * get_positive ( );  // virtual from Cell::Core
@@ -645,7 +645,7 @@ class Cell::Core::Negative : public Cell::Core
 	// so we suggest to use those (see class Cell::Core)
 
 #ifndef NDEBUG
-  std::string get_name();
+	std::string get_name();
 #endif
 	
 }; // end of class Cell::Core::Negative
@@ -665,7 +665,7 @@ class Cell::Positive : public Cell::Core::Positive
                         const tag::WhoseBoundaryIs &, Mesh::Core * msh );
 	inline Positive ( const tag::WhoseBoundaryIs &, Mesh::Core * msh );
 	inline Positive ( const tag::Triangle &, Cell::Core * AB,
-	                     Cell::Core * BC, Cell::Core * CA );
+	                        Cell::Core * BC, Cell::Core * CA );
 	inline Positive ( const tag::Quadrangle &, Cell::Core * AB, Cell::Core * BC,
 	                                           Cell::Core * CD, Cell::Core * DA );
 
@@ -773,7 +773,7 @@ class Cell::Negative::Vertex : public Cell::Core::Negative
 
 	inline Vertex ( const tag::Ghost & )
 	:	Cell::Core::Negative ( tag::ghost )
-	{ }
+	{	}
 
 	Vertex ( const Cell::Negative::Vertex & ) = delete;
 	Vertex ( const Cell::Negative::Vertex && ) = delete;
@@ -940,7 +940,7 @@ class Mesh::Positive : public Mesh::Core
 	
 	inline Positive ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
-	{ }
+	{	}
 
   Positive ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA );
 	// defined in global.cpp
@@ -1030,8 +1030,8 @@ class Mesh::OneDim::Positive : public Mesh::Core
 	// see paragraph ... in the manual
 	
 #ifndef NDEBUG
-  std::string get_name();  // virtual from Mesh::Core
- 	void print_everything ();  // virtual from Mesh::Core
+	std::string get_name();  // virtual from Mesh::Core
+	void print_everything ();  // virtual from Mesh::Core
 #endif
 
 }; // end of  class Mesh::OneDim::Positive
@@ -1087,7 +1087,7 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsPosit
 : core { c }, meth { & c->get_meth_pos() }
 {	assert ( c );
 	assert ( ( meth == & Mesh::Positive::methods_pos ) or
-           ( meth == & Mesh::OneDim::Positive::methods_pos ) );  }
+	         ( meth == & Mesh::OneDim::Positive::methods_pos ) );  }
 
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
@@ -1097,7 +1097,7 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
 : core { c }, meth { & c->get_meth_neg() }
 {	assert ( c );
 	assert ( ( meth == & Mesh::Positive::methods_neg ) or
-           ( meth == & Mesh::OneDim::Positive::methods_neg ) );  }
+	         ( meth == & Mesh::OneDim::Positive::methods_neg ) );  }
 
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
@@ -1167,15 +1167,15 @@ inline Mesh::Mesh
 	const Mesh & south, const Mesh & east, const Mesh & north, const Mesh & west,
 	const tag::WithTriangles & wt                                                  )
 // 'wt' defaults to 'tag::not_with_triangles',
-: Mesh ( tag::whose_core_is, new Mesh::Positive
-         ( tag::quadrangle, south, east, north, west, wt ) )
+:	Mesh ( tag::whose_core_is, new Mesh::Positive
+	        ( tag::quadrangle, south, east, north, west, wt ) )
 {	}
 
 inline Mesh::Mesh ( const tag::Quadrangle &, const Cell & SW, const Cell & SE,
                     const Cell & NE, const Cell & NW, size_t m, size_t n,
                     const tag::WithTriangles & wt                               )
 // 'wt' defaults to 'tag::not_with_triangles',
-: Mesh ( tag::whose_core_is, new Mesh::Positive ( tag::quadrangle, SW, SE, NE, NW, m ,n, wt ) )
+:	Mesh ( tag::whose_core_is, new Mesh::Positive ( tag::quadrangle, SW, SE, NE, NW, m ,n, wt ) )
 {	}
 
 
@@ -1250,7 +1250,7 @@ inline Cell::Cell ( const tag::BehindFace &, const Cell & face,
 inline Cell::Cell ( const tag::BehindFace &, const Cell & face,
 	const tag::WithinMesh &, const Mesh & msh, const tag::MayNotExist & )
 :	core { msh.cell_behind ( face.core, tag::may_not_exist ) }
-{ }
+{	}
 	
 
 inline Cell::Cell ( const tag::InFrontOfFace &, const Cell & face,
@@ -1268,8 +1268,8 @@ inline Cell::Cell ( const tag::InFrontOfFace &, const Cell & face,
 
 inline Cell::Cell ( const tag::Vertex &, const tag::IsPositive & ispos )
 // by default, ispos = tag::is_positive, so may be called with only one argument
-: Cell ( tag::whose_core_is, new Cell::Positive::Vertex )
-{ }
+:	Cell ( tag::whose_core_is, new Cell::Positive::Vertex )
+{	}
 
 
 inline Cell::Cell ( const tag::Segment &, const Cell & A, const Cell & B )
@@ -1281,15 +1281,15 @@ inline Cell::Cell ( const tag::Segment &, const Cell & A, const Cell & B )
 
 
 inline Cell::Cell ( const tag::Triangle &, const Cell & AB, const Cell & BC, const Cell & CA )
-: Cell ( tag::whose_core_is, new Cell::Positive
+:	Cell ( tag::whose_core_is, new Cell::Positive
             ( tag::triangle, AB.core, BC.core, CA.core ) )
-{ }
+{	}
 
 inline Cell::Cell ( const tag::Quadrangle &, const Cell & AB, const Cell & BC,
                                              const Cell & CD, const Cell & DA )
-: Cell ( tag::whose_core_is, new Cell::Positive
+:	Cell ( tag::whose_core_is, new Cell::Positive
             ( tag::quadrangle, AB.core, BC.core, CD.core, DA.core ) )
-{ }
+{	}
 
 //-----------------------------------------------------------------------------//
 

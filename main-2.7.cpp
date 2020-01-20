@@ -14,7 +14,7 @@ int main ()
 	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
 
-  Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
+	Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
 
 	// let's mesh a hemisphere (much deformed)
 	// we take the four triangles in example 2.6 in the manual
@@ -108,7 +108,7 @@ int main ()
 	// now, this does not look exactly like example 2.8 in the manual ...
 	// it's not a mistake - it's a challenge to the reader to discover why
 	
-  bumpy.export_msh ("bumpy.msh");
+	bumpy.export_msh ("bumpy.msh");
 	
 	cout << "produced file bumpy.msh" << endl;
 }

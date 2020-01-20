@@ -19,13 +19,13 @@ int main ()
 	const double rc = 0.45;  // radius of the cylinder
 	const double seg_size = 0.1;
 	
-  Manifold cylinder = RR3.implicit ( y*y + (z-0.5)*(z-0.5) == rc*rc );
+	Manifold cylinder = RR3.implicit ( y*y + (z-0.5)*(z-0.5) == rc*rc );
 	Manifold intersection = cylinder.implicit ( x*x + y*y + z*z == rs*rs );
 	Cell start1 ( tag::vertex );  x(start1) = 1.;  y(start1) = 0.;  z(start1) = 0.5 - rc;
 	intersection.project ( start1 );
 	std::vector < double > tau { 0., 1., 0. };
 	Mesh circle_1 ( tag::progressive, tag::start_at, start1, tag::towards, tau,
-                  tag::desired_length, seg_size                              );
+	                tag::desired_length, seg_size                              );
 
 	Cell start2 ( tag::vertex );  x(start2) = -1.;  y(start2) = 0.;  z(start2) = 0.5 - rc;
 	intersection.project ( start2 );
@@ -43,7 +43,7 @@ int main ()
 	RR3.implicit ( x*x + y*y + z*z == rs*rs );
 	tau = { 0., 0., -1. };
 	Mesh sph ( tag::progressive, tag::boundary, two_circles_rev,
-             tag::start_at, start1, tag::towards, tau,
+	           tag::start_at, start1, tag::towards, tau,
 	           tag::desired_length, seg_size              );
 
 	Mesh all ( tag::join, cyl, sph );

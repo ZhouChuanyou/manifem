@@ -139,8 +139,8 @@ void Manifold::Euclid::pretty_interpolate
 
 
 void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
-  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D ) const
+	double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+	double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D ) const
 //  virtual from Manifold::Core
 
 // we could inline these, as interpolate_euclid, to gain speed	
@@ -187,9 +187,9 @@ void Manifold::Euclid::pretty_interpolate
 
 
 void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
-  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
-  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const
+	double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+	double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
+	double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const
 //  virtual from Manifold::Core
 
 // we could inline these, as interpolate_euclid, to gain speed	
@@ -269,7 +269,7 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 
 // P = sA + sB,  s+t == 1     virtual from Manifold::Core
 void Manifold::Implicit::interpolate ( Cell::Positive::Vertex * P,
-  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const
+	double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const
 
 {	this->surrounding_space.core->interpolate ( P, s, A, t, B );
 	this->project ( P );                                          }
@@ -322,9 +322,9 @@ void Manifold::Parametric::interpolate ( Cell::Positive::Vertex * P,
 
 // P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1     virtual from Manifold::Core
 void Manifold::Parametric::interpolate ( Cell::Positive::Vertex * P,
-  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
-  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
-  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const
+	double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
+	double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
+	double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const
 //  virtual from Manifold::Core
 
 {	this->surrounding_space.core->interpolate ( P, s, A, t, B, u, C, v, D, w, E, z, F );

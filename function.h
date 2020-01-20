@@ -105,8 +105,7 @@ class Function::Core
 
 	virtual size_t nb_of_components ( ) const = 0;
 
-	// Function component ( size_t i )
-	//    not defined for Function::Scalar
+	// Function component ( size_t i )    not defined for Function::Scalar
 
 	virtual Function deriv ( Function ) const = 0;
 
@@ -132,11 +131,11 @@ class Function::Scalar : public Function::Core
 	virtual double get_value_on_cell ( Cell::Core * ) const = 0;
 
 	// Function deriv ( Function )
-  //    stays pure virtual from Function::Core
+	//    stays pure virtual from Function::Core
 
 #ifndef NDEBUG	
 	// string repr ( const Function::From & from = Function::from_void )
-  //   stays pure virtual from Function::Core
+	//   stays pure virtual from Function::Core
 	#endif
 };
 
@@ -160,7 +159,7 @@ class Function::ArithmeticExpression : public Function::Scalar
 	
 	#ifndef NDEBUG	
 	// string repr ( const Function::From & from = Function::from_void )
-  //   stays pure virtual from Function::Core, through Function::Scalar
+	//   stays pure virtual from Function::Core, through Function::Scalar
 	#endif
 };
 
@@ -550,7 +549,7 @@ class Function::CoupledWithField::Vector
 	// virtual from Function::Vector, through Function::Aggregate
 	
 	std::vector<double> set_value_on_cell ( Cell::Core *, const std::vector<double> & );
-  // virtual from Function::Vector, through Function::Aggregate
+	// virtual from Function::Vector, through Function::Aggregate
 	
 	std::vector<double> get_value_on_cell ( Cell::Core * ) const;
 	// virtual from Function::Vector, through Function::Aggregate
@@ -700,7 +699,7 @@ inline Function smooth_max
   const Function & j, const Function & k, const tag::Threshold &, double d        )
 // a smooth (C1) approximation of the maximum between six functions
 {	return smooth_max ( smooth_max ( f, g, tag::threshold, d ),
-											smooth_max ( h, i, tag::threshold, d ),
+	                    smooth_max ( h, i, tag::threshold, d ),
 	                    smooth_max ( j, k, tag::threshold, d ), tag::threshold, d );  }
 										
 	

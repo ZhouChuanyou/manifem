@@ -14,10 +14,10 @@ using namespace maniFEM;
 // where we provide faces with orientation compatible with the orientation
 // of the future mesh.
 // However, we think it is easier for the user to build chains of segments like
-//   Cell A ( tag::vertex ); Cell B ( tag::point );
+//   Cell A ( tag::vertex ); Cell B ( tag::vertex );
 //   Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
 // rather than
-//   Cell A ( tag::vertex ); Cell B ( tag::point );
+//   Cell A ( tag::vertex ); Cell B ( tag::vertex );
 //   Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );
 
 void Mesh::pretty_constructor
@@ -128,7 +128,7 @@ void Mesh::pretty_constructor
 		Cell AP = *it_ground;
 		Cell ground_ver = AP.tip();
 		Cell previous_seg ( tag::segment, ground_ver.reverse(), P_CA );
-	  Cell tri ( tag::triangle, AP, previous_seg, TA );
+		Cell tri ( tag::triangle, AP, previous_seg, TA );
 		tri.add_to ( *this );  // 'this' is the mesh we are building
 		Cell previous_ver = Q_CA;
 		ceiling.clear();
@@ -241,7 +241,7 @@ void Mesh::pretty_constructor ( const tag::Quadrangle &, const Mesh & south,
 	CellIterator it_south = south.iter_over ( tag::vertices );
 	CellIterator it_north = north.iter_over ( tag::vertices, tag::reverse );
 	it_east.reset(); it_east++;
-  it_west.reset(); it_west++;
+	it_west.reset(); it_west++;
 	for ( size_t i = 1; i < N_vert; ++i )
 	{	std::list<Cell>::iterator it = horizon.begin();
 		Cell seg = *it;
@@ -366,7 +366,7 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
 	// recover corners from the sides
 	Cell::Positive::Vertex * SW = (Cell::Positive::Vertex*) south.first_vertex().core;
 	assert ( SW == west.last_vertex().core );
-  Cell::Positive::Vertex * SE = (Cell::Positive::Vertex*) east.first_vertex().core;
+	Cell::Positive::Vertex * SE = (Cell::Positive::Vertex*) east.first_vertex().core;
 	assert ( SE == south.last_vertex().core );
 	Cell::Positive::Vertex * NE = (Cell::Positive::Vertex*) north.first_vertex().core;
 	assert ( NE == east.last_vertex().core );
@@ -393,7 +393,7 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
 	CellIterator it_south = south.iter_over ( tag::vertices );
 	CellIterator it_north = north.iter_over ( tag::vertices, tag::reverse );
 	it_east.reset(); it_east++;
-  it_west.reset(); it_west++;
+	it_west.reset(); it_west++;
 	for ( size_t i = 1; i < N_vert; ++i )
 	{	std::list<Cell::Core*>::iterator it = horizon.begin();
 		Cell::Core * seg = *it;
@@ -628,14 +628,14 @@ void Mesh::draw_ps_3d ( std::string file_name )
 	ymin = ymax = y(Vfirst);	
 	zmin = zmax = z(Vfirst);	
 	for ( it++ ; it.in_range(); it++ )
-	{ Cell V = *it; 
+	{	Cell V = *it; 
 		double xV = x(V), yV = y(V), zV = z(V);
 		if ( xV < xmin ) xmin = xV;
-	  if ( xV > xmax ) xmax = xV;
-	  if ( yV < ymin ) ymin = yV;
-	  if ( yV > ymax ) ymax = yV;
-	  if ( zV < zmin ) zmin = zV;
-	  if ( zV > zmax ) zmax = zV;      }
+		if ( xV > xmax ) xmax = xV;
+		if ( yV < ymin ) ymin = yV;
+		if ( yV > ymax ) ymax = yV;
+		if ( zV < zmin ) zmin = zV;
+		if ( zV > zmax ) zmax = zV;      }
 	} // just a block for hiding variables 
 	// we look at the object along the y axis, so values of y do not count
 	if ( xmax-xmin < zmax-zmin ) maxside = zmax-zmin;
@@ -722,11 +722,11 @@ void Mesh::export_msh ( std::string f, std::map<Cell::Core*,size_t> & ver_number
 	file_msh << "$MeshFormat" << std::endl << "2.2 0 8" << std::endl;
 	file_msh << "$EndMeshFormat" << std::endl;
 	
-  file_msh << "$Nodes" << std::endl << this->number_of(tag::cells_of_dim,0) << std::endl;
+	file_msh << "$Nodes" << std::endl << this->number_of(tag::cells_of_dim,0) << std::endl;
 
 	{ // just to make variables local : it, counter, x, y
 	CellIterator it = this->iter_over ( tag::cells_of_dim, 0 );
-  Function x = coord[0], y = coord[1];
+	Function x = coord[0], y = coord[1];
 	if (coord.nb_of_components() == 2)
 	{	for ( it.reset() ; it.in_range(); it++ )
 		{	Cell p = *it;

@@ -15,8 +15,8 @@ int main () {
 
 	Cell N ( tag::vertex );  x(N) =  0.;  y(N) =  1.;
 	Cell W ( tag::vertex );  x(W) = -1.;  y(W) =  0.;
-  Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
-  Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
+	Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
+	Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
 	RR2.implicit ( x*y + x - y == -1. );
 	Mesh NW ( tag::segment, N, W, tag::divided_in, 10 );
@@ -33,7 +33,7 @@ int main () {
 	Mesh diamond ( tag::progressive, tag::boundary, bdry, tag::desired_length, 0.1 );
 
 	diamond.draw_ps ("diamond.eps");
-  diamond.export_msh ("diamond.msh");
+	diamond.export_msh ("diamond.msh");
 	
 	cout << "produced files diamond.eps and diamond.msh" << endl;
 }

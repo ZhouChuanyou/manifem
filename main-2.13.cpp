@@ -27,5 +27,5 @@ int main ()
 	circle.draw_ps ("circle.eps");
 	circle.export_msh ("circle.msh");
 
-		cout << "produced files circle.eps and circle.msh" << endl;
+	cout << "produced files circle.eps and circle.msh" << endl;
 }

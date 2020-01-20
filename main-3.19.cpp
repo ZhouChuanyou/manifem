@@ -28,13 +28,13 @@ int main ()
 	Manifold intersection = cyl_manif.implicit ( x*x + y*y + z*z == 1. );
 	Cell O ( tag::vertex );  x(O) = 0.;  y(O) = 0.;  z(O) = 1.;
 	Cell A ( tag::vertex );  x(A) = 0.7*seg_size;  y(A) = 0.7*seg_size;  z(A) = 1.;
-  intersection.project(A);
+	intersection.project(A);
 	Cell B ( tag::vertex );  x(B) = -0.7*seg_size;  y(B) = 0.7*seg_size;  z(B) = 1.;
-  intersection.project(B);
+	intersection.project(B);
 	Cell C ( tag::vertex );  x(C) = -0.7*seg_size;  y(C) = -0.7*seg_size;  z(C) = 1.;
-  intersection.project(C);
+	intersection.project(C);
 	Cell D ( tag::vertex );  x(D) = 0.7*seg_size;  y(D) = -0.7*seg_size;  z(D) = 1.;
-  intersection.project(D);
+	intersection.project(D);
 
 	Cell OA ( tag::segment, O.reverse(), A );
 	Cell OB ( tag::segment, O.reverse(), B );

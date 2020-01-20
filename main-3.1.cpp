@@ -17,8 +17,8 @@ int main ( )
 
 	Cell N ( tag::vertex );  x(N) =  0.;  y(N) =  1.;
 	Cell W ( tag::vertex );  x(W) = -1.;  y(W) =  0.;
-  Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
-  Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
+	Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
+	Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
 	Mesh NW ( tag::segment, N, W, tag::divided_in, 10 );
 	Mesh WS ( tag::segment, W, S, tag::divided_in, 10 );
