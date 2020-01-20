@@ -1,4 +1,7 @@
 
+// example presented in paragraph 2.4 of the manual
+// builds a circle by joining four segments on an implicit manifold
+
 #include "maniFEM.h"
 
 using namespace maniFEM;
@@ -10,15 +13,21 @@ int main () {
 	Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	Function x = xy[0],  y = xy[1];
 
-	Manifold hiperbola = RR2.implicit ( x*y == 1. );
+	Manifold manif_circle = RR2.implicit ( x*x + y*y == 1. );
 
-	Cell A ( tag::vertex );  x(A) =  0.5;   y(A) =  2.;
-	Cell B ( tag::vertex );  x(B) =  3.;    y(B) =  0.333333333333;
+	Cell N ( tag::vertex );  x(N) =  0.;  y(N) =  1.;
+	Cell W ( tag::vertex );  x(W) = -1.;  y(W) =  0.;
+  Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
+  Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
-	Mesh arc_of_hiperbola ( tag::segment, A, B, 7 );
+	Mesh NW ( tag::segment, N, W, tag::divided_in, 5 );
+	Mesh WS ( tag::segment, W, S, tag::divided_in, 5 );
+	Mesh SE ( tag::segment, S, E, tag::divided_in, 5 );
+	Mesh EN ( tag::segment, E, N, tag::divided_in, 5 );
+	Mesh circle ( tag::join, NW, WS, SE, EN );
 
-	arc_of_hiperbola.draw_ps ("hiperbola.eps");
-  arc_of_hiperbola.export_msh ("hiperbola.msh");
+	circle.draw_ps ("circle.eps");
+  circle.export_msh ("circle.msh");
 	
-	 cout << "reached end" << endl;
+	cout << "produced files circle.eps and circle.msh" << endl;
 }

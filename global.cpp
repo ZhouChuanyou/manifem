@@ -1,5 +1,5 @@
 
-// maniFEM global.cpp 2019.11.09
+// maniFEM global.cpp 2020.01.11
 
 #include <fstream>
 #include "maniFEM.h"
@@ -15,12 +15,13 @@ using namespace maniFEM;
 // of the future mesh.
 // However, we think it is easier for the user to build chains of segments like
 //   Cell A ( tag::vertex ); Cell B ( tag::point );
-//   Mesh AB ( tag::segment, A, B, 10 );
+//   Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
 // rather than
 //   Cell A ( tag::vertex ); Cell B ( tag::point );
-//   Mesh AB ( tag::segment, A.reverse(), B, 10 );
+//   Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );
 
-void Mesh::pretty_constructor ( const tag::Segment &, const Cell & A, const Cell & B, size_t n )
+void Mesh::pretty_constructor
+( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n )
 	
 // see paragraph 6.2 in the manual
 	
@@ -42,14 +43,15 @@ void Mesh::pretty_constructor ( const tag::Segment &, const Cell & A, const Cell
 		seg.add_to (*this);
 		prev_point = P;                                         }
 	Cell seg ( tag::segment, prev_point.reverse(), B );
-	seg.add_to (*this);                                             }
+	seg.add_to (*this);                                          }
 
 // code below does the same as code above
 // above is pretty, slightly slower - below is ugly, slightly faster
 
 
 Mesh::OneDim::Positive::Positive
-( const tag::Segment &, Cell::Positive::Vertex * A, Cell::Positive::Vertex * B, size_t n )
+( const tag::Segment &, Cell::Positive::Vertex * A, Cell::Positive::Vertex * B,
+  const tag::DividedIn &, size_t n                                              )
 
 :	Positive()
 
@@ -524,6 +526,9 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
 //----------------------------------------------------------------------------------//
 
 
+// gs -q -dNOPAUSE -dBATCH -sDEVICE=png16 -sOUTPUTFILE=out.png in.ps
+
+
 void Mesh::draw_ps ( std::string file_name )
 	
 {	// we use the current manifold
@@ -651,6 +656,12 @@ void Mesh::draw_ps_3d ( std::string file_name )
 	file_ps << "<< /PageSize [" << scale_factor*(xmax-xmin+2*border) << " "
 	        << scale_factor*(zmax-zmin+2*border) << "] >> setpagedevice" << std::endl;
 	file_ps << "%%EndSetup" << std::endl << std::endl;
+
+	std::ifstream file_3d ("3d.ps");
+	while ( true )
+	{	std::string line;  // this way 'line' remains local
+		if ( getline ( file_3d, line ) ) file_ps << line + '\n';
+		else break;                                               }
 
 	file_ps << "5 rotxy" << std::endl << "-8 rotyz" << std::endl
           << "0.7 rotxz" << std::endl << std::endl;
@@ -867,11 +878,11 @@ void Mesh::export_msh ( std::string f )
 void Mesh::join_list ( const std::list<Mesh> & l )
 
 {	// check the dimensions
+	#ifndef NDEBUG
 	std::list<Mesh>::const_iterator it0 = l.begin();
 	assert ( it0 != l.end() );
-	for ( ; it0 != l.end(); it0++ )
-		assert ( this->dim() == (*it0).dim() );
-	// does the compiler ignore the above lines in NDEBUG mode ? hope so
+	for ( ; it0 != l.end(); it0++ ) assert ( this->dim() == it0->dim() );
+	#endif  // DEBUG
 	// sweep the list of meshes
 	std::list<Mesh>::const_iterator it = l.begin();
 	for ( ; it != l.end(); it++ )
@@ -880,6 +891,6 @@ void Mesh::join_list ( const std::list<Mesh> & l )
 		CellIterator itt = m.iter_over ( tag::cells_of_dim, this->dim() );
 		for ( itt.reset(); itt.in_range(); itt++ )
 		{	Cell cll = *itt;
-			cll.add_to ( *this );  }                                  }  }
+			cll.add_to ( *this );  }                                           }  }
 
 

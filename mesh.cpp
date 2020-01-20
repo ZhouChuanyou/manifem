@@ -1,5 +1,5 @@
 
-// maniFEM mesh.cpp 2019.10.30
+// maniFEM mesh.cpp 2020.01.03
 
 #include <forward_list>
 
@@ -17,8 +17,8 @@ size_t Mesh::maximum_dimension_plus_one { 4 };  // static data member
 // '1' doesn't make much sense - just points ?
 
 // static data members :
-std::vector < size_t > Cell::double_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0 );
-std::vector < size_t > Cell::double_heap_size_neg ( Mesh::maximum_dimension_plus_one, 0 );
+std::vector < size_t > Cell::double_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0. );
+std::vector < size_t > Cell::double_heap_size_neg ( Mesh::maximum_dimension_plus_one, 0. );
 std::vector < size_t > Cell::size_t_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0 );
 std::vector < size_t > Cell::size_t_heap_size_neg ( Mesh::maximum_dimension_plus_one, 0 );
 std::vector < size_t > Cell::short_int_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0 );
@@ -188,6 +188,58 @@ Cell::Core * Mesh::OneDim::Positive::last_segment ( )  // virtual from Mesh::Cor
 //-----------------------------------------------------------------------------//
 
 
+bool Cell::Core::Positive::belongs_to ( Mesh::Core * msh, const tag::Oriented & ) const
+// virtual from Cell::Core
+
+{	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
+	const std::map < Mesh::Core *, Cell::field_to_meshes > & mmap = this->meshes[0];
+	std::map<Mesh::Core*,Cell::field_to_meshes>::const_iterator it = mmap.find(msh);
+	if ( it == mmap.end() ) return false;
+	const Cell::field_to_meshes & field = it->second;
+	if ( field.counter_pos != 1 ) return false;
+	assert ( field.counter_neg == 0 );
+	return true;                                                                    }
+
+
+bool Cell::Core::Positive::belongs_to ( Mesh::Core * msh, const tag::NotOriented & ) const
+// virtual from Cell::Core
+
+{	const std::map < Mesh::Core *, Cell::field_to_meshes > & mmap =
+		this->meshes [ Mesh::diff ( msh->get_dim_plus_one(), this->get_dim() + 1 ) ];
+	std::map<Mesh::Core*,Cell::field_to_meshes>::const_iterator it = mmap.find(msh);
+	return ( it != mmap.end() );                                                     }
+
+
+bool Cell::Core::Negative::belongs_to ( Mesh::Core * msh, const tag::Oriented & ) const
+// virtual from Cell::Core
+
+{	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
+	assert ( this->reverse_p );
+	assert ( this->reverse_p->is_positive() );
+	Cell::Core::Positive * rev = static_cast < Cell::Core::Positive * > ( this->reverse_p );
+	const std::map < Mesh::Core *, Cell::field_to_meshes > & mmap = rev->meshes[0];
+	std::map<Mesh::Core*,Cell::field_to_meshes>::const_iterator it = mmap.find(msh);
+	if ( it == mmap.end() ) return false;
+	const Cell::field_to_meshes & field = it->second;
+	if ( field.counter_neg != 1 ) return false;
+	assert ( field.counter_pos == 0 );
+	return true;                                                                               }
+
+
+bool Cell::Core::Negative::belongs_to ( Mesh::Core * msh, const tag::NotOriented & ) const
+// virtual from Cell::Core
+
+{	assert ( this->reverse_p );
+	assert ( this->reverse_p->is_positive() );
+	Cell::Core::Positive * rev = static_cast < Cell::Core::Positive * > ( this->reverse_p );
+	std::map < Mesh::Core *, Cell::field_to_meshes > & mmap =
+		rev->meshes [ Mesh::diff ( msh->get_dim_plus_one(), this->get_dim() + 1 ) ];
+	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it = mmap.find(msh);
+	return ( it != mmap.end() );                                                                }
+
+//-----------------------------------------------------------------------------//
+
+
 Cell::Core * Cell::Positive::Vertex::reverse ( const tag::BuildIfNotExists & )
 // virtual from Cell::Core
 
@@ -224,7 +276,7 @@ Mesh Mesh::Positive::reverse ( Mesh::Core * core )  // static
 
 // negative meshes have no core, the core points to the (positive) reverse mesh
 
-{	return Mesh ( tag::whose_core_is, core, tag::is_negative, tag::build_if_not_exists );  }
+{	return Mesh ( tag::whose_core_is, core, tag::is_negative, tag::build_cells_if_necessary );  }
 
 
 Mesh Mesh::Negative::reverse ( Mesh::Core * core )
@@ -592,8 +644,8 @@ void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 
 	assert ( this->base_p );
 	assert ( this->tip_p );
-	assert ( this->tip_p->reverse_p );
-	assert ( this->base_p->reverse_p );
+//	assert ( this->tip_p->reverse_p );
+//	assert ( this->base_p->reverse_p );
 	assert ( msh->cells.size() > 1 );
 
 	// msh->first_ver == nullptr  means no check, no ordering
@@ -659,7 +711,7 @@ void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 	Cell::Positive::Segment * pos_seg = ( Cell::Positive::Segment * ) this->reverse_p;
 	assert ( pos_seg->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
-	assert ( pos_seg->meshes[0].find(msh) == pos_seg->meshes[0].end() );
+	assert ( pos_seg->meshes[0].find(msh) != pos_seg->meshes[0].end() );
 	// '[0]' means meshes of the same dimension as the cell
 
 	assert ( pos_seg->base_p );

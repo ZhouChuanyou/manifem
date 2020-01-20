@@ -1,4 +1,7 @@
 
+// example presented in paragraph 2.2 of the manual
+// builds an L-shaped mesh which mixed traingles and rectangles
+
 #include "maniFEM.h"
 
 using namespace maniFEM;
@@ -23,24 +26,24 @@ int main () {
 	Cell F ( tag::vertex );  x(F) = -1.;  y(F) = 1.;
 	Cell G ( tag::vertex );  x(G) =  1.;  y(G) = 0.;
 	Cell H ( tag::vertex );  x(H) =  1.;  y(H) = 0.5;
-	Mesh AB ( tag::segment, A, B, 10 );
-  Mesh BC ( tag::segment, B, C, 8 );
-	Mesh CD ( tag::segment, C, D, 10 );
-  Mesh DA ( tag::segment, D, A, 8 );
-	Mesh CE ( tag::segment, C, E, 7 );
-	Mesh EF ( tag::segment, E, F, 10 );
-	Mesh FD ( tag::segment, F, D, 7 );
-	Mesh BG ( tag::segment, B, G, 12 );
-	Mesh GH ( tag::segment, G, H, 8 );
-	Mesh HC ( tag::segment, H, C, 12 );
+	Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
+  Mesh BC ( tag::segment, B, C, tag::divided_in,  8 );
+	Mesh CD ( tag::segment, C, D, tag::divided_in, 10 );
+  Mesh DA ( tag::segment, D, A, tag::divided_in,  8 );
+	Mesh CE ( tag::segment, C, E, tag::divided_in,  7 );
+	Mesh EF ( tag::segment, E, F, tag::divided_in, 10 );
+	Mesh FD ( tag::segment, F, D, tag::divided_in,  7 );
+	Mesh BG ( tag::segment, B, G, tag::divided_in, 12 );
+	Mesh GH ( tag::segment, G, H, tag::divided_in,  8 );
+	Mesh HC ( tag::segment, H, C, tag::divided_in, 12 );
 
 	Mesh ABCD ( tag::rectangle, AB, BC, CD, DA );
 	Mesh CEFD ( tag::rectangle, CE, EF, FD, CD.reverse() );
 	Mesh BGHC ( tag::rectangle, BG, GH, HC, BC.reverse(), tag::with_triangles );
 	Mesh L_shaped ( tag::join, ABCD, CEFD, BGHC );
 
-  L_shaped.export_msh ("L-shaped.msh");
 	L_shaped.draw_ps ( "L-shaped.eps");
+  L_shaped.export_msh ("L-shaped.msh");
 	
-	cout << "reached end" << endl;
+	cout << "produced files L-shaped.eps and L-shaped.msh" << endl;
 }

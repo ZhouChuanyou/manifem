@@ -1,4 +1,7 @@
 
+// example presented in paragraph 1.1 of the manual
+// builds a twisted rectangle in 3D
+
 #include "maniFEM.h"
 
 using namespace maniFEM;
@@ -25,10 +28,10 @@ int main () {
 	cout << "coordinates of NW : " << x(NW) << " " << y(NW) << " " << z(NW) << endl;
 	
 	// Now build the four sides of the rectangle :
-	Mesh south ( tag::segment, SW, SE, 10 );
-  Mesh east  ( tag::segment, SE, NE, 10 );
-	Mesh north ( tag::segment, NE, NW, 10 );
-  Mesh west  ( tag::segment, NW, SW, 10 );
+	Mesh south ( tag::segment, SW, SE, tag::divided_in, 10 );
+  Mesh east  ( tag::segment, SE, NE, tag::divided_in, 10 );
+	Mesh north ( tag::segment, NE, NW, tag::divided_in, 10 );
+  Mesh west  ( tag::segment, NW, SW, tag::divided_in, 10 );
 
 	// And now the rectangle :
 	Mesh rect_mesh ( tag::pretty, tag::rectangle, south, east, north, west );
@@ -90,5 +93,5 @@ int main () {
 */
 //	do_test ();
 	
-	 cout << "reached end" << endl;
+	 cout << "produced file rectangle.msh" << endl;
 }

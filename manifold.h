@@ -1,5 +1,5 @@
 
-// maniFEM manifold.h 2019.11.23
+// maniFEM manifold.h 2020.01.03
 
 #ifndef MANIFEM_MANIFOLD_H
 #define MANIFEM_MANIFOLD_H
@@ -19,7 +19,7 @@ namespace maniFEM {
 namespace tag {
 	struct euclid { };  static const euclid Euclid;
 	struct Implicit { };  static const Implicit implicit;
-	struct Constrain { };  static const Constrain constrain;
+	struct Parametric { };  static const Parametric parametric;
 }
 
 
@@ -50,12 +50,12 @@ class Manifold
 	inline Manifold ( const tag::Implicit &,
 	                  const Manifold &, const Function &, const Function & );
 	
-	inline Manifold ( const tag::Constrain &, const Manifold &, const Function::Equality & );
+	inline Manifold ( const tag::Parametric &, const Manifold &, const Function::Equality & );
 
-	inline Manifold ( const tag::Constrain &,
+	inline Manifold ( const tag::Parametric &,
 	       const Manifold &, const Function::Equality &, const Function::Equality & );
 	
-	inline Manifold ( const tag::Constrain &, const Manifold &,
+	inline Manifold ( const tag::Parametric &, const Manifold &,
 	       const Function::Equality &, const Function::Equality &, const Function::Equality & );
 	
 	inline Manifold & operator= ( const Manifold & m )
@@ -75,7 +75,23 @@ class Manifold
 	inline void set_coordinates ( const Function co );
 
 	// a non-existent manifold has null core
-	inline bool exists ( ) const { return core != nullptr; } 
+	inline bool exists ( ) const { return core != nullptr; }
+
+	// metric in the manifold (an inner product on the tangent space)
+	inline double inner_prod ( const std::vector<double> & v, const std::vector<double> & w ) const;
+
+	// square of the distance, computed from the inner product
+	inline double dist_sq ( const Cell & A, const Cell & B ) const
+	{	const Function & coord = coordinates();
+		std::vector < double > vA = coord ( A ), vB = coord ( B ),
+			delta ( coord.nb_of_components() );
+		for ( size_t i = 0; i < coord.nb_of_components(); i++ )
+			delta[i] = vB[i] - vA[i];
+		return inner_prod ( delta, delta );                        }
+	
+	// distance, computed from the inner product
+	inline double distance ( const Cell & A, const Cell & B ) const
+	{	return std::sqrt ( dist_sq ( A, B ) );  }
 	
 	// P = sA + sB,  s+t == 1
 	inline void interpolate
@@ -90,15 +106,19 @@ class Manifold
 	  double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
 	  double w, const Cell & E, double z, const Cell & F ) const;
 
+	// P = sum c_k P_k,  sum c_k == 1
+	inline void interpolate
+		( const Cell & P, std::vector < double > & coefs, std::vector < Cell > & points ) const;
+
 	inline void project ( const Cell & ) const;
 	
 	inline Manifold implicit ( const Function::Equality eq ) const;
 	inline Manifold implicit ( const Function::Equality eq1,
                              const Function::Equality eq2 ) const;
-	inline Manifold constrain ( const Function::Equality eq ) const;
-	inline Manifold constrain ( const Function::Equality eq1,
+	inline Manifold parametric ( const Function::Equality eq ) const;
+	inline Manifold parametric ( const Function::Equality eq1,
                               const Function::Equality eq2 ) const;
-	inline Manifold constrain ( const Function::Equality eq1,
+	inline Manifold parametric ( const Function::Equality eq1,
            const Function::Equality eq2, const Function::Equality eq3 ) const;
 
 	static Manifold working;
@@ -106,7 +126,7 @@ class Manifold
 	inline void set_as_working_manifold ( )
 	{	Manifold::working = * this;  }
 
-	class Euclid;  class Implicit;  class Constrain;
+	class Euclid;  class Implicit;  class Parametric;
 
 };
 
@@ -115,6 +135,17 @@ class Manifold::Core
 {	public :
 
 	size_t dim;
+
+	double (*inner_prod) ( const std::vector<double> & v, const std::vector<double> & w );
+
+	virtual Function build_coord_func
+		( const tag::lagrange &, const tag::OfDegree &, size_t d ) = 0;
+	
+	virtual Function get_coord_func ( ) const = 0;
+	
+	virtual void set_coords ( const Function co ) = 0;
+
+	virtual void project ( Cell::Positive::Vertex * ) const = 0;
 
 	// P = sA + sB,  s+t == 1
 	virtual void interpolate ( Cell::Positive::Vertex * P,
@@ -130,15 +161,10 @@ class Manifold::Core
 	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B,
 	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
 	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const = 0;
-
-	virtual Function build_coord_func
-		( const tag::lagrange &, const tag::OfDegree &, size_t d ) = 0;
 	
-	virtual Function get_coord_func ( ) const = 0;
-	
-	virtual void set_coords ( const Function co ) = 0;
-
-	virtual void project ( Cell::Positive::Vertex * ) const = 0;
+	// P = sum c_k P_k,  sum c_k == 1
+	virtual void interpolate ( Cell::Positive::Vertex * P,
+		std::vector < double > & coefs, std::vector < Cell::Positive::Vertex * > & points ) const = 0;
 };
 
 
@@ -155,6 +181,13 @@ inline Function Manifold::build_coordinate_system
 inline void Manifold::set_coordinates ( const Function co )
 {	assert ( this->core );
 	this->core->set_coords ( co );  }
+
+
+// metric in the manifold (an inner product on the tangent space)
+inline double Manifold::inner_prod
+( const std::vector<double> & v, const std::vector<double> & w ) const
+{	assert ( v.size() == w.size() );
+	return this->core->inner_prod ( v, w );  }
 
 
 // P = sA + sB,  s+t == 1
@@ -215,6 +248,22 @@ inline void Manifold::interpolate
 	  w, ( Cell::Positive::Vertex * ) E.core, z, ( Cell::Positive::Vertex * ) F.core );  }
 
 
+// P = sum c_k P_k,  sum c_k == 1
+inline void Manifold::interpolate
+( const Cell & P, std::vector < double > & coefs, std::vector < Cell > & points ) const
+	
+{	assert ( points.size() == coefs.size() );
+	for ( size_t i = 0; i < points.size(); i++ )  // if debug !
+	{	assert ( points[i].is_positive() );
+		assert ( points[i].dim() == 0 );
+		assert ( coefs[i] >= 0. );   assert ( coefs[i] <= 1. );  }
+		// cannot assert the sum is 1. due to round-off errors
+	std::vector < Cell::Positive::Vertex * > cores ( coefs.size() );
+	for ( size_t i = 0; i < coefs.size(); i++ )
+		cores[i] = ( Cell::Positive::Vertex * ) points[i].core;
+	this->core->interpolate ( ( Cell::Positive::Vertex * ) P.core, coefs, cores );   }
+
+					 
 inline void Manifold::project ( const Cell & cll ) const
 {	assert ( cll.is_positive () );
 	assert ( cll.dim() == 0 );
@@ -229,16 +278,16 @@ inline Manifold Manifold::implicit
 {	return Manifold ( tag::implicit, *this, eq1.lhs - eq1.rhs, eq2.lhs - eq2.rhs );  }
 
 
-inline Manifold Manifold::constrain ( const Function::Equality eq ) const
-{	return Manifold ( tag::constrain, *this, eq );  }
+inline Manifold Manifold::parametric ( const Function::Equality eq ) const
+{	return Manifold ( tag::parametric, *this, eq );  }
 
-inline Manifold Manifold::constrain
+inline Manifold Manifold::parametric
 ( const Function::Equality eq1, const Function::Equality eq2 ) const
-{	return Manifold ( tag::constrain, *this, eq1, eq2 );  }
+{	return Manifold ( tag::parametric, *this, eq1, eq2 );  }
 
-inline Manifold Manifold::constrain ( const Function::Equality eq1,
+inline Manifold Manifold::parametric ( const Function::Equality eq1,
         const Function::Equality eq2, const Function::Equality eq3 ) const
-{	return Manifold ( tag::constrain, *this, eq1, eq2, eq3 );  }
+{	return Manifold ( tag::parametric, *this, eq1, eq2, eq3 );  }
 
 
 class Manifold::Euclid : public Manifold::Core
@@ -252,8 +301,12 @@ class Manifold::Euclid : public Manifold::Core
 
 	inline Euclid ( size_t d )
 	:	Manifold::Core(), dim { d }
-	{	assert ( d > 0 );  }
+	{	assert ( d > 0 );
+		inner_prod =  & default_inner_prod;  }
 
+	// metric in the manifold (an inner product on the tangent space)
+	static double default_inner_prod ( const std::vector<double> & v, const std::vector<double> & w );
+	
 	// P = sA + sB,  s+t == 1     virtual from Manifold::Core
 	void interpolate ( Cell::Positive::Vertex * P,
 	  double s, Cell::Positive::Vertex * A, double t, Cell::Positive::Vertex * B ) const;
@@ -277,6 +330,12 @@ class Manifold::Euclid : public Manifold::Core
 	  double t, const Cell & B, double u, const Cell & C, double v, const Cell & D,
 	  double w, const Cell & E, double z, const Cell & F ) const;
 
+	// P = sum c_k P_k,  sum c_k == 1     virtual from Manifold::Core
+  void interpolate ( Cell::Positive::Vertex * P,
+		std::vector < double > & coefs, std::vector < Cell::Positive::Vertex * > & points ) const;
+	void pretty_interpolate ( const Cell & P,
+		std::vector < double > & coefs, std::vector < Cell > & points ) const;
+	
   Function build_coord_func ( const tag::lagrange &, const tag::OfDegree &, size_t d ) ;
   // virtual from Function::Core
 	
@@ -329,6 +388,10 @@ class Manifold::Implicit : public Manifold::Core
 	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
 	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
 
+	// P = sum c_k P_k,  sum c_k == 1     virtual from Manifold::Core
+  void interpolate ( Cell::Positive::Vertex * P,
+		std::vector < double > & coefs, std::vector < Cell::Positive::Vertex * > & points ) const;
+	
 	Function build_coord_func ( const tag::lagrange &, const tag::OfDegree &, size_t d );
 	//   virtual from Manifold::Core, here execution forbidden
 	
@@ -336,8 +399,7 @@ class Manifold::Implicit : public Manifold::Core
 
 	void set_coords ( const Function co );  // virtual from Function::Core
 
-	// void project ( Cell::Positive::Vertex * ) const
-	//   stays pure virtual from Manifold::Core
+	// void project ( Cell::Positive::Vertex * ) const  stays pure virtual from Manifold::Core
 
 	class OneEquation; class TwoEquations;
 	
@@ -354,6 +416,8 @@ class Manifold::Implicit::OneEquation : public Manifold::Implicit
 	Function level_function, grad_lev_func;
 	
 	inline OneEquation ( const Manifold & s, const Function & f );
+	
+	// void interpolate (different overloaded versions) defined by Manifold::Implicit
 	
 	void project ( Cell::Positive::Vertex * ) const;
 	// virtual from Manifold::Core, through Manifold::Implicit
@@ -381,7 +445,7 @@ class Manifold::Implicit::TwoEquations : public Manifold::Implicit
 	inline TwoEquations ( const Manifold & s, const Function & f );
 	inline TwoEquations ( const Manifold & s, const Function & f1, const Function & f2 );
 
-	// void interpolate, different overloaded versions, defined by Manifold::Implicit
+	// void interpolate (different overloaded versions) defined by Manifold::Implicit
 	
 	// Function build_coord_func ( const tag::lagrange &, const tag::OfDegree &, size_t d )
 	//   defined by Manifold::Implicit (execution forbidden)
@@ -397,7 +461,7 @@ class Manifold::Implicit::TwoEquations : public Manifold::Implicit
 
 
 inline Manifold::Manifold ( const tag::Implicit &, const Manifold & m, const Function & f )
-:	Manifold ( tag::non_existent )  // temporary empty manifold
+:	Manifold ( tag::non_existent )  // temporarily empty manifold
 {	// if m is Manifold::Euclid, we want a Manifold::Implicit::OneEquation
 	// if m is Manifold::Implicit::OneEquation, we want a Manifold::Implicit::TwoEquations
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
@@ -408,15 +472,17 @@ inline Manifold::Manifold ( const tag::Implicit &, const Manifold & m, const Fun
 			dynamic_cast<Manifold::Implicit::OneEquation*> ( m.core );
 		assert ( m_one_eq );
 		this->core = new Manifold::Implicit::TwoEquations ( m, f );  }
+	this->core->inner_prod = & Manifold::Euclid::default_inner_prod;
 	Manifold::working = *this;                                                }
 	
 
 inline Manifold::Manifold
 ( const tag::Implicit &, const Manifold & m, const Function & f1, const Function & f2 )
-:	Manifold ( tag::non_existent )  // temporary empty manifold
+:	Manifold ( tag::non_existent )  // temporarily empty manifold
 {	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
 	this->core = new Manifold::Implicit::TwoEquations ( m, f1, f2 );
+	this->core->inner_prod = & Manifold::Euclid::default_inner_prod;
 	Manifold::working = *this;                                                }
 	
 
@@ -479,7 +545,7 @@ inline Manifold::Implicit::TwoEquations::TwoEquations
 	this->grad_lev_func_2.core = std::shared_ptr<Function::Core> ( grad );         }
 
 
-class Manifold::Constrain : public Manifold::Core
+class Manifold::Parametric : public Manifold::Core
 
 // a submanifold of a Manifold::Euclid defined by one or more explicit equations
 
@@ -489,13 +555,13 @@ class Manifold::Constrain : public Manifold::Core
 
 	std::map < std::shared_ptr < Function::Core >, std::shared_ptr < Function::Core > > equations;
 
-	inline Constrain ( )	:	Manifold::Core(), surrounding_space ( tag::non_existent ) { }
+	inline Parametric ( )	:	Manifold::Core(), surrounding_space ( tag::non_existent ) { }
 
-	inline Constrain ( const Manifold &, const Function::Equality & );
+	inline Parametric ( const Manifold &, const Function::Equality & );
 
-	inline Constrain ( const Manifold &, const Function::Equality &, const Function::Equality & );
+	inline Parametric ( const Manifold &, const Function::Equality &, const Function::Equality & );
 
-	inline Constrain ( const Manifold &, const Function::Equality &,
+	inline Parametric ( const Manifold &, const Function::Equality &,
                      const Function::Equality &, const Function::Equality & );
 
 	// P = sA + sB,  s+t == 1     virtual from Manifold::Core
@@ -513,6 +579,10 @@ class Manifold::Constrain : public Manifold::Core
 	  double u, Cell::Positive::Vertex * C, double v, Cell::Positive::Vertex * D,
 	  double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const;
 
+	// P = sum c_k P_k,  sum c_k == 1     virtual from Manifold::Core
+	virtual void interpolate ( Cell::Positive::Vertex * P,
+		std::vector < double > & coefs, std::vector < Cell::Positive::Vertex * > & points ) const;
+	
 	Function build_coord_func ( const tag::lagrange &, const tag::OfDegree &, size_t d );
 	//   virtual from Manifold::Core, here execution forbidden
 	
@@ -523,53 +593,53 @@ class Manifold::Constrain : public Manifold::Core
 	void project ( Cell::Positive::Vertex * ) const;
 	// virtual from Manifold::Core
 
-};  // end of class Manifold::Constrain
+};  // end of class Manifold::Parametric
 
 
 
-inline Manifold::Manifold ( const tag::Constrain &, const Manifold & m, const Function::Equality & f_eq )
+inline Manifold::Manifold ( const tag::Parametric &, const Manifold & m, const Function::Equality & f_eq )
 :	Manifold ( tag::non_existent )  // temporary empty manifold
 {	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
-	this->core = new Manifold::Constrain ( m, f_eq );
+	this->core = new Manifold::Parametric ( m, f_eq );
 	Manifold::working = *this;                                                 }
 
-inline Manifold::Manifold ( const tag::Constrain &, const Manifold & m,
+inline Manifold::Manifold ( const tag::Parametric &, const Manifold & m,
 														const Function::Equality & f_eq_1, const Function::Equality & f_eq_2 )
 :	Manifold ( tag::non_existent )  // temporary empty manifold
 {	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
-	this->core = new Manifold::Constrain ( m, f_eq_1, f_eq_2 );
+	this->core = new Manifold::Parametric ( m, f_eq_1, f_eq_2 );
 	Manifold::working = *this;                                                 }
 
-inline Manifold::Manifold ( const tag::Constrain &, const Manifold & m,
+inline Manifold::Manifold ( const tag::Parametric &, const Manifold & m,
 const Function::Equality & f_eq_1, const Function::Equality & f_eq_2, const Function::Equality & f_eq_3 )
 :	Manifold ( tag::non_existent )  // temporary empty manifold
 {	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
-	this->core = new Manifold::Constrain ( m, f_eq_1, f_eq_2, f_eq_3 );
+	this->core = new Manifold::Parametric ( m, f_eq_1, f_eq_2, f_eq_3 );
 	Manifold::working = *this;                                                           }
 
 
-inline Manifold::Constrain::Constrain ( const Manifold & m, const Function::Equality & f_eq )
-:	Constrain()
+inline Manifold::Parametric::Parametric ( const Manifold & m, const Function::Equality & f_eq )
+:	Parametric()
 {	this->surrounding_space = m;
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
 	this->equations [ f_eq.lhs.core ] = f_eq.rhs.core;                         }
 
-inline Manifold::Constrain::Constrain
+inline Manifold::Parametric::Parametric
 ( const Manifold & m, const Function::Equality & f_eq_1, const Function::Equality & f_eq_2 )
-:	Constrain()
+:	Parametric()
 {	this->surrounding_space = m;
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
 	this->equations [ f_eq_1.lhs.core ] = f_eq_1.rhs.core;
 	this->equations [ f_eq_2.lhs.core ] = f_eq_2.rhs.core;                         }
 
-inline Manifold::Constrain::Constrain ( const Manifold & m, const Function::Equality & f_eq_1,
+inline Manifold::Parametric::Parametric ( const Manifold & m, const Function::Equality & f_eq_1,
   const Function::Equality & f_eq_2, const Function::Equality & f_eq_3 )
-:	Constrain()
+:	Parametric()
 {	this->surrounding_space = m;
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
 	assert ( m_euclid );
@@ -589,7 +659,28 @@ inline void Cell::project ( const tag::Onto &, const Manifold m ) const
 	m.core->project ( cll );                                                }
 		
 
-}  // namespace maniFEM
+void inline Mesh::baricenter ( const Cell & ver, const Cell & seg_ini )
+
+// 'ver' is a vertex in 'this' mesh, 'seg' is a segment pointing towards 'ver'
+
+{	assert ( ver.dim() == 0 );
+	assert ( seg_ini.dim() == 1 );
+	std::vector < Cell > neighbours;  // vertices
+	Cell seg = seg_ini;
+	size_t n = 0;
+	while ( true )
+	{	assert ( seg.tip() == ver );
+		Cell tri = this->cell_in_front_of ( seg, tag::may_not_exist );
+		if ( not tri.exists() ) return;
+		// 'ver' is on the boundary of mesh so we do nothing
+		n++;  neighbours.push_back ( seg.base().reverse() );
+		seg = tri.boundary().cell_behind(ver);
+		if ( seg == seg_ini ) break;                                    }
+	std::vector < double > coefs ( n, 1./n );
+	Manifold::working.interpolate ( ver, coefs, neighbours );             }
+
+
+}  // end of  namespace maniFEM
 
 #endif
 // ifndef MANIFEM_MANIFOLD_H

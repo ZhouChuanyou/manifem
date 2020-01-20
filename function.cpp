@@ -1,5 +1,5 @@
 
-// maniFEM function.cpp 2019.11.09
+// maniFEM function.cpp 2019.12.28
 
 #include "math.h"
 #include <sstream>
@@ -45,6 +45,17 @@ double Function::Constant::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
 { return this->val;  }
 
+double Function::Step::get_value_on_cell ( Cell::Core * cll ) const
+// virtual from Function::Scalar, through Function::ArithmeticExpression
+{	Function::Scalar * arg_scalar = Function::core_to_scalar ( this->arg.core.get() );
+	double arg_v = arg_scalar->get_value_on_cell(cll);
+	for ( size_t i = 0; i < this->cuts.size(); i++ )
+		if ( arg_v < cuts[i] )
+		{	Function::Scalar * val_i_scalar = Function::core_to_scalar ( this->values[i].core.get() );
+			return val_i_scalar->get_value_on_cell(cll);                                                }
+	Function::Scalar * val_scalar = Function::core_to_scalar ( this->values.back().core.get() );
+	return val_scalar->get_value_on_cell(cll);                                                        }
+	
 double Function::Sum::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
 { std::forward_list<Function>::const_iterator it = this->terms.begin();
@@ -160,6 +171,9 @@ std::string Function::Sin::repr ( const Function::From & from ) const
 
 std::string Function::Cos::repr ( const Function::From & from ) const
 {	return "cos" + this->base.core->repr ( Function::from_function );  }
+
+std::string Function::Step::repr ( const Function::From & from ) const
+{	return "step";  }
 
 std::string Function::JustTesting::repr ( const Function::From & from ) const
 {	return this->name;  }
@@ -285,14 +299,20 @@ Function maniFEM::power ( const Function & f, double e )
 	return Function ( tag::whose_core_is, new Function::Power ( f, e ) );              }
 
 
-Function Function::Constant::deriv
-( Function ) const
+Function Function::Constant::deriv ( Function ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	return Function ( 0. );  }
 
 
-Function Function::Sum::deriv
-( Function x ) const
+Function Function::Step::deriv ( Function x ) const
+//  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
+{	std::vector < Function > derivs;
+	for ( size_t i = 0; i < this->values.size(); i++ )
+		derivs.push_back ( this->values[i].deriv ( x ) );
+	return Function ( tag::whose_core_is, new Function::Step ( this->arg, derivs, this->cuts ) );  }
+
+
+Function Function::Sum::deriv ( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	std::forward_list<Function>::const_iterator it = this->terms.begin();
 	Function result = 0.;
@@ -300,8 +320,7 @@ Function Function::Sum::deriv
 		result += it->core->deriv(x);
 	return result;                                                    }
 
-Function Function::Product::deriv
-( Function x ) const
+Function Function::Product::deriv ( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	Function result = 0.;
 	std::forward_list<Function>::const_iterator it1, it2;
@@ -320,36 +339,29 @@ Function Function::Product::deriv
 		result += partial_res;                              }
 	return result;                                            }
 
-Function Function::Power::deriv
-( Function x ) const
+Function Function::Power::deriv ( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	Function result = this->exponent;
 	result *= power ( this->base, this->exponent - 1. );
 	result *= this->base.core->deriv ( x );
 	return result;                                                           }
 
-Function Function::Sin::deriv
-( Function x ) const
+Function Function::Sin::deriv ( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	return cos ( this->base ) * this->base.deriv(x);  }
 
-Function Function::Cos::deriv
-( Function x ) const
+Function Function::Cos::deriv ( Function x ) const
 //  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
 {	return - sin ( this->base ) * this->base.deriv(x);  }
 
-Function Function::JustTesting::deriv
-( Function x ) const
+Function Function::JustTesting::deriv ( Function x ) const
+{ if ( this == x.core.get() ) return Function ( 1. );
+	return Function ( 0. );                             }
+
+Function Function::CoupledWithField::Scalar::deriv ( Function x ) const
 { if ( this == x.core.get() ) return Function ( 1. );
 	return Function ( 0. );                        }
 
-Function Function::CoupledWithField::Scalar::deriv
-( Function x ) const
-{ if ( this == x.core.get() ) return Function ( 1. );
-	return Function ( 0. );                        }
-
-Function Function::Vector::deriv
-( Function x ) const
+Function Function::Vector::deriv ( Function x ) const
 { assert ( false );  }
-
 

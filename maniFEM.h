@@ -4,3 +4,4 @@
 #include "field.h"
 #include "function.h"
 #include "manifold.h"
+#include "progressive.h"

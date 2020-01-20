@@ -1,4 +1,7 @@
 
+// example presented in paragraph 1.5 of the manual
+// builds a mesh which mixes triangles and rectangles
+
 #include "maniFEM.h"
 
 using namespace maniFEM;
@@ -21,21 +24,20 @@ int main () {
 	Cell D ( tag::vertex );  x(D) = -0.5;  y(D) = 0.8;
 	Cell E ( tag::vertex );  x(E) =  0.5;  y(E) = 0.8;
 	Cell F ( tag::vertex );  x(F) =  0. ;  y(F) = 1. ;
-	Mesh AB ( tag::segment, A, B, 8 );
-	Mesh BC ( tag::segment, B, C, 8 );
-	Mesh AD ( tag::segment, A, D, 8 );
-	Mesh BD ( tag::segment, B, D, 8 );
-	Mesh BE ( tag::segment, B, E, 8 );
-	Mesh CE ( tag::segment, C, E, 8 );
-	Mesh EF ( tag::segment, E, F, 8 );
-	Mesh FD ( tag::segment, F, D, 8 );
+	Mesh AB ( tag::segment, A, B, tag::divided_in, 8 );
+	Mesh BC ( tag::segment, B, C, tag::divided_in, 8 );
+	Mesh AD ( tag::segment, A, D, tag::divided_in, 8 );
+	Mesh BD ( tag::segment, B, D, tag::divided_in, 8 );
+	Mesh BE ( tag::segment, B, E, tag::divided_in, 8 );
+	Mesh CE ( tag::segment, C, E, tag::divided_in, 8 );
+	Mesh EF ( tag::segment, E, F, tag::divided_in, 8 );
+	Mesh FD ( tag::segment, F, D, tag::divided_in, 8 );
 	Mesh ABD ( tag::triangle, AB, BD, AD.reverse() );
 	Mesh BCE ( tag::triangle, BC, CE, BE.reverse() );
 	Mesh BEFD ( tag::rectangle, BE, EF, FD, BD.reverse() );
 	Mesh two_tri_one_rect ( tag::join, ABD, BEFD, BCE );
 
 	two_tri_one_rect.export_msh ("two-tri-one-rect.msh");
-	two_tri_one_rect.draw_ps ("two-tri-one-rect.eps");
 	
-	cout << "reached end" << endl;
+	cout << "produced file two-tri-one-rect.msh" << endl;
 }

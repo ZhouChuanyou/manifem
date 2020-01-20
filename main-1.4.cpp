@@ -1,4 +1,7 @@
 
+// example presented in paragraph 1.4 of the manual
+// builds a trapezoidal mesh made of triangles
+
 #include "maniFEM.h"
 
 using namespace maniFEM;
@@ -20,13 +23,13 @@ int main () {
 	Cell C ( tag::vertex );  x(C) =  1. ;  y(C) = 0.;
 	Cell D ( tag::vertex );  x(D) = -0.5;  y(D) = 1.;
 	Cell E ( tag::vertex );  x(E) =  0.5;  y(E) = 1.;
-	Mesh AB ( tag::segment, A, B, 8 );
-	Mesh BC ( tag::segment, B, C, 8 );
-	Mesh AD ( tag::segment, A, D, 8 );
-	Mesh BD ( tag::segment, B, D, 8 );
-	Mesh BE ( tag::segment, B, E, 8 );
-	Mesh CE ( tag::segment, C, E, 8 );
-	Mesh ED ( tag::segment, E, D, 8 );
+	Mesh AB ( tag::segment, A, B, tag::divided_in, 8 );
+	Mesh BC ( tag::segment, B, C, tag::divided_in, 8 );
+	Mesh AD ( tag::segment, A, D, tag::divided_in, 8 );
+	Mesh BD ( tag::segment, B, D, tag::divided_in, 8 );
+	Mesh BE ( tag::segment, B, E, tag::divided_in, 8 );
+	Mesh CE ( tag::segment, C, E, tag::divided_in, 8 );
+	Mesh ED ( tag::segment, E, D, tag::divided_in, 8 );
 	Mesh ABD ( tag::triangle, AB, BD, AD.reverse() );
 	Mesh BCE ( tag::triangle, BC, CE, BE.reverse() );
 	Mesh BED ( tag::triangle, BE, ED, BD.reverse() );
@@ -34,5 +37,5 @@ int main () {
 
 	three_tri.export_msh ("three-tri.msh");
 	
-	cout << "reached end" << endl;
+	cout << "produced file three-tri.msh" << endl;
 }

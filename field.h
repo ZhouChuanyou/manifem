@@ -1,5 +1,5 @@
 
-// maniFEM field.h 2019.11.02
+// maniFEM field.h 2020.01.03
 
 #ifndef MANIFEM_FIELD_H
 #define MANIFEM_FIELD_H
@@ -137,7 +137,9 @@ class Field::TakenOnCell
 	Cell::Core * cll;
 
 	TakenOnCell ( const Field::TakenOnCell & ) = delete;
+	TakenOnCell ( const Field::TakenOnCell && ) = delete;
 	Field::TakenOnCell operator= ( const Field::TakenOnCell & ) = delete;
+	Field::TakenOnCell operator= ( const Field::TakenOnCell && ) = delete;
 	
 	inline operator double ()
 	// can be used like in  double x = f(cll)  or  cout << f(cll)

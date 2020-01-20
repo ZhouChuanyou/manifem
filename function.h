@@ -1,5 +1,5 @@
 
-// maniFEM function.h 2019.11.23
+// maniFEM function.h 2020.01.03
 
 #ifndef MANIFEM_FUNCTION_H
 #define MANIFEM_FUNCTION_H
@@ -31,7 +31,7 @@ class Function
 	class Core;
 	class Scalar;  class ArithmeticExpression;  class Constant;
 	class Vector;  class Aggregate;  class CoupledWithField;
-	class Sum;  class Product;  class Power;  class Sin;  class Cos;
+	class Sum;  class Product;  class Power;  class Sin;  class Cos;  class Step;
 	class Equality;
 	class JustTesting;
 
@@ -52,7 +52,7 @@ class Function
 	:	core ( f.core )  { }
 
 	inline Function ( const Function && f )
-	:	core ( f.core )  { }  // is this the right way to do it ?
+	:	core ( f.core )  { }  // is this the right way to do a move ?
 
 	inline Function ( const tag::HasSize &, size_t s );
 
@@ -300,11 +300,9 @@ class Function::Sin : public Function::ArithmeticExpression
 	#endif
 };
 
-
 inline Function sin ( const Function & f )
 {	return Function ( tag::whose_core_is,
 		new Function::Sin ( f ) );  }
-
 
 	
 class Function::Cos : public Function::ArithmeticExpression
@@ -333,10 +331,76 @@ class Function::Cos : public Function::ArithmeticExpression
 };
 
 inline Function cos ( const Function & f )
-{	return Function ( tag::whose_core_is,
-		new Function::Cos ( f ) );  }
+{	return Function ( tag::whose_core_is, new Function::Cos ( f ) );  }
 
 
+class Function::Step : public Function::ArithmeticExpression
+
+// piecewise constant functions 
+
+{	public :
+
+	Function arg;  // we use wrappers as pointers
+	// 'arg' is used for testing inequalities
+
+	std::vector < Function > values;
+	std::vector < double > cuts;  //  values.size() == cuts.size() + 1
+	// 'cuts' contains values ordered increasingly
+	// for instance, suppose values=={x,1/x,3} and cuts=={-1,1}
+	// this means this(x)=x for x<-1, this(x)=1/x for -1<x<1, this(x)=3 for x>1
+
+	inline Step ( const Function & v1, const tag::Iff, const Function & x,
+                const tag::LessThan &, double c,
+	              const Function & v2, const tag::Otherwise &             )
+	:	arg { x }, values { v1, v2 }, cuts { c }
+	{	}
+	
+	inline Step ( const Function & v1, const tag::Iff, const Function & x,
+                const tag::LessThan &, double c1,
+                const Function & v2, const tag::IfLessThan, double c2,
+	              const Function & v3, const tag::Otherwise &             )
+	:	arg { x }, values { v1, v2, v3 }, cuts { c1, c2 }
+	{	assert ( c1 < c2 );  }
+	
+	inline Step ( const Function & v1, const tag::Iff, const Function & x,
+                const tag::LessThan &, double c1,
+                const Function & v2, const tag::IfLessThan, double c2,
+                const Function & v3, const tag::IfLessThan, double c3,
+	              const Function & v4, const tag::Otherwise &             )
+	:	arg { x }, values { v1, v2, v3, v4 }, cuts { c1, c2, c3 }
+	{	assert ( c1 < c2 );  assert ( c2 < c3 );  }
+	
+	inline Step ( const Function & v1, const tag::Iff, const Function & x,
+                const tag::LessThan &, double c1,
+                const Function & v2, const tag::IfLessThan, double c2,
+                const Function & v3, const tag::IfLessThan, double c3,
+                const Function & v4, const tag::IfLessThan, double c4,
+	              const Function & v5, const tag::Otherwise &             )
+	:	arg { x }, values { v1, v2, v3, v4, v5 }, cuts { c1, c2, c3, c4 }
+	{	assert ( c1 < c2 );  assert ( c1 < c2 );  assert ( c3 < c4 );  }
+
+	inline Step ( const Function & aarg, std::vector < Function > & vals, std::vector < double > cts )
+	: arg { aarg }, values { vals }, cuts { cts }
+	{	assert ( vals.size() == cts.size() + 1 );  }
+	
+	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
+
+	// double set_value_on_cell ( Cell::Core *, const double & )
+	//   defined by Function::ArithmeticExpression (execution forbidden)
+
+	double get_value_on_cell ( Cell::Core * ) const;
+	// virtual from Function::Scalar, through Function::ArithmeticExpression
+
+	Function deriv ( Function ) const;
+	//  virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
+
+	#ifndef NDEBUG	
+	std::string repr ( const Function::From & from = Function::from_void ) const;
+	// virtual from Function::Core, through Function::Scalar, Function::ArithmeticExpression
+	#endif
+};
+
+	
 class Function::JustTesting : public Function::ArithmeticExpression
 	
 {	public :
@@ -557,6 +621,87 @@ inline Function operator&& ( Function f, Function g )
 	for ( size_t i = 0; i < ng; i++ ) res->components.emplace_back ( g[i] );
 	return Function ( tag::whose_core_is,	res );                                         }
 
+
+namespace tag  {  struct Threshold { };  static const Threshold threshold;  }
+
+inline Function sign_of ( const Function & f )
+{	return Function ( tag::whose_core_is, new Function::Step
+      ( Function (-1.), tag::iff, f, tag::less_than, 0., Function(1.), tag::otherwise ) );  }
+
+inline Function smooth_abs ( const Function & f, const tag::Threshold &, double d )
+// a smooth (C1) approximation of the absolute value
+// 'd' is a threshold; if |f| >= d then smooth_abs(f) == |f|
+// below 'd', the function is smooth but far from the absolute value (never less than d/2)
+{	assert ( d > 0. );
+	return Function ( tag::whose_core_is, new Function::Step
+	      ( -f, tag::iff, f, tag::less_than, -d,
+          ( f*f + d*d ) / (2.*d), tag::if_less_than, d, f, tag::otherwise ) );  }
+//	Function abs_f = sign_of ( f ) * f;
+//	return abs_f * abs_f / ( d + abs_f );  }
+
+inline Function smooth_min
+( const Function & f, const Function & g, const tag::Threshold &, double d )
+// a smooth (C1) approximation of the minimum between two functions
+{	return 0.5 * ( f + g - smooth_abs ( f-g, tag::threshold, d ) );  }
+
+inline Function smooth_min
+( const Function & f, const Function & g, const Function & h, const tag::Threshold &, double d )
+// a smooth (C1) approximation of the minimum between three functions
+{	return smooth_min ( f, smooth_min ( g, h, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_min
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const tag::Threshold &, double d                                                )
+// a smooth (C1) approximation of the minimum between four functions
+{	return smooth_min ( smooth_min ( f, g, tag::threshold, d ),
+                      smooth_min ( h, i, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_min
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const Function & j ,const tag::Threshold &, double d                            )
+// a smooth (C1) approximation of the minimum between five functions
+{	return smooth_min ( smooth_min ( f, g, h, tag::threshold, d ),
+	                    smooth_min ( i, j, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_min
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const Function & j, const Function & k, const tag::Threshold &, double d        )
+// a smooth (C1) approximation of the minimum between six functions
+{	return smooth_min ( smooth_min ( f, g, tag::threshold, d ),
+											smooth_min ( h, i, tag::threshold, d ),
+	                    smooth_min ( j, k, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_max
+( const Function & f, const Function & g, const tag::Threshold &, double d )
+// a smooth (C1) approximation of the maximum between two functions
+{	return 0.5 * ( f + g + smooth_abs ( f-g, tag::threshold, d ) );  }
+
+inline Function smooth_max
+( const Function & f, const Function & g, const Function & h, const tag::Threshold &, double d )
+// a smooth (C1) approximation of the maximum between three functions
+{	return smooth_max ( f, smooth_max ( g, h, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_max
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const tag::Threshold &, double d                                                )
+// a smooth (C1) approximation of the maximum between four functions
+{	return smooth_max ( smooth_max ( f, g, tag::threshold, d ),
+	                    smooth_max ( h, i, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_max
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const Function & j ,const tag::Threshold &, double d                            )
+// a smooth (C1) approximation of the maximum between five functions
+{	return smooth_max ( smooth_max ( f, g, h, tag::threshold, d ),
+	                    smooth_max ( i, j, tag::threshold, d ), tag::threshold, d );  }
+
+inline Function smooth_max
+( const Function & f, const Function & g, const Function & h, const Function & i,
+  const Function & j, const Function & k, const tag::Threshold &, double d        )
+// a smooth (C1) approximation of the maximum between six functions
+{	return smooth_max ( smooth_max ( f, g, tag::threshold, d ),
+											smooth_max ( h, i, tag::threshold, d ),
+	                    smooth_max ( j, k, tag::threshold, d ), tag::threshold, d );  }
 										
 	
 class Function::TakenOnCell	
@@ -570,6 +715,25 @@ class Function::TakenOnCell
 	
 	Cell::Core * cll;
 
+	TakenOnCell ( const Function::TakenOnCell & other ) = delete;
+	TakenOnCell ( const Function::TakenOnCell && other ) = delete;
+	
+	Function::TakenOnCell & operator= ( const Function::TakenOnCell & other )
+	{	if ( f->nb_of_components() == 1 )
+		{	(*this) = static_cast <double> (other);
+			return *this;                            }
+		else
+		{	(*this) = static_cast <std::vector<double>> (other);
+			return *this;                                          }  }
+
+	Function::TakenOnCell & operator= ( const Function::TakenOnCell && other )
+	{	if ( f->nb_of_components() == 1 )
+		{	(*this) = static_cast <double> (other);
+			return *this;                            }
+		else
+		{	(*this) = static_cast <std::vector<double>> (other);
+			return *this;                                          }  }
+	
 	inline operator double() const
 	// can be used like in  double x = f(cll)  or  cout << f(cll)
 	{	Function::Scalar * f_scalar = Function::core_to_scalar ( f );

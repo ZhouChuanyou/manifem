@@ -18,18 +18,19 @@ int main () {
   Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
   Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
-	Manifold first_arc  = RR2.implicit ( x*y + x - y == -1. );
+	RR2.implicit ( x*y + x - y == -1. );
 	Mesh NW ( tag::segment, N, W, tag::divided_in, 10 );
-	Manifold second_arc = RR2.implicit ( x*y - x - y ==  1. );
+	RR2.implicit ( x*y - x - y ==  1. );
 	Mesh WS ( tag::segment, W, S, tag::divided_in, 10 );
-	Manifold third_arc  = RR2.implicit ( x*y - x + y == -1. );
+	RR2.implicit ( x*y - x + y == -1. );
 	Mesh SE ( tag::segment, S, E, tag::divided_in, 10 );
-	Manifold fourth_arc = RR2.implicit ( x*y + x + y ==  1. );
+	RR2.implicit ( x*y + x + y ==  1. );
 	Mesh EN ( tag::segment, E, N, tag::divided_in, 10 );
 
+	Mesh bdry ( tag::join, NW, WS, SE, EN );
+		
 	RR2.set_as_working_manifold();
-
-	Mesh diamond ( tag::rectangle, NW, WS, SE, EN );
+	Mesh diamond ( tag::progressive, tag::boundary, bdry, tag::desired_length, 0.1 );
 
 	diamond.draw_ps ("diamond.eps");
   diamond.export_msh ("diamond.msh");

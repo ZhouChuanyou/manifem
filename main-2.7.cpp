@@ -1,4 +1,7 @@
 
+// exercise in paragraph 2.7 of the manual
+// a "bumpy" hemisphere meshed with triangles
+
 #include "maniFEM.h"
 #include "math.h"
 
@@ -42,68 +45,70 @@ int main ()
 
 	// now build segments :
 	int n = 10;
-	Mesh S_mSW      ( tag::segment, S,    mSW,   n );
-	Mesh S_mSE      ( tag::segment, S,    mSE,   n );
-	Mesh E_mSE      ( tag::segment, E,    mSE,   n );
-	Mesh E_mNE      ( tag::segment, E,    mNE,   n );
-	Mesh N_mNE      ( tag::segment, N,    mNE,   n );
-	Mesh N_mNW      ( tag::segment, N,    mNW,   n );
-	Mesh W_mSW      ( tag::segment, W,    mSW,   n );
-	Mesh W_mNW      ( tag::segment, W,    mNW,   n );
-	Mesh S_mSup     ( tag::segment, S,    mSup,  n );
-	Mesh N_mNup     ( tag::segment, N,    mNup,  n );
-	Mesh E_mEup     ( tag::segment, E,    mEup,  n );
-	Mesh W_mWup     ( tag::segment, W,    mWup,  n );
-	Mesh mSW_mSWup  ( tag::segment, mSW,  mSWup, n );
-	Mesh mSE_mSEup  ( tag::segment, mSE,  mSEup, n );
-	Mesh mNE_mNEup  ( tag::segment, mNE,  mNEup, n );
-	Mesh mNW_mNWup  ( tag::segment, mNW,  mNWup, n );
-	Mesh up_mSup    ( tag::segment, up,   mSup,  n );
-	Mesh up_mEup    ( tag::segment, up,   mEup,  n );
-	Mesh up_mNup    ( tag::segment, up,   mNup,  n );
-	Mesh up_mWup    ( tag::segment, up,   mWup,  n );
-	Mesh mSup_mSEup ( tag::segment, mSup, mSEup, n );
-	Mesh mSup_mSWup ( tag::segment, mSup, mSWup, n );
-	Mesh mEup_mSEup ( tag::segment, mEup, mSEup, n );
-	Mesh mEup_mNEup ( tag::segment, mEup, mNEup, n );
-	Mesh mNup_mNEup ( tag::segment, mNup, mNEup, n );
-	Mesh mNup_mNWup ( tag::segment, mNup, mNWup, n );
-	Mesh mWup_mSWup ( tag::segment, mWup, mSWup, n );
-	Mesh mWup_mNWup ( tag::segment, mWup, mNWup, n );
+	Mesh S_mSW      ( tag::segment, S,    mSW,   tag::divided_in, n );
+	Mesh S_mSE      ( tag::segment, S,    mSE,   tag::divided_in, n );
+	Mesh E_mSE      ( tag::segment, E,    mSE,   tag::divided_in, n );
+	Mesh E_mNE      ( tag::segment, E,    mNE,   tag::divided_in, n );
+	Mesh N_mNE      ( tag::segment, N,    mNE,   tag::divided_in, n );
+	Mesh N_mNW      ( tag::segment, N,    mNW,   tag::divided_in, n );
+	Mesh W_mSW      ( tag::segment, W,    mSW,   tag::divided_in, n );
+	Mesh W_mNW      ( tag::segment, W,    mNW,   tag::divided_in, n );
+	Mesh S_mSup     ( tag::segment, S,    mSup,  tag::divided_in, n );
+	Mesh N_mNup     ( tag::segment, N,    mNup,  tag::divided_in, n );
+	Mesh E_mEup     ( tag::segment, E,    mEup,  tag::divided_in, n );
+	Mesh W_mWup     ( tag::segment, W,    mWup,  tag::divided_in, n );
+	Mesh mSW_mSWup  ( tag::segment, mSW,  mSWup, tag::divided_in, n );
+	Mesh mSE_mSEup  ( tag::segment, mSE,  mSEup, tag::divided_in, n );
+	Mesh mNE_mNEup  ( tag::segment, mNE,  mNEup, tag::divided_in, n );
+	Mesh mNW_mNWup  ( tag::segment, mNW,  mNWup, tag::divided_in, n );
+	Mesh up_mSup    ( tag::segment, up,   mSup,  tag::divided_in, n );
+	Mesh up_mEup    ( tag::segment, up,   mEup,  tag::divided_in, n );
+	Mesh up_mNup    ( tag::segment, up,   mNup,  tag::divided_in, n );
+	Mesh up_mWup    ( tag::segment, up,   mWup,  tag::divided_in, n );
+	Mesh mSup_mSEup ( tag::segment, mSup, mSEup, tag::divided_in, n );
+	Mesh mSup_mSWup ( tag::segment, mSup, mSWup, tag::divided_in, n );
+	Mesh mEup_mSEup ( tag::segment, mEup, mSEup, tag::divided_in, n );
+	Mesh mEup_mNEup ( tag::segment, mEup, mNEup, tag::divided_in, n );
+	Mesh mNup_mNEup ( tag::segment, mNup, mNEup, tag::divided_in, n );
+	Mesh mNup_mNWup ( tag::segment, mNup, mNWup, tag::divided_in, n );
+	Mesh mWup_mSWup ( tag::segment, mWup, mSWup, tag::divided_in, n );
+	Mesh mWup_mNWup ( tag::segment, mWup, mNWup, tag::divided_in, n );
 	
 	// now the twelve rectangles :
 	Mesh rect_S_SE  ( tag::rectangle,
-                    S_mSE, mSE_mSEup, mSup_mSEup.reverse(), S_mSup.reverse() );
+            S_mSE, mSE_mSEup, mSup_mSEup.reverse(), S_mSup.reverse(), tag::with_triangles );
 	Mesh rect_S_SW  ( tag::rectangle,
-                    S_mSup, mSup_mSWup, mSW_mSWup.reverse(), S_mSW.reverse() );
+            S_mSup, mSup_mSWup, mSW_mSWup.reverse(), S_mSW.reverse(), tag::with_triangles );
 	Mesh rect_E_SE  ( tag::rectangle,
-                    E_mEup, mEup_mSEup, mSE_mSEup.reverse(), E_mSE.reverse() );
+            E_mEup, mEup_mSEup, mSE_mSEup.reverse(), E_mSE.reverse(), tag::with_triangles );
 	Mesh rect_E_NE  ( tag::rectangle,
-                    E_mNE, mNE_mNEup, mEup_mNEup.reverse(), E_mEup.reverse() );
+            E_mNE, mNE_mNEup, mEup_mNEup.reverse(), E_mEup.reverse(), tag::with_triangles );
 	Mesh rect_N_NE  ( tag::rectangle,
-                    N_mNup, mNup_mNEup, mNE_mNEup.reverse(), N_mNE.reverse() );
+            N_mNup, mNup_mNEup, mNE_mNEup.reverse(), N_mNE.reverse(), tag::with_triangles );
 	Mesh rect_N_NW  ( tag::rectangle,
-                    N_mNW, mNW_mNWup, mNup_mNWup.reverse(), N_mNup.reverse() );
-	// yes, this sounds a lot like Carry Grant ...
+            N_mNW, mNW_mNWup, mNup_mNWup.reverse(), N_mNup.reverse(), tag::with_triangles );
 	Mesh rect_W_SW  ( tag::rectangle,
-                    W_mSW, mSW_mSWup, mWup_mSWup.reverse(), W_mWup.reverse() );
+            W_mSW, mSW_mSWup, mWup_mSWup.reverse(), W_mWup.reverse(), tag::with_triangles );
 	Mesh rect_W_NW  ( tag::rectangle,
-                     W_mWup, mWup_mNWup, mNW_mNWup.reverse(), W_mNW.reverse() );
+            W_mWup, mWup_mNWup, mNW_mNWup.reverse(), W_mNW.reverse(), tag::with_triangles );
 	Mesh rect_up_SW ( tag::rectangle,
-                    up_mWup, mWup_mSWup, mSup_mSWup.reverse(), up_mSup.reverse() );
+            up_mWup, mWup_mSWup, mSup_mSWup.reverse(), up_mSup.reverse(), tag::with_triangles );
 	Mesh rect_up_SE ( tag::rectangle,
-                    up_mSup, mSup_mSEup, mEup_mSEup.reverse(), up_mEup.reverse() );
+            up_mSup, mSup_mSEup, mEup_mSEup.reverse(), up_mEup.reverse(), tag::with_triangles );
 	Mesh rect_up_NE ( tag::rectangle,
-                    up_mEup, mEup_mNEup, mNup_mNEup.reverse(), up_mNup.reverse() );
+            up_mEup, mEup_mNEup, mNup_mNEup.reverse(), up_mNup.reverse(), tag::with_triangles );
 	Mesh rect_up_NW ( tag::rectangle,
-                    up_mNup, mNup_mNWup, mWup_mNWup.reverse(), up_mWup.reverse() );
+            up_mNup, mNup_mNWup, mWup_mNWup.reverse(), up_mWup.reverse(), tag::with_triangles );
 											 
 	// and finally join the rectangles :
 	Mesh bumpy ( tag::join, list<Mesh>
 		{ rect_S_SE, rect_S_SW, rect_E_SE, rect_E_NE, rect_N_NE, rect_N_NW,
 		  rect_W_SW, rect_W_NW, rect_up_SW, rect_up_SE, rect_up_NE, rect_up_NW } );
+
+	// now, this does not look exactly like example 2.8 in the manual ...
+	// it's not a mistake - it's a challenge to the reader to discover why
 	
   bumpy.export_msh ("bumpy.msh");
 	
-	 cout << "reached end" << endl;
+	cout << "produced file bumpy.msh" << endl;
 }

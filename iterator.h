@@ -1,5 +1,5 @@
 
-// maniFEM iterator.h 2019.10.30
+// maniFEM iterator.h 2019.12.30
 
 #ifndef MANIFEM_ITER_H
 #define MANIFEM_ITER_H
@@ -1078,8 +1078,8 @@ class CellIterator::Over::VerOfPosLoop::Reverse : public virtual CellIterator::O
 };
 
 
-// no need for class IterOver::VerOfNegChain, just use IterOver::VerOfPosChain::Reverse
-// no need for class IterOver::VerOfNegChain::Reverse, just use IterOver::VerOfPosChain
+// no need for class IterOver::VerOfNegLoop, just use IterOver::VerOfPosLoop::Reverse
+// no need for class IterOver::VerOfNegLoop::Reverse, just use IterOver::VerOfPosLoop
 
 // ----------------------------------------------------------------------------------//
 
