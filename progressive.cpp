@@ -29,7 +29,7 @@ void Mesh::Cloud::add_point ( Cell p )
 {	assert ( p.dim() == 0 );
 	assert ( Mesh::Cloud::distance.size() );
 	assert ( Mesh::Cloud::distance.size() == Cloud::range.size() );
-  Mesh::Officer * of = new Mesh::Officer::RankZero ( p );
+	Mesh::Officer * of = new Mesh::Officer::RankZero ( p );
 
 	if ( Mesh::Cloud::highest_officer == nullptr )  // cloud previously empty
 	{	assert ( of->superior == nullptr );
@@ -265,7 +265,7 @@ void Mesh::Cloud::print_everything ()
 	for ( ; it != it_e; it++ )  std::cout << " " << *it;
 	std::cout << std::endl;
 	std::cout << "ranges :";
-  it = Mesh::Cloud::range.begin();
+	it = Mesh::Cloud::range.begin();
 	it_e = Mesh::Cloud::range.end();
 	for ( ; it != it_e; it++ )  std::cout << " " << *it;
 	std::cout << std::endl;
@@ -772,7 +772,7 @@ void switch_orientation ( Mesh msh )
 	CellIterator itt = msh.iter_over ( tag::cells_of_dim, msh.dim() );
 	for ( itt.reset(); itt.in_range(); itt++ )
 		vec_of_cells.push_back ( *itt );
-  for ( std::vector<Cell>::iterator it = vec_of_cells.begin(); it != vec_of_cells.end(); it++ )
+	for ( std::vector<Cell>::iterator it = vec_of_cells.begin(); it != vec_of_cells.end(); it++ )
 		it->remove_from ( msh );
 	for ( std::vector<Cell>::iterator it = vec_of_cells.begin(); it != vec_of_cells.end(); it++ )
 		it->reverse().add_to ( msh );                                                                 }
@@ -1008,7 +1008,7 @@ void progressive_construct ( Mesh & msh, const tag::StartAt &, const Cell & star
 			if ( prod > 0. )  { winner = -1;  break;  }           }
 	}  // end of  while true
 
-  ver1.dispose();  ver2.dispose();
+	ver1.dispose();  ver2.dispose();
 
 	for ( size_t i = 0; i < nc; i++ ) best_tangent[i] *= winner;
 	progressive_construct ( msh, tag::start_at, start, tag::towards, best_tangent,
@@ -1076,7 +1076,7 @@ void progressive_construct
 	// Mesh interface ( tag::deep_copy_of, bdry );  // wait, we want to switch to a list of interfaces ...
 	Mesh interface = bdry;
 	Mesh::Progressive::interface = interface;
-  Mesh::Progressive::under_constr = msh;
+	Mesh::Progressive::under_constr = msh;
 	const size_t nc = Manifold::working.coordinates().nb_of_components();
 	Mesh::Progressive::nb_of_coords = nc;
 	Cell vertex_recently_built ( tag::non_existent );
@@ -1299,13 +1299,13 @@ check_touching :
 	Mesh::Progressive::normals.erase ( next_seg.core );
 	AP.add_to ( interface );
 	PB.add_to ( interface );
-  // if ( current_name+1 == stopping_criterion ) return;			
+	// if ( current_name+1 == stopping_criterion ) return;			
 	std::cout << "building brand new triangle " << ++current_name << std::endl << std::flush;
 	if ( current_name == stopping_criterion ) return;			
 	Mesh::Progressive::build_one_normal ( point_120, P, AP );  // based on previous segment
 	Mesh::Progressive::build_one_normal ( P, B, PB );  // based on previous segment
 	Mesh::Progressive::relocate ( P, 1, f, nc, set_of_nearby_vertices );
-  // find more vertices close to P and take them all into account; modifies f
+	// find more vertices close to P and take them all into account; modifies f
 	Mesh::Cloud::add_point ( P );
 	stop_point_120 = interface.cell_in_front_of(B).tip();
 	goto check_touching;
@@ -1530,7 +1530,7 @@ inline size_t get_topological_dim ( )
 
 Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desired_length )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1544,7 +1544,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desire
 Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif,
              const tag::DesiredLength &, double desired_length                     )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	Manifold tmp_manif = Manifold::working;
 	Manifold::working = manif;
@@ -1562,7 +1562,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif
 Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desired_length,
              const tag::RandomOrientation &                                               )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1576,7 +1576,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desire
 Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif,
              const tag::DesiredLength &, double desired_length, const tag::RandomOrientation & )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	Manifold tmp_manif = Manifold::working;
 	Manifold::working = manif;
@@ -1594,7 +1594,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif
 Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desired_length,
              const tag::InherentOrientation &                                             )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	assert ( Manifold::working.coordinates().nb_of_components() == this->dim() + 1 );
 	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
@@ -1609,7 +1609,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, double desire
 Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif,
              const tag::DesiredLength &, double desired_length, const tag::InherentOrientation & )
 
-: Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
+:	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	assert ( Manifold::working.coordinates().nb_of_components() == this->dim() + 1 );
 	Manifold tmp_manif = Manifold::working;
@@ -1631,7 +1631,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 
 // 'start' and 'stop' may be the same cell
 
-: Mesh ( tag::of_dimension_one )  // positive, by default
+:	Mesh ( tag::of_dimension_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1659,7 +1659,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 
 // 'start' and 'stop' may be the same cell
 
-: Mesh ( tag::of_dimension_one )  // positive, by default
+:	Mesh ( tag::of_dimension_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1685,7 +1685,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
              const tag::StopAt &, const Cell & stop,
              const tag::DesiredLength &, double desired_length )
 
-: Mesh ( tag::of_dimension_one )  // positive, by default
+:	Mesh ( tag::of_dimension_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 	
@@ -1700,7 +1700,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
              const tag::DesiredLength &, double desired_length                   )
 
-: Mesh ( tag::of_dimension_one )  // positive, by default
+:	Mesh ( tag::of_dimension_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 	
@@ -1716,7 +1716,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
              const tag::StopAt &, const Cell & stop,
              const tag::DesiredLength &, double desired_length, const tag::InherentOrientation & )
 
-: Mesh ( tag::of_dimension_one )  // positive, by default
+:	Mesh ( tag::of_dimension_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 	
@@ -1734,7 +1734,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 // for now, only works for two-dimensional meshes (either in RR2 or in RR3)
 // should be adapted for three-dimensional meshes
 
-: Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
+:	Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1751,7 +1751,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 // for now, only works for two-dimensional meshes in RR2
 // should be adapted for three-dimensional meshes
 
-: Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
+:	Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1768,7 +1768,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 
 // for two-dimensional meshes in RR^3
 
-: Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
+:	Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1788,7 +1788,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 	
 // 'start' is a vertex or segment belonging to 'interface'
 
-: Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
+:	Mesh ( tag::of_dimension, 2, tag::greater_than_one )  // positive, by default
 
 {	Mesh::Progressive::temporary_vertex = Cell ( tag::vertex );
 
@@ -1993,7 +1993,7 @@ inline bool Mesh::Progressive::check_touching  // static
 
 {	if ( not ver.exists() )  return false;  // no touch
 	if ( not ver.belongs_to ( interface, tag::not_oriented ) )  return false;
-  //  because 'ver' might have been left behind in the meanwhile
+	//  because 'ver' might have been left behind in the meanwhile
 
 	assert ( set_of_ver.find(ver.core) == set_of_ver.end() );
 	Cell prev_seg = Mesh::Progressive::interface.cell_behind(ver);
@@ -2020,12 +2020,12 @@ inline bool Mesh::Progressive::check_touching  // static
 		iit++;  assert ( iit == set_of_ver.end() );
 		// we want one-two-three to be in order along the interface
 		Cell seg = Mesh::Progressive::interface.cell_behind (one);
-	  Cell tmp = seg.base().reverse();
+		Cell tmp = seg.base().reverse();
 		if ( set_of_ver.find ( tmp.core ) != set_of_ver.end() )  // 'one' is not the first one
 		{	if ( tmp == two )  { two = one;  one = tmp;  }
 			else  {	assert ( tmp == three );  three = one;  one = tmp;  }             }
 		seg = Mesh::Progressive::interface.cell_behind ( one );
-	  tmp = seg.base().reverse();
+		tmp = seg.base().reverse();
 		if ( set_of_ver.find ( tmp.core ) != set_of_ver.end() )
 		// 'one' is still not the first one
 		{	if ( tmp == two )
@@ -2068,7 +2068,7 @@ inline bool Mesh::Progressive::check_touching  // static
 			// sac20091971
 			Cell other_seg = Mesh::Progressive::interface.cell_behind ( one );
 			if ( other_seg.base().reverse() != two ) return false;  // no merge
-		  Cell tmp = one;  one = two;
+			Cell tmp = one;  one = two;
 			two = tmp;                            }
 		Cell one_two = Mesh::Progressive::interface.cell_in_front_of(one);
 		assert ( one_two.tip() == two );
@@ -2197,7 +2197,7 @@ inline Cell Mesh::Progressive::build_normals ( const Cell & start )  // static
 				 Mesh::Progressive::normals.end()                   )  return new_seg;
 		assert ( new_seg != start );
 		Cell C = new_seg.tip();
-	  Mesh::Progressive::build_each_normal ( B, C, new_seg, e, f );
+		Mesh::Progressive::build_each_normal ( B, C, new_seg, e, f );
 		// 'e' and 'f' get updated within 'build_each_normal'
 		seg = new_seg;  B = C;                                                       }
 	
@@ -2380,7 +2380,7 @@ int main5 ( )
 
 	std::vector < double > N { 0, -0.02, 0. };
 	Mesh msh ( tag::progressive, tag::boundary, chain,
-             tag::start_at, AB, tag::towards, N,
+	           tag::start_at, AB, tag::towards, N,
 	           tag::desired_length, 0.02              );
 
 	msh.export_msh ("msh-new.msh");
