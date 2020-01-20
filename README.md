@@ -10,6 +10,8 @@ e.g. for implementing their own meshing or remeshing algorithms.
 ManiFEM is written in C++ and uses the Standard Template Library (STL). 
 It uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for storing matrices and solving systems of linear equations.
 
+ManiFEM is just a collection of C++ classes. It has no user-friendly interface nor graphic capabilities. The user shold have some understanding of programming and of C++. However, maniFEM can be used at a basic level by people with no deep knowledge of C++. 
+
 ManiFEM is being developped by Cristian Barbarosie, Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
