@@ -1,9 +1,9 @@
-# manifem
+# maniFEM
 ManiFEM is a software for solving partial differential equations through the finite element method.
 The name comes from "finite elements on manifolds". 
 ManiFEM has been designed with the goal of coping with very general meshes,
 in particular meshes on Riemannian manifolds, even manifolds which cannot be embedded in R^3, like the torus R^2/Z^2.
-Also, ManiFEM has been written with the goal of being conceptually clear and easy to read.
+Also, maniFEM has been written with the goal of being conceptually clear and easy to read.
 We hope it will prove particularly useful for people who want a fine control over the mesh, 
 e.g. for implementing their own meshing or remeshing algorithms.
 
