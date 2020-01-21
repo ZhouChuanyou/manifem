@@ -1,5 +1,5 @@
 
-// manifem/progressive.cpp 2020.01.13
+// manifem/progressive.cpp 2020.01.20
 
 #include <stack>
 #include "math.h"
@@ -25,6 +25,8 @@ Cell Mesh::Progressive::temporary_vertex ( tag::non_existent );
 //-------------------------------------------------------------------------------------------------
 
 void Mesh::Cloud::add_point ( Cell p )
+
+// see paragraph 9.9 in the manual
 
 {	assert ( p.dim() == 0 );
 	assert ( Mesh::Cloud::distance.size() );
@@ -58,6 +60,8 @@ void Mesh::Officer::PositiveRank::adopt ( Mesh::Officer * of, Mesh::Officer * to
 // perhaps we should define 'adopt' as a method of class Mesh::Officer
 // this way, we could eliminate the check in 'add_point'
 // also, define 'rank' as a data member in Mesh::Officer
+
+// see paragraph 9.9 in the manual
 
 {	size_t rank_of_of = of->get_rank();
 	size_t rank_of_this = this->get_rank();
@@ -162,6 +166,8 @@ bool Mesh::Officer::try_to_cling_to
 //-------------------------------------------------------------------------------------------------
 
 void Mesh::Cloud::remove_point ( Cell p )
+
+// see paragraph 9.9 in the manual
 
 {	assert ( p.dim() == 0 );
 	Mesh::Officer * of_0 = Mesh::Officer::officer[p.core];
@@ -1151,7 +1157,7 @@ angles_60 :
 		if ( d < Mesh::Progressive::long_dist_sq )  // we may want to form a triangle
 		// but first we must make sure it is on the correct side
 		if ( Mesh::Progressive::positive_orientation ( A, point_60, prev_seg, next_seg ) )
-		if ( Mesh::Progressive::cos_sq_60 ( A, point_60, B, prev_seg, next_seg) > 0.03 )
+		if ( Mesh::Progressive::cos_sq_60 ( A, point_60, B, prev_seg, next_seg) > 0.02 )
 		// triangle waiting to be filled; see paragraph 9.7 in the manual
 		{	Cell seg_next_to_B = interface.cell_in_front_of(B);
 			Cell ver_next_to_B = seg_next_to_B.tip();

@@ -107,6 +107,8 @@ exe-3.18: iterator.o field.o function.o global.o main-3.18.o manifold.o mesh.o p
 exe-3.19: iterator.o field.o function.o global.o main-3.19.o manifold.o mesh.o progressive.o
 	g++ -o $@ -std=c++17 $^
 
+exe-7.2: iterator.o field.o function.o global.o main-7.2.o manifold.o mesh.o
+	g++ -o $@ -std=c++17 $^
 
 clean:
 	rm *.o
@@ -213,5 +215,8 @@ run-3.18: exe-3.18
 run-3.19: exe-3.19
 	./exe-3.19
 
+run-7.2: exe-7.2
+	./exe-7.2
 
-PHONY: run-test run-1.1 run-1.3 run-1.4 run-1.5 run-2.1 run-2.2 run-2.3 run-2.4 run-2.5 run-2.6 run-2.7 run-2.8 run-2.9 run-2.10 run-2.11 run-2.12 run-2.13 run-2.14 run-2.15 run-3.1 run-3.2 run-3.3 run-3.4 run-3.5 run-3.6 run-3.7 run-3.8 run-3.14 exe-3.15 exe-3.16 run-3.17 run-3.18 run-3.19 run-progressive clean
+
+PHONY: run-test run-1.1 run-1.3 run-1.4 run-1.5 run-2.1 run-2.2 run-2.3 run-2.4 run-2.5 run-2.6 run-2.7 run-2.8 run-2.9 run-2.10 run-2.11 run-2.12 run-2.13 run-2.14 run-2.15 run-3.1 run-3.2 run-3.3 run-3.4 run-3.5 run-3.6 run-3.7 run-3.8 run-3.14 exe-3.15 exe-3.16 run-3.17 run-3.18 run-3.19 run-7.2 run-progressive clean
