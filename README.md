@@ -17,6 +17,24 @@ see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
 To learn maniFEM, you should begin by reading the [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
-To use maniFEM, you need a recent version of the `g++` compiler and the `make` utility. Under linux it should be easy to install them. It is not that easy to install and use them under windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. You should copy all `.cpp` and `.h` files to some directory in your computer, together with the `Makefile`.
+To use maniFEM, you need a recent version of the `g++` compiler and the `make` utility. 
+Under linux it should be easy to install them. 
+It is not that easy to install and use them under windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
+You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
+You should copy all `.cpp` and `.h` files to some directory in your computer, together with the `Makefile`.
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
 
+Copyright 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+
+ManiFEM is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ManiFEM is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
