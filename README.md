@@ -22,7 +22,7 @@ To use maniFEM, you should copy all `.cpp` and `.h` files under `src/` to some d
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
 Under linux it should be easy to install them. 
-It is not that easy to install and use them under windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
+It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
 You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
 
 This work is supported by National Funding from FCT -- Fundação para a Ciência e a Tecnologia (Portugal), 
