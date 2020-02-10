@@ -11,21 +11,24 @@ ManiFEM uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for s
 
 ManiFEM is just a collection of C++ classes. It has no user-friendly interface nor graphic capabilities. The user shold have some understanding of programming and of C++. However, maniFEM can be used at a basic level by people with no deep knowledge of C++. 
 
-In its current version (20.02.06), maniFEM works well for mesh generation. Quotient manifolds and anisotropic Riemann metrics are not yet implemented. Variational formulations and finite elements are not yet implemented.
+In its current version (20.02.09), maniFEM works well for mesh generation. Quotient manifolds and anisotropic Riemann metrics are not yet implemented. Variational formulations and finite elements are not yet implemented.
 
-ManiFEM is being developped by Cristian Barbarosie, Sérgio Lopes and Anca-Maria Toader;
+ManiFEM is being developped by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
 To learn maniFEM, you should begin by reading the [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
-To use maniFEM, you should copy all `.cpp` and `.h` files under `src/` to some directory in your computer, together with the `Makefile`.
-Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, and so on.
+To use maniFEM, you should copy all `.cpp` and `.h` files under `src/` to some directory in your computer, 
+together with the `Makefile`.
+Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, 
+and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
 Under linux it should be easy to install them. 
-It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using [cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
+It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using 
+[cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
 You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
 
-This work is supported by National Funding from FCT -- Fundação para a Ciência e a Tecnologia (Portugal), 
+This work is supported by National Funding from FCT - Fundação para a Ciência e a Tecnologia (Portugal), 
 through Faculdade de Cências da Universidade de Lisboa and 
 Centro de Matemática, Aplicações Fundamentais e Investigação Operacional, project UID/MAT/04561/2020.
 
@@ -42,4 +45,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
