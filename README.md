@@ -7,16 +7,22 @@ Also, maniFEM has been written with the goal of being conceptually clear and eas
 We hope it will prove particularly useful for people who want a fine control over the mesh, 
 e.g. for implementing their own meshing or remeshing algorithms.
 
-ManiFEM uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for storing matrices and solving systems of linear equations.
+ManiFEM uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) for storing matrices and for
+solving systems of linear equations.
 
-ManiFEM is just a collection of C++ classes. It has no user-friendly interface nor graphic capabilities. The user shold have some understanding of programming and of C++. However, maniFEM can be used at a basic level by people with no deep knowledge of C++. 
+ManiFEM is just a collection of C++ classes. It has no user-friendly interface nor graphic capabilities. 
+The user shold have some understanding of programming and of C++. 
+However, maniFEM can be used at a basic level by people with no deep knowledge of C++. 
 
-In its current version (20.02.09), maniFEM works well for mesh generation. Quotient manifolds and anisotropic Riemann metrics are not yet implemented. Variational formulations and finite elements are not yet implemented.
+In its current version (20.02.09), maniFEM works well for mesh generation. 
+Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
+Variational formulations and finite elements are not yet implemented.
 
 ManiFEM is being developped by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
-To learn maniFEM, you should begin by reading the [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
+To learn maniFEM, you should begin by reading the 
+[manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
 To use maniFEM, you should copy all `.cpp` and `.h` files under `src/` to some directory in your computer, 
 together with the `Makefile`.
@@ -29,7 +35,7 @@ It is not that easy to install and use them under Windows, but it is certainly p
 You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
 
 This work is supported by National Funding from FCT - Fundação para a Ciência e a Tecnologia (Portugal), 
-through Faculdade de Cências da Universidade de Lisboa and 
+through Faculdade de Ciências da Universidade de Lisboa and 
 Centro de Matemática, Aplicações Fundamentais e Investigação Operacional, project UID/MAT/04561/2020.
 
 Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
