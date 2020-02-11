@@ -16,7 +16,7 @@ int main ()
 	
 	Cell A ( tag::vertex );  t(A) = 0.;
 	Cell B ( tag::vertex );  t(B) = 1.9*pi;
-	Mesh circle ( tag::segment, A, B, tag::divided_in, 19 );
+	Mesh circle ( tag::segment, A.reverse(), B, tag::divided_in, 19 );
 
 	Cell BA ( tag::segment, B.reverse(), A );
 	BA.add_to ( circle );

@@ -1,7 +1,10 @@
 
-// maniFEM mesh.h 2020.02.06
+// mesh.h 2020.02.09
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 //    ManiFEM is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +18,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
 
 #ifndef MANIFEM_MESH_H
 #define MANIFEM_MESH_H
@@ -634,6 +634,9 @@ class Cell::Core::Positive : public Cell::Core
 	bool is_positive ( ) const;  // virtual from Cell::Core
 	Cell::Core::Positive * get_positive ( );  // virtual from Cell::Core
 
+	Cell::Core * reverse ( const tag::BuildIfNotExists & );  // virtual from Cell::Core
+	virtual Cell::Core * build_reverse ( ) = 0;
+
 	bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const;  // virtual from Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
 
@@ -702,7 +705,7 @@ class Cell::Positive : public Cell::Core::Positive
 	Cell::Positive & operator= ( const Cell::Positive && ) = delete;
 
 	size_t get_dim ( ) const; // virtual
-	Cell::Core * reverse ( const tag::BuildIfNotExists & ); // virtual from Cell::Core
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
@@ -771,7 +774,7 @@ class Cell::Positive::Vertex : public Cell::Core::Positive
 	Cell::Positive::Vertex & operator= ( const Cell::Positive::Vertex && ) = delete;
 
 	size_t get_dim ( ) const; // virtual from Cell::Core
-	Cell::Core * reverse ( const tag::BuildIfNotExists & ); // virtual from Cell::Core
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
 	
 	// Methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'.
 	// If 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
@@ -841,7 +844,7 @@ class Cell::Positive::Segment : public Cell::Core::Positive
 	Cell::Core * base () override; // virtual, overrides definition by Cell::Core
 
 	size_t get_dim ( ) const; // virtual from Cell::Core
-	Cell::Core * reverse ( const tag::BuildIfNotExists & ); // virtual from Cell::Core
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
@@ -1032,7 +1035,7 @@ class Mesh::OneDim::Positive : public Mesh::Core
 	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
 	{ }
 
-	Positive ( const tag::Segment &, Cell::Positive::Vertex * A, Cell::Positive::Vertex * B,
+	Positive ( const tag::Segment &, Cell::Negative::Vertex * A, Cell::Positive::Vertex * B,
              const tag::DividedIn &, size_t n );
 	// defined in global.cpp
 	
@@ -1142,22 +1145,9 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
 		assert ( cll_rev_p );  assert ( cll_rev_p == cll_p->reverse_p );             }     }
 
 
-// In Mesh ( tag::segment... ), the first two arguments are positive points.
-// This is not consistent with Cell ( tag::segment... ), where the user
-// must provide a negative point (the base) then a positive point (the tip).
-// It is also inconsistent with other constructors like Mesh ( tag::quadrangle... )
-// where we provide faces with orientation compatible with the orientation
-// of the future mesh.
-// However, we think it is easier for the user to build chains of segments like
-//   Cell A ( tag::vertex ); Cell B ( tag::point );
-//   Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
-// rather than
-//   Cell A ( tag::vertex ); Cell B ( tag::point );
-//   Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );
-
 inline Mesh::Mesh ( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n )
 : Mesh ( tag::whose_core_is, new Mesh::OneDim::Positive
-  ( tag::segment, (Cell::Positive::Vertex*) A.core, (Cell::Positive::Vertex*) B.core, tag::divided_in, n ) )
+  ( tag::segment, (Cell::Negative::Vertex*) A.core, (Cell::Positive::Vertex*) B.core, tag::divided_in, n ) )
 {	}
 
 
@@ -1338,14 +1328,18 @@ inline Cell Mesh::first_vertex ( ) const
 	if ( this->is_positive() )
 		return Cell ( tag::whose_core_is, this->core->first_vertex() );
 	else
-		return Cell ( tag::whose_core_is, this->core->last_vertex() );  }
+	{	Cell::Core * tmp = this->core->last_vertex()->reverse_p;
+		assert ( tmp );
+		return Cell ( tag::whose_core_is, tmp );                  }      }
 
 inline Cell Mesh::last_vertex ( ) const
 {	assert ( this->dim() == 1 );
 	if ( this->is_positive() )
 		return Cell ( tag::whose_core_is, this->core->last_vertex() );
 	else
-		return Cell ( tag::whose_core_is, this->core->first_vertex() );  }
+	{	Cell::Core * tmp = this->core->first_vertex()->reverse_p;
+		assert ( tmp );
+		return Cell ( tag::whose_core_is, tmp );                   }     }
 
 inline Cell Mesh::first_segment ( ) const
 {	assert ( this->dim() == 1 );
@@ -1409,10 +1403,10 @@ inline Mesh::Positive::Positive ( const tag::Quadrangle &, const Cell & SW, cons
 	
 {	bool cut_rectangles_in_half = ( wt == tag::with_triangles );
 
-	Mesh south ( tag::segment, SW, SE, tag::divided_in, m );
-	Mesh east  ( tag::segment, SE, NE, tag::divided_in, n );
-	Mesh north ( tag::segment, NE, NW, tag::divided_in, m );
-	Mesh west  ( tag::segment, NW, SW, tag::divided_in, n );
+	Mesh south ( tag::segment, SW.reverse(), SE, tag::divided_in, m );
+	Mesh east  ( tag::segment, SE.reverse(), NE, tag::divided_in, n );
+	Mesh north ( tag::segment, NE.reverse(), NW, tag::divided_in, m );
+	Mesh west  ( tag::segment, NW.reverse(), SW, tag::divided_in, n );
 
 	// when these four meshes go out of scope, their core should be disposed of
 
@@ -1822,7 +1816,7 @@ inline void Mesh::OneDim::Positive::order ( )
 // see paragraph 8.14 in the manual [?]
 
 {	if ( this->first_ver ) return;
-	// if first_vertex is not null, the mesh is already ordered
+	// if first_ver is not null, the mesh is already ordered
 	
 	std::list<Cell::Core*>::iterator it0 = this->cells[1].begin();  // will change !
 	if ( it0 == this->cells[1].end() )  // empty mesh

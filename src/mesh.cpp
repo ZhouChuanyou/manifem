@@ -1,7 +1,10 @@
 
-// maniFEM mesh.cpp 2020.01.03
+// mesh.cpp 2020.02.09
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 //    ManiFEM is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +18,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
 
 #include <forward_list>
 
@@ -159,14 +159,14 @@ Cell::Core * Mesh::Positive::last_segment ( )  // virtual from Mesh::Core
 	exit ( 1 );                                                                                     }
 
 Cell::Core * Mesh::OneDim::Positive::first_vertex ( )  // virtual from Mesh::Core
-// returns a positive vertex
+// returns a negative vertex
 {	this->order();
 	assert ( this->first_ver );
 	assert ( this->first_ver != Cell::ghost );
 	assert ( not this->first_ver->is_positive() );
 	assert ( this->last_ver );
 	assert ( this->last_ver->is_positive() );
-	return this->first_ver->reverse_p;              }
+	return this->first_ver;                         }
 
 Cell::Core * Mesh::OneDim::Positive::last_vertex ( )  // virtual from Mesh::Core
 {	this->order();
@@ -258,28 +258,34 @@ bool Cell::Core::Negative::belongs_to ( Mesh::Core * msh, const tag::NotOriented
 //-----------------------------------------------------------------------------//
 
 
-Cell::Core * Cell::Positive::Vertex::reverse ( const tag::BuildIfNotExists & )
+Cell::Core * Cell::Positive::Vertex::build_reverse ( )
 // virtual from Cell::Core
 
-{	if ( this->reverse_p == nullptr )
-		this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this );
+{	this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this );
 	return this->reverse_p;                                                    }
 
 
-Cell::Core * Cell::Positive::Segment::reverse ( const tag::BuildIfNotExists & )
+Cell::Core * Cell::Positive::Segment::build_reverse ( )
 // virtual from Cell::Core
 
-{	if ( this->reverse_p == nullptr )
-		this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this );
+{	this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this );
 	return this->reverse_p;                                                     }
 
 
-Cell::Core * Cell::Positive::reverse ( const tag::BuildIfNotExists & )
+Cell::Core * Cell::Positive::build_reverse ( )
 // virtual from Cell::Core
 
-{	if ( this->reverse_p == nullptr )
-		this->reverse_p = new Cell::Negative ( tag::reverse_of, this );
+{	this->reverse_p = new Cell::Negative ( tag::reverse_of, this );
 	return this->reverse_p;                                                   }
+
+
+Cell::Core * Cell::Core::Positive::reverse ( const tag::BuildIfNotExists & )
+// virtual from Cell::Core
+
+{	if ( this->reverse_p == nullptr )  this->reverse_p = this->build_reverse();
+	assert ( this->reverse_p );
+	assert ( not this->reverse_p->is_positive() );
+	return this->reverse_p;                                                      }
 
 
 Cell::Core * Cell::Core::Negative::reverse ( const tag::BuildIfNotExists & )

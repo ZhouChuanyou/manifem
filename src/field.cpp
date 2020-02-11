@@ -1,7 +1,10 @@
 
-// maniFEM field.cpp 2019.10.30
+// field.cpp 2019.10.30
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 //    ManiFEM is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +18,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
 
 #include "field.h"
 

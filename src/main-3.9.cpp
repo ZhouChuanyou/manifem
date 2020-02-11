@@ -1,6 +1,6 @@
 
 // example presented in paragraph 3.9 of the manual
-// a "bumpy" hemisphere built progressively
+// a "bumpy" hemisphere meshed progressively
 
 #include "maniFEM.h"
 #include "math.h"

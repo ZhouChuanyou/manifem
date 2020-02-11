@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.24 of the manual
+// a disk with an eccentric hole, anisotropic mesh
 // the code shown in the manual does not work (yet)
 // we fake the desired result by meshing a surface in 3D
 
@@ -21,15 +22,12 @@ int main ( )
 	circle.project ( P );
 	Mesh outer ( tag::progressive, tag::start_at, P, tag::desired_length, d, tag::random_orientation );
 
-	std::cout << "aha 1" << std::endl << std::flush;
 	double y0 = 0.37;
 	Manifold ellipse = parab_surf.implicit ( x*x + (y-y0)*(y-y0) + 0.3*x*y == 0.25 );
 	Mesh inner ( tag::progressive, tag::desired_length, d, tag::random_orientation );
 
-	std::cout << "aha 2" << std::endl << std::flush;
 	Mesh circles ( tag::join, outer, inner.reverse() );
 
-	std::cout << "aha 3" << std::endl << std::flush;
 	parab_surf.set_as_working_manifold();
 	Mesh disk ( tag::progressive, tag::boundary, circles,
               tag::start_at, P, tag::towards, { -1., 0., 0. },

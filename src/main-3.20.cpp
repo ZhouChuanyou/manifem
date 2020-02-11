@@ -1,6 +1,8 @@
 
 // example presented in paragraph 3.20 of the manual
 // a sharp cone
+// the code shown in the manual does not work (yet)
+// we fake the result by building by hand the triangles around the vertex
 
 #include "maniFEM.h"
 #include "math.h"
@@ -14,7 +16,7 @@ int main ()
 {	Manifold RR3 ( tag::Euclid, tag::of_dim, 3 );
 	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
-	double seg_size = 0.12;
+	double seg_size = 0.13;
 	// std::cout << "segment size : ";
 	// std::cin >> seg_size;
 

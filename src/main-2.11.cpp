@@ -36,14 +36,14 @@ int main ()
 	base.project ( mSW );  base.project ( mSE );  base.project ( mNE );  base.project ( mNW );
 
 	// now build eight segments, forming the base
-	Mesh S_mSW ( tag::segment, S, mSW, tag::divided_in, n );
-	Mesh S_mSE ( tag::segment, S, mSE, tag::divided_in, n );
-	Mesh E_mSE ( tag::segment, E, mSE, tag::divided_in, n );
-	Mesh E_mNE ( tag::segment, E, mNE, tag::divided_in, n );
-	Mesh N_mNE ( tag::segment, N, mNE, tag::divided_in, n );
-	Mesh N_mNW ( tag::segment, N, mNW, tag::divided_in, n );
-	Mesh W_mSW ( tag::segment, W, mSW, tag::divided_in, n );
-	Mesh W_mNW ( tag::segment, W, mNW, tag::divided_in, n );
+	Mesh S_mSW ( tag::segment, S.reverse(), mSW, tag::divided_in, n );
+	Mesh S_mSE ( tag::segment, S.reverse(), mSE, tag::divided_in, n );
+	Mesh E_mSE ( tag::segment, E.reverse(), mSE, tag::divided_in, n );
+	Mesh E_mNE ( tag::segment, E.reverse(), mNE, tag::divided_in, n );
+	Mesh N_mNE ( tag::segment, N.reverse(), mNE, tag::divided_in, n );
+	Mesh N_mNW ( tag::segment, N.reverse(), mNW, tag::divided_in, n );
+	Mesh W_mSW ( tag::segment, W.reverse(), mSW, tag::divided_in, n );
+	Mesh W_mNW ( tag::segment, W.reverse(), mNW, tag::divided_in, n );
 
 	// we are done with the bas, now switch back to 'nut'
 	nut.set_as_working_manifold();
@@ -64,26 +64,26 @@ int main ()
 	nut.project ( mNEup );  nut.project ( mNWup );
 
 	// more segments :
-	Mesh S_mSup     ( tag::segment, S,    mSup,  tag::divided_in, n );
-	Mesh N_mNup     ( tag::segment, N,    mNup,  tag::divided_in, n );
-	Mesh E_mEup     ( tag::segment, E,    mEup,  tag::divided_in, n );
-	Mesh W_mWup     ( tag::segment, W,    mWup,  tag::divided_in, n );
-	Mesh mSW_mSWup  ( tag::segment, mSW,  mSWup, tag::divided_in, n );
-	Mesh mSE_mSEup  ( tag::segment, mSE,  mSEup, tag::divided_in, n );
-	Mesh mNE_mNEup  ( tag::segment, mNE,  mNEup, tag::divided_in, n );
-	Mesh mNW_mNWup  ( tag::segment, mNW,  mNWup, tag::divided_in, n );
-	Mesh up_mSup    ( tag::segment, up,   mSup,  tag::divided_in, n );
-	Mesh up_mEup    ( tag::segment, up,   mEup,  tag::divided_in, n );
-	Mesh up_mNup    ( tag::segment, up,   mNup,  tag::divided_in, n );
-	Mesh up_mWup    ( tag::segment, up,   mWup,  tag::divided_in, n );
-	Mesh mSup_mSEup ( tag::segment, mSup, mSEup, tag::divided_in, n );
-	Mesh mSup_mSWup ( tag::segment, mSup, mSWup, tag::divided_in, n );
-	Mesh mEup_mSEup ( tag::segment, mEup, mSEup, tag::divided_in, n );
-	Mesh mEup_mNEup ( tag::segment, mEup, mNEup, tag::divided_in, n );
-	Mesh mNup_mNEup ( tag::segment, mNup, mNEup, tag::divided_in, n );
-	Mesh mNup_mNWup ( tag::segment, mNup, mNWup, tag::divided_in, n );
-	Mesh mWup_mSWup ( tag::segment, mWup, mSWup, tag::divided_in, n );
-	Mesh mWup_mNWup ( tag::segment, mWup, mNWup, tag::divided_in, n );
+	Mesh S_mSup     ( tag::segment, S.reverse(),    mSup,  tag::divided_in, n );
+	Mesh N_mNup     ( tag::segment, N.reverse(),    mNup,  tag::divided_in, n );
+	Mesh E_mEup     ( tag::segment, E.reverse(),    mEup,  tag::divided_in, n );
+	Mesh W_mWup     ( tag::segment, W.reverse(),    mWup,  tag::divided_in, n );
+	Mesh mSW_mSWup  ( tag::segment, mSW.reverse(),  mSWup, tag::divided_in, n );
+	Mesh mSE_mSEup  ( tag::segment, mSE.reverse(),  mSEup, tag::divided_in, n );
+	Mesh mNE_mNEup  ( tag::segment, mNE.reverse(),  mNEup, tag::divided_in, n );
+	Mesh mNW_mNWup  ( tag::segment, mNW.reverse(),  mNWup, tag::divided_in, n );
+	Mesh up_mSup    ( tag::segment, up.reverse(),   mSup,  tag::divided_in, n );
+	Mesh up_mEup    ( tag::segment, up.reverse(),   mEup,  tag::divided_in, n );
+	Mesh up_mNup    ( tag::segment, up.reverse(),   mNup,  tag::divided_in, n );
+	Mesh up_mWup    ( tag::segment, up.reverse(),   mWup,  tag::divided_in, n );
+	Mesh mSup_mSEup ( tag::segment, mSup.reverse(), mSEup, tag::divided_in, n );
+	Mesh mSup_mSWup ( tag::segment, mSup.reverse(), mSWup, tag::divided_in, n );
+	Mesh mEup_mSEup ( tag::segment, mEup.reverse(), mSEup, tag::divided_in, n );
+	Mesh mEup_mNEup ( tag::segment, mEup.reverse(), mNEup, tag::divided_in, n );
+	Mesh mNup_mNEup ( tag::segment, mNup.reverse(), mNEup, tag::divided_in, n );
+	Mesh mNup_mNWup ( tag::segment, mNup.reverse(), mNWup, tag::divided_in, n );
+	Mesh mWup_mSWup ( tag::segment, mWup.reverse(), mSWup, tag::divided_in, n );
+	Mesh mWup_mNWup ( tag::segment, mWup.reverse(), mNWup, tag::divided_in, n );
 	
 	// now the twelve rectangles :
 	Mesh rect_S_SE  ( tag::rectangle,

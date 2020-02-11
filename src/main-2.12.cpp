@@ -16,7 +16,7 @@ int main ()
 	
 	Cell A ( tag::vertex );  t(A) = pi/2.;
 	Cell B ( tag::vertex );  t(B) = 5.*pi;
-	Mesh arc_of_spiral ( tag::segment, A, B, tag::divided_in, 50 );
+	Mesh arc_of_spiral ( tag::segment, A.reverse(), B, tag::divided_in, 50 );
 
 	Function x = t*cos(t), y = t*sin(t);
 	spiral.set_coordinates ( x && y );

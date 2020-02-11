@@ -1,5 +1,8 @@
 
-// maniFEM manifold.cpp 2020.01.21
+// manifold.cpp 2020.01.21
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -15,9 +18,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
 
 #include "manifold.h"
 

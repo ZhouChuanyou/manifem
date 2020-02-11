@@ -20,7 +20,7 @@ int main ( )
 	// start the process by building a segment
 	Cell ini_A ( tag::vertex );  x(ini_A) = 1.;  y(ini_A) = 0.;
 	Cell ini_B ( tag::vertex );  x(ini_B) = 2.;  y(ini_B) = 0.;
-	Mesh ini_seg ( tag::segment, ini_A, ini_B, tag::divided_in, radial_divisions );
+	Mesh ini_seg ( tag::segment, ini_A.reverse(), ini_B, tag::divided_in, radial_divisions );
 	Mesh prev_seg = ini_seg;
 	Cell  A = ini_A,  B = ini_B;
 	std::list < Mesh > sectors;
@@ -31,20 +31,20 @@ int main ( )
 		Cell C ( tag::vertex );  x(C) =    cos(theta);  y(C) =    sin(theta);
 		Cell D ( tag::vertex );  x(D) = 2.*cos(theta);  y(D) = 2.*sin(theta);
 		// and three new segments
-		Mesh BD ( tag::segment, B, D, tag::divided_in, rot_divisions );
-		Mesh DC ( tag::segment, D, C, tag::divided_in, radial_divisions );
-		Mesh CA ( tag::segment, C, A, tag::divided_in, rot_divisions );
+		Mesh BD ( tag::segment, B.reverse(), D, tag::divided_in, rot_divisions );
+		Mesh DC ( tag::segment, D.reverse(), C, tag::divided_in, radial_divisions );
+		Mesh CA ( tag::segment, C.reverse(), A, tag::divided_in, rot_divisions );
 		// and a quadrangle
 		Mesh quadr ( tag::quadrangle, prev_seg, BD, DC, CA );
 		sectors.push_back ( quadr );
 		prev_seg = DC.reverse();
-		A = C;  B = D;                                                          }
+		A = C;  B = D;                                                                }
 
 	// we now build the last sector, thus closing the ring
 	// prev_seg, A and B have rotated during the construction process
 	// but ini_seg, ini_A and ini_B are the same, initial, ones
-	Mesh outer ( tag::segment, B, ini_B, tag::divided_in, rot_divisions );
-	Mesh inner ( tag::segment, ini_A, A, tag::divided_in, rot_divisions );
+	Mesh outer ( tag::segment, B.reverse(), ini_B, tag::divided_in, rot_divisions );
+	Mesh inner ( tag::segment, ini_A.reverse(), A, tag::divided_in, rot_divisions );
 	Mesh quadr ( tag::quadrangle, outer, ini_seg.reverse(), inner, prev_seg );
 	sectors.push_back ( quadr );
 

@@ -25,10 +25,10 @@ int main ()
 	Cell C ( tag::vertex );  alpha(C) = 1.95*pi;  beta(C) = 1.9*pi;  torus.project(C);
 	Cell D ( tag::vertex );  alpha(D) = 1.95*pi;  beta(D) = 0.;      torus.project(D);
 
-	Mesh AB ( tag::segment, A, B, tag::divided_in, 19 );
-	Mesh BC ( tag::segment, B, C, tag::divided_in, 39 );
-	Mesh CD ( tag::segment, C, D, tag::divided_in, 19 );
-	Mesh DA ( tag::segment, D, A, tag::divided_in, 39 );
+	Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 19 );
+	Mesh BC ( tag::segment, B.reverse(), C, tag::divided_in, 39 );
+	Mesh CD ( tag::segment, C.reverse(), D, tag::divided_in, 19 );
+	Mesh DA ( tag::segment, D.reverse(), A, tag::divided_in, 39 );
 
 	torus.set_as_working_manifold();
 	Mesh ABCD ( tag::rectangle, AB, BC, CD, DA );

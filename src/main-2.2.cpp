@@ -26,16 +26,16 @@ int main () {
 	Cell F ( tag::vertex );  x(F) = -1.;  y(F) = 1.;
 	Cell G ( tag::vertex );  x(G) =  1.;  y(G) = 0.;
 	Cell H ( tag::vertex );  x(H) =  1.;  y(H) = 0.5;
-	Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
-	Mesh BC ( tag::segment, B, C, tag::divided_in,  8 );
-	Mesh CD ( tag::segment, C, D, tag::divided_in, 10 );
-	Mesh DA ( tag::segment, D, A, tag::divided_in,  8 );
-	Mesh CE ( tag::segment, C, E, tag::divided_in,  7 );
-	Mesh EF ( tag::segment, E, F, tag::divided_in, 10 );
-	Mesh FD ( tag::segment, F, D, tag::divided_in,  7 );
-	Mesh BG ( tag::segment, B, G, tag::divided_in, 12 );
-	Mesh GH ( tag::segment, G, H, tag::divided_in,  8 );
-	Mesh HC ( tag::segment, H, C, tag::divided_in, 12 );
+	Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );
+	Mesh BC ( tag::segment, B.reverse(), C, tag::divided_in,  8 );
+	Mesh CD ( tag::segment, C.reverse(), D, tag::divided_in, 10 );
+	Mesh DA ( tag::segment, D.reverse(), A, tag::divided_in,  8 );
+	Mesh CE ( tag::segment, C.reverse(), E, tag::divided_in,  7 );
+	Mesh EF ( tag::segment, E.reverse(), F, tag::divided_in, 10 );
+	Mesh FD ( tag::segment, F.reverse(), D, tag::divided_in,  7 );
+	Mesh BG ( tag::segment, B.reverse(), G, tag::divided_in, 12 );
+	Mesh GH ( tag::segment, G.reverse(), H, tag::divided_in,  8 );
+	Mesh HC ( tag::segment, H.reverse(), C, tag::divided_in, 12 );
 
 	Mesh ABCD ( tag::rectangle, AB, BC, CD, DA );
 	Mesh CEFD ( tag::rectangle, CE, EF, FD, CD.reverse() );

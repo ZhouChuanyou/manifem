@@ -1,6 +1,6 @@
 
 // example presented in paragraph 3.7 of the manual
-// meshes progressively a complicated surface, a kind of convolution between two tori
+// a complicated surface, a kind of convolution between two tori
 
 #include "maniFEM.h"
 #include "math.h"

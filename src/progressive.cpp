@@ -1,7 +1,10 @@
 
-// manifem/progressive.cpp 2020.02.07
+// progressive.cpp 2020.02.09
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 //    ManiFEM is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU Lesser General Public License as published by
@@ -15,9 +18,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
 
 // this is not the most elegant programming style
 // I use some global variables and also some goto's ...
@@ -1442,7 +1442,7 @@ void progressive_construct
 	Cell point_60 = start.tip();
 	
 	int stopping_criterion = 0;
-	std::cout << "stopping criterion : ";  std::cin >> stopping_criterion;
+	// std::cout << "stopping criterion : ";  std::cin >> stopping_criterion;
 	int current_name = 1;
 
 restart:
@@ -1966,7 +1966,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	progress_nb_of_coords = Manifold::working.coordinates().nb_of_components();
 	desired_length = length;
 
-	desired_len_at_point = desired_length ( start.tip() );
+	desired_len_at_point = desired_length ( start );
 	sq_desired_len_at_point = desired_len_at_point * desired_len_at_point;
 
 	double n2 = 0.;  // ensure that normal has the right norm
@@ -1997,7 +1997,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	progress_nb_of_coords = Manifold::working.coordinates().nb_of_components();
 	desired_length = length;
 
-	desired_len_at_point = desired_length ( start.tip() );
+	desired_len_at_point = desired_length ( start );
 	sq_desired_len_at_point = desired_len_at_point * desired_len_at_point;
 
 	double n2 = 0.;  // ensure that normal has the right norm

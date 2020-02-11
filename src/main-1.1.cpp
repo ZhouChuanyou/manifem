@@ -28,10 +28,10 @@ int main () {
 	cout << "coordinates of NW : " << x(NW) << " " << y(NW) << " " << z(NW) << endl;
 	
 	// Now build the four sides of the rectangle :
-	Mesh south ( tag::segment, SW, SE, tag::divided_in, 10 );
-	Mesh east  ( tag::segment, SE, NE, tag::divided_in, 10 );
-	Mesh north ( tag::segment, NE, NW, tag::divided_in, 10 );
-	Mesh west  ( tag::segment, NW, SW, tag::divided_in, 10 );
+	Mesh south ( tag::segment, SW.reverse(), SE, tag::divided_in, 10 );
+	Mesh east  ( tag::segment, SE.reverse(), NE, tag::divided_in, 10 );
+	Mesh north ( tag::segment, NE.reverse(), NW, tag::divided_in, 10 );
+	Mesh west  ( tag::segment, NW.reverse(), SW, tag::divided_in, 10 );
 
 	// And now the rectangle :
 	Mesh rect_mesh ( tag::pretty, tag::rectangle, south, east, north, west );

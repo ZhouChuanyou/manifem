@@ -1,8 +1,11 @@
 
-// maniFEM/metric-tree.h 2020.02.01
+// metric-tree.h 2020.02.01
 
 //    This is MetricTree, a tiny C++ library for hierarchical organization
 //    of a cloud of points in a metric space
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/MetricTree
 
 //    MetricTree is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU Lesser General Public License as published by
@@ -16,9 +19,6 @@
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
-
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/MetricTree
 
 
 // a cloud, i.e. a set of points in a metric space, organized as a tree
