@@ -1382,7 +1382,7 @@ void progressive_construct
 // 'normal' is a vector tangent to the working manifold, orthogonal to 'start'
 
 {	// we don't want to change 'bdry' so we make a copy of it
-	// Mesh interface ( tag::deep_copy_of, bdry );  // wait, we want to switch to a list of interfaces ...
+	// Mesh interface ( tag::deep_copy_of, bdry );  or maybe let the Mesh contstructor do this
 	progress_interface = bdry;
 	mesh_under_constr = msh;
 	Cell vertex_recently_built ( tag::non_existent );
