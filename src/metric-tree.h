@@ -1,10 +1,10 @@
 
-// metric-tree.h 2020.02.01
+// metric-tree.h 2020.02.13
 
 //    This is MetricTree, a tiny C++ library for hierarchical organization
 //    of a cloud of points in a metric space
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    Copyright 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 //    https://github.com/cristian-barbarosie/MetricTree
 
 //    MetricTree is free software: you can redistribute it and/or modify
@@ -55,7 +55,7 @@
 // we prefer to work with squared distance (thus avoiding computing square roots)
 
 // see paragraph 8.15 in the manual of maniFEM
-
+// https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf
 
 #include <iostream>
 #include <fstream>
@@ -100,8 +100,8 @@ class MetricTree
 
 	inline void remove ( Node * );
 
-	inline std::list < Point > find_close_neighbours_of ( const Point & P, double dd2 );
-	// return all points in the cloud whose squared distance to P is less than or equal to dd2
+	inline std::list < Point > find_close_neighbours_of ( const Point & P, double dd );
+	// return all points in the cloud whose distance to P is less than or equal to dd
 
 	inline double get_dist ( int r );
 	inline double get_sq_dist ( int r );
@@ -189,8 +189,8 @@ class MetricTree<Point,SqDist>::Node
 	void remove_from ( MetricTree * cloud );
 	
 	void get_close_neighbours_of
-	( const Point & P, double dd2, std::list < Point > & ll, MetricTree<Point,SqDist> * cloud );
-	// return all points in the cloud whose squared distance to P is less than or equal to dd2
+	( const Point & P, double dd, std::list < Point > & ll, MetricTree<Point,SqDist> * cloud );
+	// return all points in the cloud whose distance to P is less than or equal to dd
 	// the cloud is used as source of information (ratio etc)
 	
 	void promote ( MetricTree * cloud );
@@ -422,12 +422,12 @@ void MetricTree<Point,SqDist>::Node::remove_from
 
 template < typename Point, typename SqDist >
 inline std::list < Point > MetricTree<Point,SqDist>::find_close_neighbours_of
-( const Point & P, double dd2 )
+( const Point & P, double dd )
 
-// return all points in the cloud whose squared distance to P is less than or equal to dd2
+// return all points in the cloud whose distance to P is less than or equal to dd
 
 {	std::list < Point > ll;
-	this->root->get_close_neighbours_of ( P, dd2, ll, this );
+	this->root->get_close_neighbours_of ( P, dd, ll, this );
 	return ll;                                                 }
 
 //-----------------------------------------------------------------------------------------------//

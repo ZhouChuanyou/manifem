@@ -19,13 +19,13 @@ int main () {
 	Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
 	RR2.implicit ( x*y + x - y == -1. );
-	Mesh NW ( tag::segment, N.reverse(), W, tag::divided_in, 10 );
+	Mesh NW ( tag::segment, N.reverse(), W, tag::divided_in, 12 );
 	RR2.implicit ( x*y - x - y ==  1. );
-	Mesh WS ( tag::segment, W.reverse(), S, tag::divided_in, 10 );
+	Mesh WS ( tag::segment, W.reverse(), S, tag::divided_in, 12 );
 	RR2.implicit ( x*y - x + y == -1. );
-	Mesh SE ( tag::segment, S.reverse(), E, tag::divided_in, 10 );
+	Mesh SE ( tag::segment, S.reverse(), E, tag::divided_in, 12 );
 	RR2.implicit ( x*y + x + y ==  1. );
-	Mesh EN ( tag::segment, E.reverse(), N, tag::divided_in, 10 );
+	Mesh EN ( tag::segment, E.reverse(), N, tag::divided_in, 12 );
 
 	Mesh bdry ( tag::join, NW, WS, SE, EN );
 		

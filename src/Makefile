@@ -4,21 +4,22 @@
 	g++ -Wshadow -Wall -c -I $(HOME)/include/ -std=c++17 $^
 #	g++ -DNDEBUG -c -I $(HOME)/include/ -std=c++17 $^
 
-exe-%: iterator.o field.o function.o global.o manifold.o mesh.o main-%.o progressive.o
+manifem-exe-%: iterator.o field.o function.o global.o manifold.o mesh.o main-%.o progressive.o
 	g++ -o $@ -std=c++17 $^
 
-clean:
-	rm *.o
+manifem-exe-8.15: main-8.15.o
+	g++ -o $@ -std=c++17 $^
 
-run-%: exe-%
+run-%: manifem-exe-%
 	./$<
 
-test: metric-tree.o
-	g++ -o $@ -std=c++17 $^
+clean:
+	rm *.o manifem-exe-*
 
-run-test: test
-	./test
+clean-all: clean
+	rm *.eps *.msh
 
 .SECONDARY:
 
-.PHONY: run-% clean
+.PHONY: clean clean-all run-%
+

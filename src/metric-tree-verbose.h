@@ -1,5 +1,5 @@
 
-// maniFEM/metric-tree-verbose.h 2020.02.01
+// maniFEM/metric-tree-verbose.h 2020.02.13
 
 // this verbose version draws a PS file
 // for normal use, #include "metric-tree.h"
@@ -103,8 +103,8 @@ class MetricTree
 
 	inline void remove ( Node * );
 
-	inline std::list < Point > find_close_neighbours_of ( const Point & P, double dd2 );
-	// return all points in the cloud whose squared distance to P is less than or equal to dd2
+	inline std::list < Point > find_close_neighbours_of ( const Point & P, double dd );
+	// return all points in the cloud whose distance to P is less than or equal to dd
 
 	inline double get_dist ( int r );
 	inline double get_sq_dist ( int r );
@@ -195,8 +195,8 @@ class MetricTree<Point,SqDist>::Node
 	void remove_from ( MetricTree * cloud );
 	
   void get_close_neighbours_of
-	( const Point & P, double dd2, std::list < Point > & ll, MetricTree<Point,SqDist> * cloud );
-	// return all points in the cloud whose squared distance to P is less than or equal to dd2
+	( const Point & P, double dd, std::list < Point > & ll, MetricTree<Point,SqDist> * cloud );
+	// return all points in the cloud whose distance to P is less than or equal to dd
 	// the cloud is used as source of information (ratio etc)
 	
 	void promote ( MetricTree * cloud );
@@ -431,14 +431,14 @@ void MetricTree<Point,SqDist>::Node::remove_from
 
 template < typename Point, typename SqDist >
 inline std::list < Point > MetricTree<Point,SqDist>::find_close_neighbours_of
-( const Point & P, double dd2 )
+( const Point & P, double dd )
 
-// return all points in the cloud whose squared distance to P is less than or equal to dd2
+// return all points in the cloud whose distance to P is less than or equal to dd
 
 {	std::list < Point > ll;
 	std::cout << "looking for neighbours of (" << P[0] << "," << P[1] << "), distance "
-						<< std::sqrt(dd2) << std::endl;
-	this->root->get_close_neighbours_of ( P, dd2, ll, this );
+						<< std::sqrt(dd) << std::endl;
+	this->root->get_close_neighbours_of ( P, dd, ll, this );
 	return ll;                                                 }
 
 //-----------------------------------------------------------------------------------------------//
