@@ -1471,7 +1471,7 @@ void progressive_construct
 	Cell point_60 = start.tip();
 	
 	int stopping_criterion = 0;
-	std::cout << "stopping criterion : ";  std::cin >> stopping_criterion;
+	// std::cout << "stopping criterion : ";  std::cin >> stopping_criterion;
 	int current_name = 1;
 
 restart:
