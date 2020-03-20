@@ -1,5 +1,4 @@
 # maniFEM
-[manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
 Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 
@@ -13,6 +12,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
-See files [COPYING](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING) and 
+Full text of the GNU Lesser General Public License is available in files
+[COPYING](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING) and 
 [COPYING.LESSER](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING.LESSER).
 Or, see <https://www.gnu.org/licenses/>.
