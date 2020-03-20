@@ -50,5 +50,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+Full text of the GNU Lesser General Public License is available in files
+[COPYING](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING) and 
+[COPYING.LESSER](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING.LESSER).
+Or, see <https://www.gnu.org/licenses/>.
