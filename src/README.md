@@ -15,4 +15,4 @@ GNU Lesser General Public License for more details.
 Full text of the GNU Lesser General Public License is available in files
 [COPYING](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING) and 
 [COPYING.LESSER](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING.LESSER).
-Or, see <https://www.gnu.org/licenses/>.
+It can also be found at <https://www.gnu.org/licenses/>.
