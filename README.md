@@ -17,6 +17,7 @@ However, maniFEM can be used at a basic level by people with no deep knowledge o
 In its current version (20.03), maniFEM works well for mesh generation. 
 Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
 Variational formulations and finite elements are not yet implemented.
+To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 
 ManiFEM is being developped by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
