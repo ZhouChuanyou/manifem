@@ -33,7 +33,7 @@ and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
 Under linux it should be easy to install them. 
 It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using 
-[cygwin](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/cygwin.org). 
+[cygwin](https://cygwin.org). 
 You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
 
 This work is supported by National Funding from FCT - Fundação para a Ciência e a Tecnologia (Portugal), 
@@ -52,7 +52,5 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
-Full text of the GNU Lesser General Public License is available in files
-[COPYING](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING) and 
-[COPYING.LESSER](https://github.com/cristian-barbarosie/manifem/blob/master/src/COPYING.LESSER).
+Full text of the GNU Lesser General Public License is available in files [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER).
 It can also be found at <https://www.gnu.org/licenses/>.
