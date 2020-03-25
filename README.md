@@ -27,7 +27,7 @@ see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 To learn maniFEM, you should read the 
 [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
-To use maniFEM, you should copy all files under [src/](https://github.com/cristian-barbarosie/manifem/blob/master/src/) to some directory in your computer.
+To use maniFEM, you should copy all files under [src/](src/) to some directory in your computer.
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, 
 and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
@@ -52,5 +52,6 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
-Full text of the GNU Lesser General Public License is available in files [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER).
+Full text of the GNU Lesser General Public License is available 
+in files [COPYING](src/COPYING) and [COPYING.LESSER](src/COPYING.LESSER).
 It can also be found at <https://www.gnu.org/licenses/>.
