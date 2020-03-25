@@ -1,5 +1,7 @@
 # maniFEM
 
+To know which version of maniFEM is installed in your computer, look at the beginning of `maniFEM.h`.
+
 Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 
 ManiFEM is free software: you can redistribute it and/or modify
