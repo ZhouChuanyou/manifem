@@ -1,0 +1,136 @@
+
+muita coisa que funcionava em 2019.09 deixou de funcionar ...
+
+deveriamos prever a possibilidade de "desactivar" um campo NumericField
+Por exemplo, criamos uma malha com as coordenadas xyz, depois criamos o
+elemento master com as coordenadas xi eta, depois queremos remalhar.
+Convem desactivar as coordenadas xi eta quando remalhamos.
+
+No produto cartesiano de malhas, usar um iterador "coerente" e
+eliminar celulas que sabemos que ja nao serao usadas.
+
+Chamo "iterador coerente" a um iterador que usa uma interface (um corte) que "baleia"
+a malha toda. Usa apenas relacoes de vizinhanca (nao usa listas de celulas) mas precisa
+duma celula para iniciar o processo. Tem a vantagem que pode fornecer informacao suplementar.
+Para alem da celula corrente, pode indicar uma zona de celulas que ja' foram fornecidas
+e nao voltarao a aparecer no processo de iteracao.
+Por exemplo, suponhamos que iteramos sobre segmentos numa malha 3D.
+Havera' uma superficie que corta a malha em duas zonas, uma branca que ja' foi percorrida
+e uma preta que ainda nao foi. Escolhemos uma face qualquer nesta superficie (usamos outro
+iterador?) e consideramos a celula preta adjacente a esta face. Iremos devolver segmentos
+na fronteira desta celula, que agora consideramos cinzenta. A interface corta a fronteira
+da celula cinzenta em duas zonas, uma que passamos a considerar cinzenta (do lado branco da malha),
+outra ainda preta; devolveremos segmentos da zona cinzenta. Usamos um outro iterador sobre a
+fronteira cinzenta (que podemos inicializar com o corte com a interface na malha grande -
+um loop que podemos colorir de cor-de-rosa). Quando acabamos com a zona cinzenta,
+podemos dar informacao ao utilizador do iterador que esses segmentos nao voltarao a aparecer.
+Mais precisamente : se um segmento da zona cinzenta nao toca no loop cor-de-rosa, entao
+toda a sua vizinhanca imediata nao voltara' a aparecer no processo de iteracao.
+Nalguns algoritmos, isto pode ser util para o utilizador do iterador.
+Por exemplo, no produto cartesiano de malhas. Ai', queremos, na verdade, um iterador que
+forneca todas as celulas independentemente da dimensao. Se soubermos que uma certa zona
+nao voltara' a aparecer no processo de iteracao, podemos limpar alguns dicionarios (maps).
+Se formos por ai', nem precisamos das listas de celulas [gulp]
+
+quando fazemos reset dum iterador sobre malha uni-dimensional, podemos testar se a linha
+e' fechada ou aberta
+se necessario, metamorfosamos o iterador
+
+em interpolate, por os coeficientes antes dos pontos
+
+dar um tratamento a parte a malhas uni-dimensionais
+
+first_ver e last_ver so' para malhas unidimensionais (cells ainda para todas as malhas)
+Fields parecem funcionar
+tenho que prever maneira de localizar os indices : para cada malha um conjunto de indices
+guardo em  2019.10  : samsung com borboletas e disco azul
+
+faltam malhas zero-dimensionais (built on-the-fly) e iteradores sobre as tais
+talvez rever a hierarquia dos iteradores, usar mais multiple inheritance
+talvez definir umas funcoes inline para agrupar pedacos de codigo repetido
+
+functions, manifolds, tudo incipiente mas funcionam
+guardo em 2019.10.25
+
+rever os metodos first_vertex, last_vertex, first_segment, last_segment
+acrescentar tag::may_not_exist e tag::surely_exists, fica parecido com cell_in_front_of
+
+introduzir iteradores declarados com tag::cells_of_max_dim,
+que usem cells->back()
+a mesma coisa para number_of
+
+quando calculamos as componentes duma funcao associada a um campo vectorial,
+nao precisamos de criar as componentes do campo vectorial
+podemos ter uma funcao escalar associada a um indice dentro dum campo vectorial
+
+em draw_ps_3d, introduzir uns cinzentos para dar a impressao de nevoeiro
+mas entao teriamos que ordenar os segmentos
+
+eliminar o construtor Manifold circle_manif ( tag::parametric, tag::of_dim, 1 )
+
+em simplif, acrescentar construtores para Sum e Prod com tag::reserve_size
+
+em progressive, evitar o uso da raiz quadrada (testar para ver se melhora)
+por exemplo, para um certo vertice A, procuramos outros vertices a distancia menor que d de A
+procuramos um oficial O de rank r[k], calculamos o quadrado da distancia AO
+se AO for maior que r[k]+d, sabemos que nao vale a pena procurar entre os subalternos de O
+precisamos, portanto, duma estimativa AO >= ?
+primeiro, se AO^2 <= d[k]^2 entao o proprio A poderia ser um subalterno de O portanto
+temos que procurar sim entre os subalternos de O
+segundo, se AO^2 > r[k+1]^2 entao A nao poderia ser subalterno do superior imediato de O
+portanto e' impossivel haver um subalterno de O tao perto de A
+resta o caso d[k]^2 <= AO^2 <= r[k+1]^2
+escrevemos AO^2 como combinacao convexa AO^2 = alpha d[k]^2 + beta r[k+1]^2
+resulta AO > alpha d[k] + beta r[k+1]  (com sorte, podemos ja' responder negativamente)
+depois ainda podemos aplicar um ou dois passos do algoritmo de Newton
+x = (x^2+AO^2)/(2x)  a partir de  x = alpha d[k] + beta r[k+1]
+todos os valores deste algoritmo estao acima da raiz quadrada, portanto AO <= x
+a partir de  alpha d[k] + beta r[k+1] <= AO <= x  aplicamos novamente a combinacao convexa
+
+em progressive, quando construimos as normais, guardar tambem o vector segmento
+uniformizar o uso de positive_orientation, cos_sq_120 e cos_sq_60
+pensar bem os produtos internos, pois as normais sao ortogonais na metrica de Riemman
+em switch_orientation ( Mesh ), nao usar reverse, mas chamar switch_orientation ( Cell )
+
+em correctly_oriented, procurar um so' vertice com zmax
+e determinar a orientacao dos triangulos adjacentes como se fossem horizontais
+
+belongs_to nao funciona para malhas negativas ?
+criar versoes de belongs_to que tomem a dimensao da celula como argumento
+acrescentar verificacao belongs_to no metodo reset dos iteradores sobre malhas uni-dimensionais
+
+a sequencia de instrucoes
+	Mesh msh ( tag::of_dimension_one );
+	AB.add_to ( msh );  BC.add_to ( msh );
+	BC.reverse().remove_from ( msh );
+deveria desencadear um erro num assert mais cedo, antes de action_remove
+
+para malhas adaptativas
+temos uma distancia de longo alcance dada pelo espaco ambiente euclidiano
+e uma distancia de curto alcance dada pelo produto interno no espaco tangente da variedade
+esta ultima e' dada por uma matriz
+precisamos duma margem inferior do coeficiente de Rayleigh  Axx > margem x^2
+o Cloud vai trabalhar apenas com distancia de longo alcance
+quando pedimos vertices proximos dum vertice dado,
+fornecemos uma distancia calculada com a margem acima referida
+Cloud devolve uma lista possivelmente demasiado larga,
+depois nos filtramos com a distancia de curto alcance
+
+Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
+             const tag::DesiredLength &, double desired_length                   )
+deveria ter tag::random_orientation ?  uniformizar
+
+em manifold.h, ficou steps_for_Newton = 10
+testar com os dois toros se faz diferenca diminuir este valor
+
+disponibilizar separadamente simplif assim como fizemos com metric tree ?
+
+em progressive_construct, poderiamos fornecer (sub)variedades como fronteiras (em vez de malhas)
+especificar uma direccao (com tag::towards) atraves duma desigualdade entre duas funcoes
+
+quando copiamos Functions, decrementar o contador antigo
+
+em github/manifem : copiar *.h *.cpp Makefile
+										copiar este coment.txt para misc
+
+no disco azul : copiar *.cpp *.h coment.txt
