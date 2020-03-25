@@ -27,7 +27,7 @@ see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 To learn maniFEM, you should read the 
 [manual](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf).
 
-To use maniFEM, you should copy all files under [src/](src/) to some directory in your computer.
+To use maniFEM, you should copy all files under [src](src) to some directory in your computer.
 Then try `make run-1.1` for the example in paragraph 1.1 of the manual, `make run-2.2` for the example in paragraph 2.2, 
 and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
