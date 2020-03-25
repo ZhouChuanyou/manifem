@@ -1,20 +1,20 @@
 
-// mesh.h 2020.02.09
+// mesh.h 2020.02.19
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
 //    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 //    https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU Lesser General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
+//    ManiFEM is free software: you can redistribute it and/or modify it
+//    under the terms of the GNU Lesser General Public License as published
+//    by the Free Software Foundation, either version 3 of the License
+//    or (at your option) any later version.
 
 //    ManiFEM is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU Lesser General Public License for more details.
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//    See the GNU Lesser General Public License for more details.
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
@@ -26,6 +26,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <memory>
 #include "assert.h"
 
 namespace maniFEM {
@@ -86,6 +87,7 @@ namespace tag {
 	struct OfDegree { };  static const OfDegree of_degree;
 	enum WithTriangles { with_triangles, not_with_triangles };
 	struct Join { };  static const Join join;
+	enum KeyForHook { tangent_vector, normal_vector, node_in_cloud };
 	struct Onto { };  static const Onto onto;
 	struct Around { };  static const Around around;
 	struct Iff { };  static const Iff iff;
@@ -529,6 +531,8 @@ class Cell::Core
 	std::vector < double > double_heap;
 	std::vector < size_t > size_t_heap;
 	std::vector < short int > short_int_heap;
+	// and heterogeneous information here :
+	std::map < tag::KeyForHook, void * > hook;
 
 	// if 'this' is a face of another cell and that other cell belongs to some mesh msh,
 	// cell_behind_within[msh] keeps that cell

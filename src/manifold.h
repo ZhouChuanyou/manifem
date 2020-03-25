@@ -1,20 +1,20 @@
 
-// manifold.h 2020.01.25
+// manifold.h 2020.03.10
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
 //    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 //    https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU Lesser General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
+//    ManiFEM is free software: you can redistribute it and/or modify it
+//    under the terms of the GNU Lesser General Public License as published
+//    by the Free Software Foundation, either version 3 of the License
+//    or (at your option) any later version.
 
 //    ManiFEM is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU Lesser General Public License for more details.
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//    See the GNU Lesser General Public License for more details.
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
@@ -349,7 +349,7 @@ class Manifold::Euclid : public Manifold::Core
 	size_t dim;
 	
 	Field::Core * coord_field { nullptr };
-	Function coord_func { tag::non_existent };
+	Function coord_func { 0. };  // temporarily zero function
 
 	inline Euclid ( size_t d )
 	:	Manifold::Core(), dim { d }
@@ -558,7 +558,7 @@ inline Manifold::Manifold
 inline Manifold::Implicit::OneEquation::OneEquation
 ( const Manifold & m, const Function & f )
 : level_function ( f ),
-	grad_lev_func ( tag::non_existent )  // temporarily empty gradient
+	grad_lev_func ( 0. )  // temporarily zero gradient
 
 {	this->surrounding_space = m;
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
@@ -568,18 +568,18 @@ inline Manifold::Implicit::OneEquation::OneEquation
 	Function::Aggregate * grad = new Function::Aggregate ( tag::reserve_size, n );
 	for ( size_t i = 0; i < n; i++ ) // grad->components[i] = f.deriv(coord[i]);
 		grad->components.emplace_back ( f.deriv(coord[i]) );
-	this->grad_lev_func.core = std::shared_ptr<Function::Core> ( grad );        }
+	this->grad_lev_func = Function ( tag::whose_core_is, grad );                   }
 
 
 inline Manifold::Implicit::TwoEquations::TwoEquations
 ( const Manifold & m, const Function & f )
-: level_function_1 ( tag::non_existent),  // temporarily empty function
-	grad_lev_func_1 ( tag::non_existent ),  // temporarily empty gradient
+: level_function_1 ( 0. ),  // temporarily zero function
+	grad_lev_func_1 ( 0. ),  // temporarily zero gradient
 	level_function_2 ( f ),
-	grad_lev_func_2 ( tag::non_existent )  // temporarily empty gradient
+	grad_lev_func_2 ( 0. )  // temporarily zero gradient
 
 {	Manifold::Implicit::OneEquation * m_one_eq =
-		dynamic_cast<Manifold::Implicit::OneEquation*> ( m.core );
+		dynamic_cast < Manifold::Implicit::OneEquation * > ( m.core );
 	assert ( m_one_eq );
 	this->surrounding_space = m_one_eq->surrounding_space;
 	this->level_function_1 = m_one_eq->level_function;
@@ -589,15 +589,15 @@ inline Manifold::Implicit::TwoEquations::TwoEquations
 	Function::Aggregate * grad = new Function::Aggregate ( tag::reserve_size, n );
 	for ( size_t i = 0; i < n; i++ ) // grad->components[i] = f.deriv(coord[i]);
 		grad->components.emplace_back ( f.deriv(coord[i]) );
-	this->grad_lev_func_2.core = std::shared_ptr<Function::Core> ( grad );        }
+	this->grad_lev_func_2 = Function ( tag::whose_core_is, grad );                   }
 
 
 inline Manifold::Implicit::TwoEquations::TwoEquations
 ( const Manifold & m, const Function & f1, const Function & f2 )
 : level_function_1 ( f1 ), 
-	grad_lev_func_1 ( tag::non_existent ),  // temporarily empty gradient
+	grad_lev_func_1 ( 0. ),  // temporarily zero gradient
 	level_function_2 ( f2 ),
-	grad_lev_func_2 ( tag::non_existent )  // temporarily empty gradient
+	grad_lev_func_2 ( 0. )  // temporarily zero gradient
 
 {	this->surrounding_space = m;
 	Manifold::Euclid * m_euclid = dynamic_cast<Manifold::Euclid*> ( m.core );
@@ -607,11 +607,11 @@ inline Manifold::Implicit::TwoEquations::TwoEquations
 	Function::Aggregate * grad = new Function::Aggregate ( tag::reserve_size, n );
 	for ( size_t i = 0; i < n; i++ ) // grad->components[i] = f1.deriv(coord[i]);
 		grad->components.emplace_back ( f1.deriv(coord[i]) );
-	this->grad_lev_func_1.core = std::shared_ptr<Function::Core> ( grad );
+	this->grad_lev_func_1 = Function ( tag::whose_core_is, grad );
 	grad = new Function::Aggregate ( tag::reserve_size, n );
 	for ( size_t i = 0; i < n; i++ ) // grad->components[i] = f2.deriv(coord[i]);
 		grad->components.emplace_back ( f2.deriv(coord[i]) );
-	this->grad_lev_func_2.core = std::shared_ptr<Function::Core> ( grad );         }
+	this->grad_lev_func_2 = Function ( tag::whose_core_is, grad );                 }
 
 
 class Manifold::Parametric : public Manifold::Core
@@ -622,7 +622,7 @@ class Manifold::Parametric : public Manifold::Core
 
 	Manifold surrounding_space;
 
-	std::map < std::shared_ptr < Function::Core >, std::shared_ptr < Function::Core > > equations;
+	std::map < Function::Core *, Function::Core * > equations;
 
 	inline Parametric ( )	:	Manifold::Core(), surrounding_space ( tag::non_existent ) { }
 

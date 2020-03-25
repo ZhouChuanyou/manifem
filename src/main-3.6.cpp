@@ -3,6 +3,7 @@
 // meshes a sphere progressively
 
 #include "maniFEM.h"
+#include <iomanip>
 #include "math.h"
 
 using namespace maniFEM;
@@ -15,9 +16,10 @@ int main ()
 	Function  x = xyz[0],  y = xyz[1],  z = xyz[2];
 
 	cout << "this example takes some time" << endl;
+	// cout << setprecision(10);
 
-	RR3.implicit ( x*x + y*y + z*z == 0.01 );
-	Mesh sphere ( tag::progressive, tag::desired_length, 0.01 );
+	RR3.implicit ( x*x + y*y + z*z == 1. );
+	Mesh sphere ( tag::progressive, tag::desired_length, 0.06 );
 
 	sphere.export_msh ("sphere.msh");
 

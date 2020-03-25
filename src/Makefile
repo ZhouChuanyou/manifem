@@ -7,11 +7,17 @@
 manifem-exe-%: iterator.o field.o function.o global.o manifold.o mesh.o main-%.o progressive.o
 	g++ -o $@ -std=c++17 $^
 
-manifem-exe-8.15: main-8.15.o
+manifem-exe-9.15: main-9.15.o
 	g++ -o $@ -std=c++17 $^
 
 run-%: manifem-exe-%
 	./$<
+
+run-test: test
+	./$<
+
+test: test.o function.o mesh.o field.o iterator.o manifold.o
+	g++ -o $@ -std=c++17 $^
 
 clean:
 	rm *.o manifem-exe-*
@@ -21,5 +27,5 @@ clean-all: clean
 
 .SECONDARY:
 
-.PHONY: clean clean-all run-%
+.PHONY: clean clean-all
 

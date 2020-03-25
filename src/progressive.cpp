@@ -1,20 +1,20 @@
 
-// progressive.cpp 2020.02.14
+// progressive.cpp 2020.02.22
 
 //    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
 //    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 //    https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU Lesser General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
+//    ManiFEM is free software: you can redistribute it and/or modify it
+//    under the terms of the GNU Lesser General Public License as published
+//    by the Free Software Foundation, either version 3 of the License
+//    or (at your option) any later version.
 
 //    ManiFEM is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU Lesser General Public License for more details.
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//    See the GNU Lesser General Public License for more details.
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
@@ -24,6 +24,7 @@
 
 #include <stack>
 #include "math.h"
+#include <memory>
 #include <random>
 
 #include "maniFEM.h"
@@ -40,9 +41,7 @@ using namespace maniFEM;
 // global variables and functions for this file, not visible for other object files
 namespace {  // equivalent to 'static' (internal linkage)
 
-std::map < Cell, MetricTree<Cell,Manifold::Euclid::SqDist>::Node * > node_in_cloud;
-std::map < Cell, std::vector < double > > normals;
-// use Cell::hook !
+// std::map < Cell, MetricTree<Cell,Manifold::Euclid::SqDist>::Node * > node_in_cloud;
 
 Cell temporary_vertex ( tag::non_existent );
 
@@ -187,8 +186,8 @@ inline void progress_add_point
 ( const Cell & P, MetricTree<Cell,Manifold::Euclid::SqDist> & cloud )
 
 {	assert ( P.dim() == 0 );
-	node_in_cloud[P] = cloud.add ( P );  }
-// use hook !
+	P.core->hook[tag::node_in_cloud] = static_cast < void * > ( cloud.add ( P ) );  }
+// optimize !
 
 //-------------------------------------------------------------------------------------------------
 
@@ -200,16 +199,18 @@ inline bool positive_orientation
 	assert ( B == BC.base().reverse() );
 	// code below is identical to part of progress_cos_sq_120
 	// if you change anything, please change both; keep them identical
-	assert ( normals.find(BC) != normals.end() );
-	std::vector < double >  e ( progress_nb_of_coords ),  & f = normals[BC];
+	assert ( BC.core->hook.find(tag::normal_vector) != BC.core->hook.end() );
+	std::vector < double > & f =
+		* static_cast < std::vector < double > * > ( BC.core->hook[tag::normal_vector] );
+	std::vector < double >  e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 	{	Function x = Manifold::working.coordinates()[i];
-		e[i] = x ( B ) - x ( A );              }
+		e[i] = x ( B ) - x ( A );          }  // recover tangent from hook !
 	double prod = 0.;  // scalar product e.f
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  prod += e[i] * f[i];
 	// we could have used the Riemannian product, but the sign should be the same
 	// code above is identical to part of progress_cos_sq_120
-	return prod < 0.;                                                                      }
+	return prod < 0.;                                                                                   }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -228,7 +229,7 @@ inline double progress_cos_sq_60
 	                       e2 ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 	{	Function x = Manifold::working.coordinates()[i];
-		e1[i] = x ( B ) - x ( A );
+		e1[i] = x ( B ) - x ( A );  // recover tangents from hook !
 		e2[i] = x ( C ) - x ( B );                        }
 	double prod = 0.;  // scalar product e1.e2
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  prod += e1[i] * e2[i];
@@ -258,12 +259,13 @@ inline double progress_cos_sq_120
 	// first, check orientation
 	// code below is identical to part of 'positive_orientation'
 	// if you change anything, please change both; keep them identical
-	assert ( normals.find(BC) != normals.end() );
-	std::vector < double > e ( progress_nb_of_coords ),
-		& f = normals[BC];
+	assert ( BC.core->hook.find(tag::normal_vector) != BC.core->hook.end() );
+	std::vector < double > & f =
+		* static_cast < std::vector < double > * > ( BC.core->hook[tag::normal_vector] );
+	std::vector < double >  e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 	{	Function x = Manifold::working.coordinates()[i];
-		e[i] = x ( B ) - x ( A );                         }
+		e[i] = x ( B ) - x ( A );          }  // recover tangent from hook !
 	double prod = 0.;  // scalar product e.f
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  prod += e[i] * f[i];
 	// we could have used the Riemannian product, but the sign should be the same
@@ -271,7 +273,7 @@ inline double progress_cos_sq_120
 	if ( prod > 0. ) return 2.;
 	std::vector < double > e2 ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
-	{	Function x = Manifold::working.coordinates()[i];
+	{	Function x = Manifold::working.coordinates()[i];  // recover tangent from hook !
 		e2[i] = x ( C ) - x ( B );                       }
 	// use Riemannian metric below
 	double norm1 = 0., norm2 = 0.;  prod = 0.;
@@ -774,8 +776,10 @@ inline void build_one_normal ( Cell & B, Cell & C, Cell & new_seg )
 	std::vector < double > vB = Manifold::working.coordinates() ( B );
 	std::vector < double > old_e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  old_e[i] = vB[i] - vA[i];
-	assert ( normals.find(AB) != normals.end() );
-	std::vector < double > & old_f = normals[AB];
+	// recover tangent from hook !
+	assert ( AB.core->hook.find(tag::normal_vector) != AB.core->hook.end() );
+	std::vector < double > & old_f =
+		* static_cast < std::vector < double > * > ( AB.core->hook[tag::normal_vector] );
 	// 'e' is the vector of the segment, 'f' is orthogonal
 	// they are all of approximately the same length, equal to desired_length
 
@@ -784,6 +788,7 @@ inline void build_one_normal ( Cell & B, Cell & C, Cell & new_seg )
 	std::vector < double > vC = Manifold::working.coordinates() ( C );
 	std::vector < double > new_e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  new_e[i] = vC[i] - vB[i];
+	// recover tangent from hook !
 	// scalar products :
 	double with_e = 0.,  with_f = 0., norm_e_sq = 0., norm_f_sq = 0.;
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  // use Riemannian metric !
@@ -791,13 +796,13 @@ inline void build_one_normal ( Cell & B, Cell & C, Cell & new_seg )
 		norm_e_sq += old_e[i]*old_e[i];  norm_f_sq += old_f[i]*old_f[i];  }
 	with_e /= norm_e_sq;
 	with_f /= norm_f_sq;
-	std::vector < double > new_f ( progress_nb_of_coords );
+	std::vector < double > & new_f = * new std::vector < double > ( progress_nb_of_coords );
 	// we rotate 'new_e' with 90 degrees, in the same sense as 'f' is rotated from 'e'
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 		new_f[i] = - with_f * old_e[i] + with_e * old_f[i];
 	// project and normalize :
 	improve_normal ( B, C, new_e, new_f );
-	normals[new_seg] = new_f;  // optimize
+	new_seg.core->hook[tag::normal_vector] = static_cast < void * > ( & new_f );  // optimize
 	// code above is identical to part of 'build_each_normal'
 }  // end of build_one_normal
 
@@ -819,19 +824,20 @@ inline void build_each_normal
 	std::vector < double > vC = Manifold::working.coordinates() ( C );
 	std::vector < double > new_e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  new_e[i] = vC[i] - vB[i];
+	// recover tangent from hetero_info !
 	// scalar products :
 	double with_e = 0.,  with_f = 0.;
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )  // use Riemannian metric !
 	{	with_e += new_e[i]*old_e[i];  with_f += new_e[i]*old_f[i];  }
 	with_e /= sq_desired_len_at_point;
 	with_f /= sq_desired_len_at_point;
-	std::vector < double > new_f ( progress_nb_of_coords );
+	std::vector < double > & new_f = * new std::vector < double > ( progress_nb_of_coords );
 	// we rotate 'new_e' with 90 degrees, in the same sense as 'f' is rotated from 'e'
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 		new_f[i] = - with_f * old_e[i] + with_e * old_f[i];
 	// project and normalize :
 	improve_normal ( B, C, new_e, new_f );
-	normals[new_seg] = new_f;  // optimize
+	new_seg.core->hook[tag::normal_vector] = static_cast < void * > ( & new_f );  // optimize
 	// code above is identical to part of 'build_one_normal'
 	old_e = new_e;  old_f = new_f;
 }  // end of build_each_normal
@@ -856,10 +862,12 @@ inline Cell build_normals ( const Cell & start )
 	Cell A = seg.base().reverse(),  B = seg.tip();
 	std::vector < double > va = Manifold::working.coordinates() (A),
 		vb = Manifold::working.coordinates() (B);
-	assert ( normals.find ( seg ) != normals.end() );
-	std::vector < double > e ( progress_nb_of_coords ),
-		f = normals[seg];  // assert key found
+	assert ( seg.core->hook.find(tag::normal_vector) != seg.core->hook.end() );
+	std::vector < double > f =
+		* static_cast < std::vector < double > * > ( seg.core->hook[tag::normal_vector] );
+	std::vector < double > e ( progress_nb_of_coords );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ ) e[i] = vb[i] - va[i];
+	// recover tangent from hook !
 	// 'e' and 'f' form an oriented basis in the two-dimensional space
 	// tangent to the manifold at the current point
 	// they will be used to build further vectors pointing outwards
@@ -870,7 +878,7 @@ inline Cell build_normals ( const Cell & start )
 	{	desired_len_at_point = desired_length ( B );
 		sq_desired_len_at_point = desired_len_at_point * desired_len_at_point;
  		Cell new_seg = progress_interface.cell_in_front_of ( B );
-		if ( normals.find(new_seg) != normals.end() )
+		if ( new_seg.core->hook.find(tag::normal_vector) != new_seg.core->hook.end() )
 		{	desired_len_at_point = dlp;
 			sq_desired_len_at_point = sdlp;
 			return new_seg;                 }
@@ -890,11 +898,15 @@ inline void progress_fill_60
 
 {	AB.remove_from ( progress_interface );
 	BC.remove_from ( progress_interface );
-	assert ( normals.find(AB) != normals.end() );
-	assert ( normals.find(BC) != normals.end() );
-	normals.erase ( AB );
-	normals.erase ( BC );
-	cloud.remove ( node_in_cloud[B] );
+	assert ( AB.core->hook.find(tag::normal_vector) != AB.core->hook.end() );
+	assert ( BC.core->hook.find(tag::normal_vector) != BC.core->hook.end() );
+	delete static_cast < std::vector < double > * > ( AB.core->hook[tag::normal_vector] );  // optimize !
+	delete static_cast < std::vector < double > * > ( BC.core->hook[tag::normal_vector] );  // optimize !
+	AB.core->hook.erase ( tag::normal_vector );
+	BC.core->hook.erase ( tag::normal_vector );
+	cloud.remove ( static_cast < MetricTree<Cell,Manifold::Euclid::SqDist>::Node * >
+	               ( B.core->hook[tag::node_in_cloud] )                               );
+	B.core->hook.erase ( tag::node_in_cloud );  // optimize !
 	Cell new_tri ( tag::triangle, AB, BC, CA );
 	
 	std::vector < double > vA = Manifold::working.coordinates() ( CA.tip() );
@@ -915,10 +927,12 @@ inline void glue_two_segs_common
 	Cell CB = BC.reverse();
 	AD.add_to ( progress_interface );
 	CB.add_to ( progress_interface );
-	assert ( normals.find(AB) != normals.end() );
-	normals.erase ( AB );  // assert that key was found
-	assert ( normals.find ( CD ) != normals.end() );
-	normals.erase ( CD );
+	assert ( AB.core->hook.find(tag::normal_vector) != AB.core->hook.end() );
+	assert ( CD.core->hook.find(tag::normal_vector) != CD.core->hook.end() );
+	delete static_cast < std::vector < double > * > ( AB.core->hook[tag::normal_vector] );  // optimize !
+	delete static_cast < std::vector < double > * > ( CD.core->hook[tag::normal_vector] );  // optimize !
+	AB.core->hook.erase ( tag::normal_vector );
+	CD.core->hook.erase ( tag::normal_vector );
 	// build normals for two newly added segments AD and CB
 	build_one_normal ( A, D, AD );  // from previous segment
 	build_one_normal ( C, B, CB );  // from previous segment
@@ -993,10 +1007,15 @@ inline void progress_fill_last_triangle
 
 {	progress_fill_60 ( AB, BC, CA, B, cloud );
 	CA.remove_from ( progress_interface );
-	assert ( normals.find(CA) != normals.end() );
-	normals.erase ( CA );
-	cloud.remove ( node_in_cloud [ A ] );
-	cloud.remove ( node_in_cloud [ C ] );
+	assert ( CA.core->hook.find(tag::normal_vector) != CA.core->hook.end() );
+	delete static_cast < std::vector < double > * > ( CA.core->hook[tag::normal_vector] );  // optimize !
+	CA.core->hook.erase ( tag::normal_vector );
+	cloud.remove ( static_cast < MetricTree<Cell,Manifold::Euclid::SqDist>::Node * >
+	               ( A.core->hook[tag::node_in_cloud] )                               );
+	A.core->hook.erase ( tag::node_in_cloud );  // optimize !
+	cloud.remove ( static_cast < MetricTree<Cell,Manifold::Euclid::SqDist>::Node * >
+	               ( C.core->hook[tag::node_in_cloud] )                               );
+	C.core->hook.erase ( tag::node_in_cloud );  // optimize !
 	mesh_under_constr.baricenter ( A, CA );
 	mesh_under_constr.baricenter ( C, BC );                   }
 
@@ -1045,8 +1064,8 @@ void progress_relocate
 	Cell kept_seg ( tag::non_existent );
 	for ( size_t i = 0; i < vector_of_seg.size(); i++ )
 	{	Cell seg_p = vector_of_seg[i];
-		if ( normals.find ( seg_p ) == normals.end() )
-		{	counter++; kept_seg = seg_p;  }                  }
+		if ( seg_p.core->hook.find(tag::normal_vector) == seg_p.core->hook.end() )
+		{	counter++;  kept_seg = seg_p;  }                                          }
 	if ( counter > 0 )  // there are 'counter' segments with no normal
 	{	// assert ( counter == 1 );
 		// build normal of 'kept_seg' from 'normal_dir'
@@ -1055,10 +1074,11 @@ void progress_relocate
 		std::vector < double > tangent_dir ( progress_nb_of_coords );
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 		{	Function x = Manifold::working.coordinates()[i];
-			tangent_dir[i] = x(B) - x(A);
+			tangent_dir[i] = x(B) - x(A);  // recover tangent from hook !
 			normal_dir[i] *= -1.;                             }
 	  improve_normal ( A, B, tangent_dir, normal_dir );  // modifies normal_dir
-		normals[kept_seg] = normal_dir;
+		kept_seg.core->hook[tag::normal_vector] = static_cast < void * >
+			( new std::vector < double > { normal_dir } );  // optimize !
 		Cell ret = build_normals ( kept_seg );
 		assert ( ret == kept_seg );                                           }
 
@@ -1068,11 +1088,9 @@ void progress_relocate
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )  pos[i] *= n;  }
 	for ( size_t j = 0; j < vector_of_seg.size(); j++ )
 	{	Cell AB = vector_of_seg[j];
-	  std::map < Cell, std::vector<double> > :: iterator it =
-			normals.find ( AB );
-		assert ( it != normals.end() );
-		std::vector < double > & nor = it->second;
-		// std::vector < double > & nor = normals [ AB ];
+		assert ( AB.core->hook.find(tag::normal_vector) != AB.core->hook.end() );
+	  std::vector < double > & nor =
+			* static_cast < std::vector < double > * > ( AB.core->hook[tag::normal_vector] );
 		Cell A = AB.base().reverse();
 		Cell B = AB.tip();
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )
@@ -1263,7 +1281,7 @@ void progressive_construct ( Mesh & msh,
 			double prod = 0.;
 			for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 			{	Function x = Manifold::working.coordinates()[i];
-				e[i] = x(stop) - x(A);
+				e[i] = x(stop) - x(A);  // recover tangent from hook !
 				prod += tangent[i] * e[i];                        }
 			if ( prod > 0. )
 			{	Cell last ( tag::segment, A.reverse(), stop );
@@ -1281,7 +1299,7 @@ void progressive_construct ( Mesh & msh,
 		if ( counter == max_counter ) return;
 		Manifold::working.project ( B );
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )
-		{	Function x = Manifold::working.coordinates()[i];
+		{	Function x = Manifold::working.coordinates()[i];  // recover tangent from hook !
 			tangent[i] = x(B) - x(A);                         }
 		double n2 = 0.;  // Manifold::working.inner_prod ( A, tangent, tangent ); ?!!
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )
@@ -1459,12 +1477,16 @@ void progressive_construct
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 	{	Function x = Manifold::working.coordinates()[i];
 		vec[i] = x ( start_tip ) - x ( start_base );      }
+	// recover tangent from hook !
 	improve_normal ( start_base, start_tip, vec, normal );
 	// ensures again the norm is right, projects on the tangent space,
 	// ensures orthogonality with 'start' segment
 	} // just a block of code for hiding variables
 
-	normals[start] = normal;
+	assert ( start.core->hook.find(tag::normal_vector) == start.core->hook.end() );
+  std::vector < double > * ff = new std::vector < double > { normal };
+	start.core->hook[tag::normal_vector] = static_cast < void * > ( ff );
+	// optimize !
 	Cell ret = build_normals ( start );
 	assert ( ret == start );
 
@@ -1582,10 +1604,14 @@ check_touching :
 				goto search_for_start;                                                             }
 			Cell P ( tag::vertex );  vertex_recently_built = P;
 			// now we want to place this new vertex accordingly
-			assert ( normals.find(prev_seg) != normals.end() );
-			assert ( normals.find(next_seg) != normals.end() );
-			std::vector < double > & nor_a = normals [ prev_seg ];
-			std::vector < double > & nor_b = normals [ next_seg ];
+			assert ( prev_seg.core->hook.find(tag::normal_vector) !=
+		           prev_seg.core->hook.end()                        );
+		  std::vector < double > & nor_a = * static_cast < std::vector < double > * >
+				( prev_seg.core->hook[tag::normal_vector] );
+			assert ( next_seg.core->hook.find(tag::normal_vector) !=
+		           next_seg.core->hook.end()                        );
+			std::vector < double > & nor_b = * static_cast < std::vector < double > * >
+				( next_seg.core->hook[tag::normal_vector] );
 			std::vector < double > sum_of_nor ( progress_nb_of_coords );
 			for ( size_t i = 0; i < progress_nb_of_coords; i++ )  sum_of_nor[i] = nor_a[i] + nor_b[i];
 			for ( size_t i = 0; i < progress_nb_of_coords; i++ )
@@ -1603,11 +1629,16 @@ check_touching :
 			tri2.add_to ( msh );
 			prev_seg.remove_from ( progress_interface );
 			next_seg.remove_from ( progress_interface );
-			normals.erase ( prev_seg );
-			normals.erase ( next_seg );
+			delete static_cast < std::vector < double > * > ( prev_seg.core->hook[tag::normal_vector] );
+			delete static_cast < std::vector < double > * > ( next_seg.core->hook[tag::normal_vector] );
+			// optimize !
+			prev_seg.core->hook.erase ( tag::normal_vector );
+			next_seg.core->hook.erase ( tag::normal_vector );
 			AP.add_to ( progress_interface );
 			PB.add_to ( progress_interface );
-			cloud.remove ( node_in_cloud[point_120] );
+			cloud.remove ( static_cast < MetricTree<Cell,Manifold::Euclid::SqDist>::Node * >
+			               ( point_120.core->hook[tag::node_in_cloud] )                      );
+			point_120.core->hook.erase ( tag::node_in_cloud );  // optimize !
 			build_one_normal ( A, P, AP );  // based on previous segment
 			build_one_normal ( P, B, PB );  // based on previous segment
 			progress_relocate ( P, 2, sum_of_nor, set_of_nearby_vertices, cloud );
@@ -1636,8 +1667,10 @@ check_touching :
 	Cell next_seg = progress_interface.cell_in_front_of ( point_120, tag::surely_exists );
 	Cell B = next_seg.tip();
 	Cell P ( tag::vertex );  vertex_recently_built = P;
-	assert ( normals.find(next_seg) != normals.end() );
-	std::vector < double > f = normals [ next_seg ];
+	assert ( next_seg.core->hook.find(tag::normal_vector) !=
+	         next_seg.core->hook.end()                       );
+  std::vector < double > & f = * static_cast < std::vector < double > * >
+		( next_seg.core->hook[tag::normal_vector] );
 	for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 	{	Function x = Manifold::working.coordinates()[i];
 		x(P) = ( x(point_120) + x(B) ) / 2. + f[i] * sqrt_of_075;  }
@@ -1648,7 +1681,8 @@ check_touching :
 	Cell tri ( tag::triangle, next_seg, BP, AP.reverse() );
 	tri.add_to ( msh );
 	next_seg.remove_from ( progress_interface );
-	normals.erase ( next_seg );
+	delete static_cast < std::vector < double > * > ( next_seg.core->hook[tag::normal_vector] );  // optimize !
+	next_seg.core->hook.erase ( tag::normal_vector );
 	AP.add_to ( progress_interface );
 	PB.add_to ( progress_interface );
 	std::cout << "building brand new triangle " << ++current_name << std::endl;
@@ -1676,8 +1710,8 @@ search_for_start :  // execution only reaches this point through 'goto'
 	std::list<Cell::Core*>::iterator it = l.begin();
 	for ( ; it != l.end(); it++ )
 	{	Cell tmp ( tag::whose_core_is, *it );
-		if ( normals.find ( tmp ) != normals.end() )
-		{	start_seg = tmp;  break;  }                }
+		if ( ( tmp.core->hook.find(tag::normal_vector) ) != tmp.core->hook.end() )
+		{	start_seg = tmp;  break;  }                                                             }
 	assert ( start_seg.exists() );
 	point_60 = start_seg.tip();
 	// any point on this connected component would do
@@ -1717,7 +1751,7 @@ inline void progressive_construct
 		Cell C ( tag::vertex );
 		for ( size_t i = 0; i < progress_nb_of_coords; i++ )
 		{	Function x = Manifold::working.coordinates()[i];
-			x ( C ) = x ( start ) + 0.5 * tangent[i] - 0.866 * normal[i];  }
+			x ( C ) = x ( start ) + 0.5 * tangent[i] - sqrt_of_075 * normal[i];  }
 		Cell BC ( tag::segment, B.reverse(), C );
 		Cell CA ( tag::segment, C.reverse(), start );
 		Cell tri ( tag::triangle, AB, BC, CA );
@@ -1891,6 +1925,8 @@ inline size_t get_topological_dim ( )
 
 Mesh::Mesh ( const tag::Progressive &, const tag::DesiredLength &, const Function & length )
 
+// since no boundary is provided, we assume the working manifold is compact
+	
 :	Mesh ( tag::of_dimension, get_topological_dim(), tag::might_be_one )
 
 {	temporary_vertex = Cell ( tag::vertex );
@@ -1920,7 +1956,7 @@ Mesh::Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif
 	// last argument true means : check orientation, switch it if necessary
 
 	temporary_vertex.dispose();
-	Manifold::working = tmp_manif;                                           }
+	Manifold::working = tmp_manif;                                                }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -2077,8 +2113,6 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 
 //-------------------------------------------------------------------------------------------------
 
-// below we should use the inherent orientation if the co-dimension is 1 !
-
 Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
              const tag::DesiredLength &, const Function & length                 )
 
@@ -2089,7 +2123,11 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	desired_length = length;
 	
 	if ( this->dim() == 1 )
-		progressive_construct ( *this, tag::start_at, start, tag::stop_at, start );  // random orientation
+		if ( progress_nb_of_coords == 2 )
+			progressive_construct ( *this, tag::start_at, start,
+		                          tag::stop_at, start, tag::inherent_orientation );
+		else  // random orientation
+			progressive_construct ( *this, tag::start_at, start, tag::stop_at, start );
 	else
 	{	assert ( this->dim() == 2 );  // no 3D meshing for now
 		bool check_and_switch = ( progress_nb_of_coords == 3 );

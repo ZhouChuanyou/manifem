@@ -23,7 +23,7 @@ int main ()
 	Mesh circle ( tag::progressive, tag::desired_length, 0.1, tag::random_orientation );
 
 	nut.set_as_working_manifold();
-	Mesh bumpy ( tag::progressive, tag::boundary, circle, tag::desired_length, 0.1 );
+	Mesh bumpy ( tag::progressive, tag::boundary, circle, tag::desired_length, 0.098 );
 	bumpy.export_msh ("bumpy.msh");
 	
 	cout << "produced file bumpy.msh" << endl;
