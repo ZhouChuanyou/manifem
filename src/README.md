@@ -1,6 +1,6 @@
 # maniFEM
 
-To know which version of maniFEM is installed in your computer, look at the beginning of `maniFEM.h`.
+To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 
 Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
 
