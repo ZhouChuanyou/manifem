@@ -2,7 +2,7 @@
 
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 
-Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
 
 ManiFEM is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
