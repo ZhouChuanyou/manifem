@@ -1,23 +1,23 @@
 
-// manifold.cpp 2020.03.10
+// manifold.cpp 2021.02.11
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "manifold.h"
 
@@ -91,7 +91,8 @@ void Manifold::Parametric::set_coords ( const Function co )  // virtual from Man
 
 // metric in the manifold (an inner product on the tangent space)
 double Manifold::default_inner_prod  // static
-( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & )
+(	const Cell & P, const std::vector<double> & v,
+	const std::vector<double> & w, const Function & )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );
@@ -102,12 +103,13 @@ double Manifold::default_inner_prod  // static
 
 // metric in the manifold (an inner product on the tangent space) not constant
 double Manifold::zoom_inner_prod  // static
-( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & metric )
+(	const Cell & P, const std::vector<double> & v,
+	const std::vector<double> & w, const Function & metric )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );
 	assert ( metric.nb_of_components() == 1 );
-	std::cout << "zoom (" << metric(P) <<") ";
+	// std::cout << "zoom (" << metric(P) <<") ";
 	double res = 0.;
 	for ( size_t i = 0; i < v.size(); i++ )  res += v[i]*w[i];
 	return res * metric(P);                                     }
@@ -115,7 +117,8 @@ double Manifold::zoom_inner_prod  // static
 
 // metric in the manifold (an inner product on the tangent space) not constant, anisotropic
 double Manifold::matrix_inner_prod  // static
-( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & metric )
+(	const Cell & P, const std::vector<double> & v,
+	const std::vector<double> & w, const Function & metric )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );

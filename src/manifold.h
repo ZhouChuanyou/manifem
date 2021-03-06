@@ -1,23 +1,23 @@
 
-// manifold.h 2020.03.10
+// manifold.h 2021.02.11
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef MANIFEM_MANIFOLD_H
 #define MANIFEM_MANIFOLD_H
@@ -36,6 +36,7 @@ namespace maniFEM {
 
 namespace tag {
 	struct euclid { };  static const euclid Euclid;
+	struct lagrange { };  static const lagrange Lagrange;
 	struct Implicit { };  static const Implicit implicit;
 	struct Parametric { };  static const Parametric parametric;
 }
@@ -75,6 +76,9 @@ class Manifold
 	
 	inline Manifold ( const tag::Parametric &, const Manifold &,
 	       const Function::Equality &, const Function::Equality &, const Function::Equality & );
+
+	inline ~Manifold ( )
+	{} //	std::cout << "destructor Manifold" << std::endl;  }
 	
 	inline Manifold & operator= ( const Manifold & m )
 	{	core = m.core;
@@ -204,9 +208,10 @@ class Manifold::Core
 		double w, Cell::Positive::Vertex * E, double z, Cell::Positive::Vertex * F ) const = 0;
 	
 	// P = sum c_k P_k,  sum c_k == 1
-	virtual void interpolate ( Cell::Positive::Vertex * P,
-		std::vector < double > & coefs, std::vector < Cell::Positive::Vertex * > & points ) const = 0;
-};
+	virtual void interpolate ( Cell::Positive::Vertex * P, std::vector < double > & coefs,
+														 std::vector < Cell::Positive::Vertex * > & points ) const = 0;
+
+}; // end of class Manifold::Core
 
 
 inline Function Manifold::coordinates ( ) const
@@ -340,7 +345,7 @@ inline Manifold Manifold::parametric ( const Function::Equality eq1,
         const Function::Equality eq2, const Function::Equality eq3 ) const
 {	return Manifold ( tag::parametric, *this, eq1, eq2, eq3 );  }
 
-//-------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
 
 class Manifold::Euclid : public Manifold::Core
 
@@ -349,7 +354,7 @@ class Manifold::Euclid : public Manifold::Core
 	size_t dim;
 	
 	Field::Core * coord_field { nullptr };
-	Function coord_func { 0. };  // temporarily zero function
+	Function coord_func { tag::non_existent };
 
 	inline Euclid ( size_t d )
 	:	Manifold::Core(), dim { d }
@@ -396,16 +401,16 @@ class Manifold::Euclid : public Manifold::Core
 
 	class SqDist;
 	// a callable object returning the square of the distance between two points
-	// used for MetricTree, see paragraph 8.15 in the manual
+	// used for MetricTree, see paragraph 9.15 in the manual
 
 };  // end of class Manifold::Euclid
 
-//-------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 
 class Manifold::Euclid::SqDist
 
 // a callable object returning the square of the distance between two points
-// used for MetricTree, see paragraph 8.15 in the manual
+// used for MetricTree, see paragraph 9.15 in the manual
 
 {	public :
 

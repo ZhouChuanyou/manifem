@@ -1,23 +1,23 @@
 
-// function.cpp 2020.03.24
+// function.cpp 2021.02.10
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "math.h"
 #include <sstream>
@@ -25,6 +25,12 @@
 #include "function.h"
 
 using namespace maniFEM;
+
+//-----------------------------------------------------------------------------------------//
+
+#ifndef NDEBUG
+std::map < const Function::Core*, std::string > Function::name;
+#endif
 
 //-----------------------------------------------------------------------------------------//
 
@@ -78,10 +84,12 @@ double Function::Step::get_value_on_cell ( Cell::Core * cll ) const
 	double arg_v = arg_scalar->get_value_on_cell(cll);
 	for ( size_t i = 0; i < this->cuts.size(); i++ )
 		if ( arg_v < cuts[i] )
-		{	Function::Scalar * val_i_scalar = Function::core_to_scalar ( this->values[i].core );
-			return val_i_scalar->get_value_on_cell(cll);                                                }
-	Function::Scalar * val_scalar = Function::core_to_scalar ( this->values.back().core );
-	return val_scalar->get_value_on_cell(cll);                                                        }
+		{	Function::Scalar * val_i_scalar =
+				Function::core_to_scalar ( this->values[i].core );
+			return val_i_scalar->get_value_on_cell(cll);           }
+	Function::Scalar * val_scalar =
+		Function::core_to_scalar ( this->values.back().core );
+	return val_scalar->get_value_on_cell(cll);                                     }
 	
 double Function::Sum::get_value_on_cell ( Cell::Core * cll ) const
 // virtual from Function::Scalar, through Function::ArithmeticExpression
@@ -139,6 +147,12 @@ std::vector<double> Function::Diffeomorphism::get_value_on_cell ( Cell::Core * c
 // virtual from Function::Vector
 { assert ( false );  }
 
+double Function::Composition::get_value_on_cell ( Cell::Core * cll ) const
+// virtual from Function::Vector
+{ Function::Scalar * base_scalar = Function::core_to_scalar ( this->base.core );
+	// isto esta muito errado
+	return base_scalar->get_value_on_cell(cll);                                     }
+
 //-----------------------------------------------------------------------------------------//
 	
 double Function::ArithmeticExpression::set_value_on_cell
@@ -168,6 +182,10 @@ std::vector<double> Function::CoupledWithField::Vector::set_value_on_cell
 
 std::vector<double> Function::Diffeomorphism::set_value_on_cell
 ( Cell::Core * cll, const std::vector<double> & x )  // virtual from Function::Vector
+{ assert ( false );  }
+
+double Function::Composition::set_value_on_cell
+( Cell::Core * cll, const double & x )  // virtual from Function::Vector
 { assert ( false );  }
 
 //-----------------------------------------------------------------------------------------//
@@ -219,11 +237,15 @@ std::string Function::Step::repr ( const Function::From & from ) const
 std::string Function::Vector::repr ( const Function::From & from ) const
 {	assert ( false );  }
 
-#include <sstream>
 std::string Function::CoupledWithField::Scalar::repr ( const Function::From & from ) const
-{	std::stringstream ss;
+{	if ( Function::name.find(this) != Function::name.end() )
+		return Function::name[this];
+	std::stringstream ss;
 	ss << this->field;
-	return "scalar"+ss.str();  }
+	return "scalar"+ss.str();                                      }
+
+std::string Function::Composition::repr ( const Function::From & from ) const
+{	return this->base.core->repr ( Function::from_product ) + "º";  }
 
 #endif // DEBUG
 
@@ -387,19 +409,52 @@ Function Function::CoupledWithField::Scalar::deriv ( Function x ) const
 Function Function::Vector::deriv ( Function x ) const
 { assert ( false );  }
 
+
+Function::Diffeomorphism::Diffeomorphism
+( const Function & gc, const Function & mc, const Function & bgc )
+
+:	geom_coords ( gc ), master_coords ( mc ), back_geom_coords ( bgc ), det ( 0. )
+
+{	assert ( gc.nb_of_components() == mc.nb_of_components() );
+	assert ( mc.nb_of_components() == bgc.nb_of_components() );
+	assert ( mc.nb_of_components() == 2 );
+	Function this_wrapper ( tag::whose_core_is, this );
+	Function dx_dxi  ( bgc[0].deriv(mc[0]), tag::composed_with, this_wrapper );
+	Function dx_deta ( bgc[0].deriv(mc[1]), tag::composed_with, this_wrapper );
+  Function dy_dxi  ( bgc[1].deriv(mc[0]), tag::composed_with, this_wrapper );
+	Function dy_deta ( bgc[1].deriv(mc[1]), tag::composed_with, this_wrapper );
+	this->det = dx_dxi * dy_deta - dx_deta * dy_dxi;
+	Function dxi_dx =   dy_deta / this->det,  deta_dx = - dy_dxi / this->det,
+	         dxi_dy = - dx_deta / this->det,  deta_dy =   dx_dxi / this->det;
+	jacobian.insert ( std::pair < Function, Function >
+                    ( geom_coords[0], dxi_dx && deta_dx ) );
+	jacobian.insert ( std::pair < Function, Function >
+                    ( geom_coords[1], dxi_dy && deta_dy ) );
+	assert ( jacobian.find(geom_coords[0]) != jacobian.end() );
+	assert ( jacobian.find(geom_coords[1]) != jacobian.end() );                      }
+
+
 Function Function::Composition::deriv ( Function x ) const
-// x must be a geometric coordinate
-{ Function::Diffeomorphism * diffeo =
+	
+// there are two kinds of derivatives for a Function::Composition
+// if x is a master coordinate, then we return the usual arithmetic derivative
+// if x is a geometric coordinate, we apply the chain rule
+
+{	Function::Diffeomorphism * diffeo =
 		dynamic_cast < Function::Diffeomorphism * > ( this->diffeom.core );
 	assert ( diffeo );
 	std::map<Function,Function>::const_iterator it = diffeo->jacobian.find(x);
+	assert ( it != diffeo->jacobian.end() );
+	// x is a geometric coordinate, so we apply the chain rule
 	const Function & jacob = it->second;
 	// 'jacob' contains derivatives of the master coordinates with respect to x
 	Function master_coords = diffeo->master_coords;
 	Function result = 0.;
 	for ( size_t i = 0; i < master_coords.nb_of_components(); i++ )
-		result += this->deriv(master_coords[i]) * jacob[i];
-	return result;                                                         }
+	{	Function der ( this->base.deriv(master_coords[i]),
+	                  tag::composed_with, this->diffeom );
+		result += der * jacob[i];                             }
+	return result;                                                              }
 	
 //	Function geom_coords = diffeo->geom_coords;
 //	Function back_geom_coords = diffeo->back_geom_coords;
@@ -474,6 +529,10 @@ Function Function::CoupledWithField::Vector::replace
 {	assert ( false );  }
 
 Function Function::Diffeomorphism::replace ( const Function & x, const Function & y )
+//  virtual from Function::Core, through Function::Vector
+{	assert ( false );  }
+
+Function Function::Composition::replace ( const Function & x, const Function & y )
 //  virtual from Function::Core, through Function::Vector
 {	assert ( false );  }
 

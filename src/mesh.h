@@ -1,23 +1,23 @@
 
-// mesh.h 2020.02.19
+// mesh.h 2021.02.27
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef MANIFEM_MESH_H
 #define MANIFEM_MESH_H
@@ -32,7 +32,7 @@
 namespace maniFEM {
 
 namespace tag {
-	// see paragraph 8.2 in the manual
+	// see paragraph 9.2 in the manual
 	struct IsNegative { };  static const IsNegative is_negative;
 	struct IsPositive { };  static const IsPositive is_positive;
 	struct Reverse { };  static const Reverse reverse;
@@ -41,7 +41,6 @@ namespace tag {
 	struct BuildIfNotExists { };  static const BuildIfNotExists build_if_not_exists;
 	struct MayNotExist { };  static const MayNotExist may_not_exist;
 	struct SurelyExists { };  static const SurelyExists surely_exists;
-	struct OnTheFly { };  static const OnTheFly on_the_fly;
 	struct OfDimension { };  static const OfDimension of_dim;
 	                         static const OfDimension of_dimension;
 	struct OfDimensionOne { };  static const OfDimensionOne of_dim_one;
@@ -82,23 +81,17 @@ namespace tag {
 	struct ForcePositive { };  static const ForcePositive force_positive;
 	struct HasSize { };  static const HasSize has_size;
 	struct ReserveSize { };  static const ReserveSize reserve_size;
-	struct lagrange { };  static const lagrange Lagrange;
 	struct Pretty { };  static const Pretty pretty;
 	struct OfDegree { };  static const OfDegree of_degree;
 	enum WithTriangles { with_triangles, not_with_triangles };
 	struct Join { };  static const Join join;
 	enum KeyForHook { tangent_vector, normal_vector, node_in_cloud };
 	struct Onto { };  static const Onto onto;
-	struct Around { };  static const Around around;
-	struct Iff { };  static const Iff iff;
-	struct LessThan { };  static const LessThan less_than;
-	struct IfLessThan { };  static const IfLessThan if_less_than;
-	struct Otherwise { };  static const Otherwise otherwise;
 	struct EntireManifold { };  static const EntireManifold entire_manifold;
 	struct DesiredLength { };  static const DesiredLength desired_length;
 	struct IntrinsicOrientation { };  static const IntrinsicOrientation intrinsic_orientation;
 	struct InherentOrientation { };  static const InherentOrientation inherent_orientation;
-	struct RandomOrientation { };  static const RandomOrientation random_orientation;   }
+	struct RandomOrientation { };  static const RandomOrientation random_orientation;             }
 
 class Cell;  class Mesh;
 class CellIterator;  class MeshIterator;
@@ -215,7 +208,7 @@ class Cell
 		size_t_heap_size_pos, size_t_heap_size_neg, short_int_heap_size_pos, short_int_heap_size_neg;
 
 	static Cell::Core * const ghost;
-	// see paragraph 8.14 in the manual
+	// see paragraph 9.14 in the manual
 	
 	struct field_to_meshes
 	{	short int counter_pos;
@@ -288,7 +281,7 @@ class Mesh
 	const Methods * meth;
 
 	// we keep here the topological dimension of the largest mesh we intend to build
-	// see method 'set_max_dim' and paragraph 8.5 in the manual
+	// see method 'set_max_dim' and paragraph 9.5 in the manual
 	static size_t maximum_dimension_plus_one;
 
 	// constructors :
@@ -489,7 +482,7 @@ class Mesh
 	{	assert ( a >= b );  return  a - b;  }
 
 	inline static void set_max_dim ( size_t d )
-	// see paragraph 8.5 in the manual
+	// see paragraph 9.5 in the manual
 	{	maximum_dimension_plus_one = d + 1;
 		Cell::double_heap_size_pos.resize ( maximum_dimension_plus_one, 0 );
 		Cell::double_heap_size_neg.resize ( maximum_dimension_plus_one, 0 );
@@ -1061,7 +1054,7 @@ class Mesh::OneDim::Positive : public Mesh::Core
 	// run over all segments, order them linearly, check that the mesh is connected
 	// if it is a loop, set first_ver = Cell::ghost
 	// if it is an open chain, set first_ver and last_ver
-	// see paragraph 8.14 in the manual [?]
+	// see paragraph 9.14 in the manual
 	
 #ifndef NDEBUG
 	std::string get_name();  // virtual from Mesh::Core
@@ -1075,7 +1068,7 @@ class Mesh::OneDim::Positive : public Mesh::Core
 
 // negative meshes aren't kept in the computer, they are just abstract concepts
 // to be more precise: there are Mesh objects (wrappers) refering to negative meshes
-// but their core points to a positive Mesh::Core; there are no negative Mesh::Corees
+// but their core points to a positive Mesh::Core; there are no negative Mesh::Cores
 // we declare the Mesh::Negative namespace however to mimick static methods of a class
 
 struct Mesh::Negative
@@ -1817,11 +1810,11 @@ inline void Mesh::OneDim::Positive::order ( )
 // run over all segments, order them linearly, check that the mesh is connected
 // if it is a loop, set first_ver = Cell::ghost
 // if it is an open chain, set first_ver and last_ver
-// see paragraph 8.14 in the manual [?]
+// see paragraph 9.14 in the manual
 
 {	if ( this->first_ver ) return;
 	// if first_ver is not null, the mesh is already ordered
-	
+
 	std::list<Cell::Core*>::iterator it0 = this->cells[1].begin();  // will change !
 	if ( it0 == this->cells[1].end() )  // empty mesh
 	{	assert ( this->cells[1].size() == 0 );  // will change !

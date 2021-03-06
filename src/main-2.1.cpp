@@ -1,6 +1,6 @@
 
 // example presented in paragraph 2.1 of the manual
-// builds an L-shaped mesh by joining two segments and then three two triangles
+// builds an L-shaped mesh by joining two segments and then two rectangles
 
 #include "maniFEM.h"
 

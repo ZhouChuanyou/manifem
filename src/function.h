@@ -1,23 +1,23 @@
 
-// function.h 2020.03.24
+// function.h 2021.02.11
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef MANIFEM_FUNCTION_H
 #define MANIFEM_FUNCTION_H
@@ -38,7 +38,11 @@ namespace maniFEM {
 
 namespace tag
 {	struct Diffeomorphism { };  static const Diffeomorphism diffeomorphism;
-	struct ComposedWith { };  static const ComposedWith composed_with;        }
+	struct ComposedWith { };  static const ComposedWith composed_with;
+	struct Iff { };  static const Iff iff;
+	struct LessThan { };  static const LessThan less_than;
+	struct IfLessThan { };  static const IfLessThan if_less_than;
+	struct Otherwise { };  static const Otherwise otherwise;                  }
 	
 
 class Manifold;
@@ -54,7 +58,13 @@ class Function
 
 	class Core;
 
+	#ifndef NDEBUG
+	static std::map < const Function::Core*, std::string > name;
+	#endif
+
 	Function::Core * core;
+
+	inline Function ( const tag::NonExistent & ) : core { nullptr } { };
 
 	inline Function ( const tag::WhoseCoreIs &, Function::Core * c );
 
@@ -68,7 +78,8 @@ class Function
 	inline Function ( const tag::Diffeomorphism &, const Function & geom_coords,
                     const Function & master_coords, const Function & geom_back_coords );
 
-	inline Function ( const Function & expr, const tag::ComposedWith &, const Function & diffeo );
+	inline Function ( const Function & expr,
+                    const tag::ComposedWith &, const Function & diffeo );
 	// an 'expr'ession involving master coordinates ( e.g.  1. - xi - eta )
 	// composed with a 'diffeo'morphism sending it in the physical space
 
@@ -111,6 +122,7 @@ class Function
 	static inline Function::Constant * core_to_constant ( Function::Core * f );
 	static inline Function::Sum * core_to_sum ( Function::Core * f );
 	static inline Function::Product * core_to_product ( Function::Core * f );
+	static inline Function::Diffeomorphism * core_to_diffeom ( Function::Core * f );
 
 };  // end of  class Function
 
@@ -126,11 +138,13 @@ class Function::Core
 
 	// Manifold * manifold;
 
-	size_t number_of_wrappers;
+	size_t number_of_wrappers { 0 };
 	
-	inline Core ( ) : number_of_wrappers { 0 } { };
+	// inline Core ( ) : number_of_wrappers { 0 } { };
 
 	virtual ~Core ( ) { };
+
+	inline void release ( );
 
 	virtual size_t nb_of_components ( ) const = 0;
 
@@ -148,20 +162,28 @@ class Function::Core
 
 //-----------------------------------------------------------------------------------------//
 
+inline void Function::Core::release ( )
+
+{	assert ( this->number_of_wrappers > 0 );
+	// std::cout << "Function destructor " << this->number_of_wrappers << " "
+	//					<< this << " " << Function::name[this] << std::endl;
+	this->number_of_wrappers --;
+	if ( this->number_of_wrappers == 0 ) delete this;  }
+
+
 inline Function::Function ( const tag::WhoseCoreIs &, Function::Core * c )
 :	core ( c )
-{	assert ( c );
-	c->number_of_wrappers ++;  }
+{	assert ( c );  c->number_of_wrappers ++;  }
+	// std::cout << "Function constructor " << c->number_of_wrappers << " " << c << std::endl;  }
 
 inline Function::~Function ()
-{	assert ( this->core->number_of_wrappers > 0 );
-	this->core->number_of_wrappers--;
-	if ( this->core->number_of_wrappers == 0 ) delete this->core;  }
+{	if ( this->core ) this->core->release();  }
 
 inline Function & Function::operator= ( const Function & m )
-{	core = m.core;
-	core->number_of_wrappers ++;
-	return *this;   }
+{	if ( this->core ) this->core->release();
+	this->core = m.core;
+	this->core->number_of_wrappers ++;
+	return *this;                             }
 	
 inline Function Function::replace ( const Function & x, const Function & y ) const
 {	return this->core->replace ( x, y );  }
@@ -462,7 +484,8 @@ class Function::Step : public Function::ArithmeticExpression
 	:	arg { x }, values { v1, v2, v3, v4, v5 }, cuts { c1, c2, c3, c4 }
 	{	assert ( c1 < c2 );  assert ( c1 < c2 );  assert ( c3 < c4 );  }
 
-	inline Step ( const Function & aarg, std::vector < Function > & vals, std::vector < double > cts )
+	inline Step ( const Function & aarg, std::vector < Function > & vals,
+                std::vector < double > cts )
 	: arg { aarg }, values { vals }, cuts { cts }
 	{	assert ( vals.size() == cts.size() + 1 );  }
 	
@@ -564,8 +587,8 @@ inline Function operator&& ( Function f, Function g )
 //-----------------------------------------------------------------------------------------//
 
 inline bool operator< ( const Function & f, const Function & g )
-{	return true;  }
-// needed for map in class Function::Diffeomorphism
+{	return f.core < g.core;  }
+// needed for map 'jacobian' in class Function::Diffeomorphism
 
 //-----------------------------------------------------------------------------------------//
 
@@ -575,23 +598,19 @@ class Function::Diffeomorphism : public Function::Vector
 
 	Function geom_coords, master_coords, back_geom_coords;
 	// back_geom_coords are expressions involving the master coordinates
-	// mathematically, it corresponds to the same function geom_coords
+	// mathematically, they correspond to the same function geom_coords
 
 	std::map < Function, Function > jacobian;
+	// conceptually, the jacobian contains the derivatives of master_coords
+	// with respect to geom_coords
+	// this is implemented backwards, by computing the derivatives of
+	// back_geom_coords with respect to master_coords
+	// then taking the inverse matrix
 
-	inline Diffeomorphism ( const Function & gc, const Function & mc, const Function & bmc )
-	:	geom_coords ( gc ), master_coords ( mc ), back_geom_coords ( bmc )
-	{	assert ( gc.nb_of_components() == mc.nb_of_components() );
-		assert ( mc.nb_of_components() == bmc.nb_of_components() );
-		assert ( mc.nb_of_components() == 2 );
-		jacobian.insert ( std::pair < Function, Function >
-	                    ( geom_coords[0], Function(1.) && Function(0.) ) );
-		jacobian.insert ( std::pair < Function, Function >
-	                    ( geom_coords[1], Function(0.) && Function(1.) ) );  }
-	// for now, an identity matrix is built, should change !
-//		for ( size_t i = 0; i < mc.nb_of_components(); i++ )
-		// we could use here an empty function, with zero components ...
-//		{	Function jx =
+	Function det;  // determinant of the jacobian matrix
+	               // should be positive, so may be used directly for integration
+
+	Diffeomorphism ( const Function & gc, const Function & mc, const Function & bmc );
 	
 	size_t nb_of_components ( ) const;  // virtual from Function::Core, through Function::Vector
 
@@ -623,10 +642,14 @@ inline Function::Function ( const tag::Diffeomorphism &, const Function & geom_c
 : Function ( tag::whose_core_is, new Function::Diffeomorphism
                 ( geom_coords, master_coords, geom_back_coords ) )
 {	}
+
 //-----------------------------------------------------------------------------------------//
 
 class Function::Composition : public Function::Scalar
 	
+// an expression 'base' involving master coordinates ( e.g.  1. - xi - eta )
+// composed with a 'diffeom'orphism sending it in the physical space
+
 {	public :
 
 	Function base, diffeom;
@@ -654,11 +677,15 @@ class Function::Composition : public Function::Scalar
 
 //-----------------------------------------------------------------------------------------//
 
-inline Function::Function ( const Function & expr, const tag::ComposedWith &, const Function & diffeo )
+inline Function::Function
+(	const Function & expr, const tag::ComposedWith &, const Function & diffeo )
 // an 'expr'ession involving master coordinates ( e.g.  1. - xi - eta )
 // composed with a 'diffeo'morphism sending it in the physical space
-: Function ( tag::whose_core_is, new Function::Composition ( expr, diffeo ) )
-{	}
+: Function ( tag::non_existent )
+{	Function::Constant * exc = dynamic_cast < Function::Constant * > ( expr.core );
+	if ( exc ) (*this) = expr;
+	else (*this) = Function
+	   ( tag::whose_core_is, new Function::Composition ( expr, diffeo ) );            }
 
 //-----------------------------------------------------------------------------------------//
 
@@ -795,6 +822,14 @@ inline Function::Product * Function::core_to_product ( Function::Core * f )  // 
 	assert ( res );  return res;                                           }
 #else  // no debug
 	{	return static_cast < Function::Product * > ( f );  }
+#endif
+	
+inline Function::Diffeomorphism * Function::core_to_diffeom ( Function::Core * f )  // static
+#ifndef NDEBUG
+{	Function::Diffeomorphism * res = dynamic_cast < Function::Diffeomorphism * > ( f );
+	assert ( res );  return res;                                           }
+#else  // no debug
+	{	return static_cast < Function::Diffeomorphism * > ( f );  }
 #endif
 	
 //-----------------------------------------------------------------------------------------//

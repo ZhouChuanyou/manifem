@@ -1,6 +1,6 @@
 
 // example presented in paragraph 2.2 of the manual
-// builds an L-shaped mesh which mixed traingles and rectangles
+// builds an L-shaped mesh with mixed traingles and rectangles
 
 #include "maniFEM.h"
 
