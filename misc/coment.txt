@@ -19,11 +19,12 @@ Havera' uma superficie que corta a malha em duas zonas, uma branca que ja' foi p
 e uma preta que ainda nao foi. Escolhemos uma face qualquer nesta superficie (usamos outro
 iterador?) e consideramos a celula preta adjacente a esta face. Iremos devolver segmentos
 na fronteira desta celula, que agora consideramos cinzenta. A interface corta a fronteira
-da celula cinzenta em duas zonas, uma que passamos a considerar cinzenta (do lado branco da malha),
-outra ainda preta; devolveremos segmentos da zona cinzenta. Usamos um outro iterador sobre a
-fronteira cinzenta (que podemos inicializar com o corte com a interface na malha grande -
-um loop que podemos colorir de cor-de-rosa). Quando acabamos com a zona cinzenta,
-podemos dar informacao ao utilizador do iterador que esses segmentos nao voltarao a aparecer.
+da celula cinzenta em duas zonas, uma que passamos a considerar cinzenta (do lado branco
+da malha), outra ainda preta; devolveremos segmentos da zona cinzenta.
+Usamos um outro iterador sobre a fronteira cinzenta (que podemos inicializar com o corte
+com a interface na malha grande - um loop que podemos colorir de cor-de-rosa).
+Quando acabamos com a zona cinzenta, podemos dar informacao ao utilizador do iterador
+que esses segmentos nao voltarao a aparecer.
 Mais precisamente : se um segmento da zona cinzenta nao toca no loop cor-de-rosa, entao
 toda a sua vizinhanca imediata nao voltara' a aparecer no processo de iteracao.
 Nalguns algoritmos, isto pode ser util para o utilizador do iterador.
@@ -38,18 +39,18 @@ se necessario, metamorfosamos o iterador
 
 em interpolate, por os coeficientes antes dos pontos
 
-dar um tratamento a parte a malhas uni-dimensionais
-
-first_ver e last_ver so' para malhas unidimensionais (cells ainda para todas as malhas)
 Fields parecem funcionar
 tenho que prever maneira de localizar os indices : para cada malha um conjunto de indices
+
 guardo em  2019.10  : samsung com borboletas e disco azul
 
 faltam malhas zero-dimensionais (built on-the-fly) e iteradores sobre as tais
 talvez rever a hierarquia dos iteradores, usar mais multiple inheritance
 talvez definir umas funcoes inline para agrupar pedacos de codigo repetido
+[ja feito?]
 
 functions, manifolds, tudo incipiente mas funcionam
+
 guardo em 2019.10.25
 
 rever os metodos first_vertex, last_vertex, first_segment, last_segment
@@ -107,7 +108,8 @@ deveria desencadear um erro num assert mais cedo, antes de action_remove
 
 para malhas adaptativas
 temos uma distancia de longo alcance dada pelo espaco ambiente euclidiano
-e uma distancia de curto alcance dada pelo produto interno no espaco tangente da variedade
+e uma distancia de curto alcance dada pelo produto interno no espaco tangente
+da variedade
 esta ultima e' dada por uma matriz
 precisamos duma margem inferior do coeficiente de Rayleigh  Axx > margem x^2
 o Cloud vai trabalhar apenas com distancia de longo alcance
@@ -123,14 +125,32 @@ deveria ter tag::random_orientation ?  uniformizar
 em manifold.h, ficou steps_for_Newton = 10
 testar com os dois toros se faz diferenca diminuir este valor
 
-disponibilizar separadamente simplif assim como fizemos com metric tree ?
+disponibilizar separadamente 'simplif' assim como fizemos com 'metric tree' ?
 
 em progressive_construct, poderiamos fornecer (sub)variedades como fronteiras (em vez de malhas)
 especificar uma direccao (com tag::towards) atraves duma desigualdade entre duas funcoes
 
-quando copiamos Functions, decrementar o contador antigo
+o copy-constructor de Manifold nao deveria setar Manifold::working
+ou talvez o move operator e move constructor ?
 
-em github/manifem : copiar *.h *.cpp Makefile
-										copiar este coment.txt para misc
+introduzir shared_ptr em Function e Manifold e Field
+agora tenho release em Function mas shared_ptr e' melhor
+vou ter que usar dynamic_pointer_cast ou static_pointer_cast, ver simplif.cpp
+em Cell nao vale a pena porque tenho a informacao por outras vias
 
-no disco azul : copiar *.cpp *.h coment.txt
+erro estranho em main-lente.cpp
+
+neste momento, instrucoes como
+Function xi_eta_phys ( xi_eta, tag::composed_with, transf )
+nao funcionam bem; xi_eta_phys fica a herdar de Function::Scalar
+
+em github/manifem : copiar coment.txt function.cpp function.h Makefile maniFEM.h
+                           finite-elem.cpp finite-elem.h manifold.cpp manifold.h mesh.h
+													 main-2.1.cpp main-2.2.cpp main-2.10.cpp and above main-7.2.cpp
+										eliminar cloud.cpp
+
+no disco azul :   copiar coment.txt function.cpp test.cpp finite-elem.cpp finite-elem.h
+                         manifold.cpp manifold.h mesh.h Makefile maniFEM.h
+                         main-2.1.cpp main-2.2.cpp main-2.10.cpp and above main-7.2.cpp
+
+Anca :  finite-elem.cpp finite-elem.h  Makefile
