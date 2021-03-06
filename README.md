@@ -14,9 +14,10 @@ ManiFEM is just a collection of C++ classes. It has no user-friendly interface n
 The user shold have some understanding of programming and of C++. 
 However, maniFEM can be used at a basic level by people with no deep knowledge of C++.
 
-In its current version (20.03), maniFEM works well for mesh generation. 
+In its current version (21.02), maniFEM works well for mesh generation. 
 Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
-Variational formulations and finite elements are not yet implemented.
+Variational formulations (section 6 in the manual) are not yet implemented. 
+Finite elements (section 7 in the manual) are implemented in a rather rudimentary manner for now. 
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 
 A component of maniFEM, [MetricTree](https://github.com/cristian-barbarosie/MetricTree), can be used independently.
@@ -33,14 +34,17 @@ and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
 Under linux it should be easy to install them. 
 It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using 
-[cygwin](https://cygwin.org). 
+[cygwin](https://cygwin.org).
+Some examples require the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library; 
+just copy its source tree somewhere in your computer and be sure that path is mentioned in your 
+`Makefile` under the `-I` flag of your compiler.
 You may also want to use [gmsh](http://gmsh.info/) for visualization purposes. 
 
 This work is supported by National Funding from FCT - Fundação para a Ciência e a Tecnologia (Portugal), 
 through Faculdade de Ciências da Universidade de Lisboa and 
 Centro de Matemática, Aplicações Fundamentais e Investigação Operacional, project UID/MAT/04561/2020.
 
-Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
 
 ManiFEM is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
