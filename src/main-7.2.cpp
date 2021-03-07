@@ -126,52 +126,28 @@ int main ()
 		impose_value_of_unknown ( matrix_A, vector_b, i, 0. );  }
 	} // just a block of code 
 	
-	for ( size_t i = 0; i < size_matrix; i++ )
-	{	std::cout << i << " ";
-		for ( size_t j = 0; j < size_matrix; j++ )
-			std::cout << matrix_A.coeffRef (i,j) << " ";
-		std::cout << std::endl;                           }
+//	for ( size_t i = 0; i < size_matrix; i++ )
+//	{	std::cout << i << " ";
+//		for ( size_t j = 0; j < size_matrix; j++ )
+//			std::cout << matrix_A.coeffRef (i,j) << " ";
+//		std::cout << std::endl;                           }
 
-	std::cout << std::endl;
-	for ( size_t j = 0; j < size_matrix; j++ )
-		std::cout << vector_b (j) << " ";
-	std::cout << std::endl;
-	for ( size_t i = 0; i < size_matrix; i++ )
-		std::cout << vector_sol (i) << " ";
-	std::cout << std::endl;
+//	std::cout << std::endl;
+//	for ( size_t j = 0; j < size_matrix; j++ )
+//		std::cout << vector_b (j) << " ";
+//	std::cout << std::endl;
+//	for ( size_t i = 0; i < size_matrix; i++ )
+//		std::cout << vector_sol (i) << " ";
+//	std::cout << std::endl;
+
 	// solve the system of linear equations
 	Eigen::ConjugateGradient < Eigen::SparseMatrix<double>,
 	                           Eigen::Lower|Eigen::Upper    > cg;
 	cg.compute ( matrix_A );
 	vector_sol = cg.solve ( vector_b );
-	std::cout << std::endl;
-	for ( size_t j = 0; j < size_matrix; j++ )
-		std::cout << vector_b (j) << " ";
-	std::cout << std::endl;
-	for ( size_t i = 0; i < size_matrix; i++ )
-		std::cout << vector_sol (i) << " ";
-	std::cout << std::endl;
 
-	vector_b.setZero();
-	std::cout << std::endl;
-	for ( size_t j = 0; j < size_matrix; j++ )
-		std::cout << vector_b (j) << " ";
-	std::cout << std::endl;
-	for ( size_t i = 0; i < size_matrix; i++ )
-		std::cout << vector_sol (i) << " ";
-	std::cout << std::endl;
-
-	vector_b = matrix_A * vector_sol;
-	std::cout << std::endl;
-	for ( size_t j = 0; j < size_matrix; j++ )
-		std::cout << vector_b (j) << " ";
-	std::cout << std::endl;
-	for ( size_t i = 0; i < size_matrix; i++ )
-		std::cout << vector_sol (i) << " ";
-	std::cout << std::endl;
-
+	ABCD.export_msh ("square-Dirichlet.msh", numbering );
 	{ // just a block of code for hiding variables
-		ABCD.export_msh ("square-Dirichlet.msh", numbering );
 	ofstream solution_file ("square-Dirichlet.msh", fstream::app );
 	solution_file << "$NodeData" << endl;
 	solution_file << "1" << endl;   // one string follows
@@ -188,6 +164,8 @@ int main ()
 		size_t i = numbering[P.core];
 		solution_file << i << " " << vector_sol[i-1] << std::endl;   }
 	} // just a block of code
+
+	std::cout << "produced file square-Dirichlet.msh" << std::endl;
 
 	return 0;
 }
