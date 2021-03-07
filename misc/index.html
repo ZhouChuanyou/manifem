@@ -1,0 +1,106 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="description"
+content="Homepage of maniFEM">
+<meta name="keywords"
+content="mathematics numerical analysis optimization">
+<title>maniFEM</title>
+   <style>
+      .img-container {
+        text-align: center;
+      }
+    </style>
+    <style> body { font-size:18pt; } </style>
+</head>
+
+<body>
+	
+<div class="img-container"> <!-- Block parent element -->
+    <img src="logo-manifem-09.png" width="90%" align="center">
+</div>
+
+<!-- <font size="+1"> -->
+
+<p>
+This is the home page of maniFEM, a C++ library for solving partial differential equations
+through the finite element method.
+The name comes from "finite elements on manifolds". 
+ManiFEM has been designed with the goal of coping with very general meshes,
+in particular meshes on Riemannian manifolds.
+Also, maniFEM has been written with the goal of being conceptually clear
+and easy to read.
+We hope it will prove particularly useful for people who want a fine control over the mesh,
+e.g. for implementing their own meshing or remeshing algorithms.
+
+<p>
+ManiFEM is written in C++. 
+It uses <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>
+for storing matrices and for solving systems of linear equations.
+You may want to use <a href="http://gmsh.info/">gmsh</a> for visualization of results.
+
+<p>
+ManiFEM is just a collection of C++ classes.
+It has no user-friendly interface nor graphic capabilities.
+The user shold have some understanding of programming and of C++.
+However, maniFEM can be used at a basic level by people with no deep knowledge of C++.
+
+<p>
+In its current version, 21.02, maniFEM works quite well for mesh generation.
+Quotient manifolds (section 5 in the manual) and anisotropic meshing (paragraph
+3.24 in the manual) are not yet implemented.
+Variational formulations (section 6 in the manual) are not yet implemented.
+Finite elements (section 7 in the manual) are implemented in a rather rudimentary manner for now.
+To check which version of maniFEM is installed in your computer, see at the beginning of the file
+<code>maniFEM.h</code>.
+
+<p>
+ManiFEM is written by <a href="cristian.barbarosie@gmail.com">Cristian Barbarosie</a>,
+S&eacute;rgio Lopes and Anca-Maria Toader.
+It is currently under development.
+
+<p>
+<!-- To learn maniFEM, you should read the manual. 
+You can choose between two versions : <a href="manual-manifem-1ed.pdf">21.02</a> 
+(first edition, ISBN 978-972-8394-30-1) and the more recent one
+<a href="manual-manifem.pdf">??.??</a>. -->
+To learn maniFEM, you should read this <a href="manual-manifem-1ed.pdf">manual</a>
+(version 21.02, first edition, ISBN 978-972-8394-30-1).
+
+<p>
+To use maniFEM, you should go to <a href="https://github.com/cristian-barbarosie/manifem">
+https://github.com/cristian-barbarosie/manifem</a> and copy all
+files under <code>src/</code> to some directory in your computer.
+To check which version of maniFEM is installed in your computer, see at the beginning of the file
+<code>maniFEM.h</code>.
+You can then run the examples in the manual :
+just <code>make</code> <code>run-1.1</code> for the example in paragraph 1.1,
+<code>make</code> <code>run-1.3</code> for the example in paragraph 1.3, and so on.
+You will need a recent C++ compiler (we use <code>g++</code>)
+and the <code>make</code> utility.
+Under linux it should be easy to install them.
+It is not that easy to install and use them under Windows, but it is certainly possible,
+for instance by using <a href="cygwin.org">cygwin</a>.
+Some examples require the <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>
+library; just copy its source tree somewhere in your computer and be sure that path
+is mentioned in your <code>Makefile</code> under the <code>-I</code> flag of your compiler.
+You may also want to use <a href="http://gmsh.info/">gmsh</a> for visualization purposes.
+
+<p>
+This work is supported by National Funding from FCT - Funda&ccedil;&atilde;o para a
+Ci&ecirc;ncia e a Tecnologia (Portugal), through Faculdade de Ci&ecirc;ncias da
+Universidade de Lisboa and Centro de Matem&aacute;tica, Aplica&ccedil;&otilde;es
+Fundamentais e Investiga&ccedil;&atilde;o Operacional, project UID/MAT/04561/2020.
+
+<p>
+ManiFEM is free software; it is copyrighted by Cristian Barbarosie
+<a href="cristian.barbarosie@gmail.com">cristian.barbarosie@gmail.com</a>
+under the GNU Lesser General Public License.
+
+<!-- </font> -->
+
+
+</body>
+</html>

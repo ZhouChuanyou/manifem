@@ -1,0 +1,152 @@
+\section{\numb section 6. Fields, functions and variational formulations}
+
+
+\paragraph{\numb section 6.\numb parag 1. Fields and functions}
+
+As the reader may have already noticed, all examples in {\maniFEM} begin by declaring a
+Euclidian {\codett Manifold} and then go on by building a coordinate system :
+
+\verbatim
+   Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
+   Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+   Function x = xy[0],  y = xy[1];
+\endverbatim
+
+See paragraph \numb section 9.\numb parag 2 for more details about tags.
+
+In the above, {\codett xy} is a {\codett Function}, a vector field actually, with two components,
+{\codett x} and {\codett y}.
+The declaration of {\codett xy} starts a complex process; under the curtains {\maniFEM} declares
+a {\codett Field} object associated to {\codett xy}.
+The {\codett Field} object changes the behaviour of {\maniFEM} in what regards initialization of
+{\codett Cell}s.
+Since {\codett xy} is of type Lagrange of degree 1, each newly built vertex {\codett Cell}
+will have memory space reserved for two {\codett double} precision numbers.
+If {\codett A} is a vertex {\codett Cell}, an assignment like {\codett x(A) = 1.5}
+sets the value of the {\codett x} component of the {\codett Field} associated to {\codett xy}
+at {\codett A}.
+
+If we declare {\codett xy} to be of type Lagrange of degree 2, not only future vertices will
+have space reserved for two {\codett double}s, but also future segments.
+So, we may assign the value of {\codett y} at the middle of segment {\codett AB} by using
+the syntax {\codett y(AB) = 0.75}.
+
+{\codett Function} objects allow for arithmetic expressions like in
+
+\verbatim
+   Function norm = power ( x*x + y*y, 0.5 );
+\endverbatim
+
+The {\codett deriv} method performs symbolic differentiation :
+
+\verbatim
+   Function norm_x = norm.deriv ( x );
+   Function norm_y = norm.deriv ( y );
+\endverbatim
+
+Functions can also be integrated, see section \numb section 7.
+
+
+\paragraph{\numb section 6.\numb parag 2. \special{ps: gsave 0.6 setgray}Fields and functions\special{ps: grestore} [outdated]}
+
+{\bf The code described in this paragraph is outdated and does not work.}
+
+Consider the mesh built by the code below.
+
+\verbatim
+   Mesh::intended_dimension = 2; // topological dimension
+   Mesh::initialize();
+   auto & xy = NumericField::multi_dim ("size", 2, "lives on", "points");	
+   auto & x = xy[0], & y = xy[1];
+   auto & u = NumericField::one_dim ("lives on", "points");
+   auto SW = Cell::point ("SW"); x(SW) = -1.1; y(SW) = 0.3;
+   auto SE = Cell::point ("SE"); x(SE) = 1; y(SE) = 0;
+   auto NE = Cell::point ("NE"); x(NE) = 1; y(NE) = 1;
+   auto NW = Cell::point ("NW"); x(NW) = -1; y(NW) = 1;
+   auto south ( tag::segment, SW.reverse(), SE, tag::divided_in, 4, xy );
+   auto east  ( tag::segment, SE.reverse(), NE, tag::divided_in, 2, xy );
+   auto north ( tag::segment, NE.reverse(), NW, tag::divided_in, 4, xy );
+   auto west  ( tag::segment, NW.reverse(), SW, tag::divided_in, 2, xy );
+   auto rect_mesh ( tag::rectangle, south, east, north, west, xy );
+\endverbatim
+
+Note that, besides the {\codett NumericField} objects {\codett x} and {\codett y}
+which we have already encountered in paragraph \numb section 1.\numb parag 1,
+we introduce another {\codett NumericField}, {\codett u}, which is meant to hold
+the values of the solution of some PDE.
+
+We now declare two functions defined on the mesh, linked to the two fields {\codett x} and
+{\codett y}.
+We can declare each function individually, as we did in paragraph \numb section 1.\numb parag 1,
+or we can declare the pair and then extract each component :
+
+\verbatim
+   auto & xxyy = FunctionOnMesh::from_field ( xy, "Lagrange degree one" );
+   auto & xx = xxyy[0], & yy = xxyy[1];
+\endverbatim
+
+These functions are described as {\codett "Lagrange degree one"}, which means that they vary
+linearly along segments and also inside triangles.
+On quadrilaterals, they are polynomials of degree one, meaning they have a linear part plus
+a bi-linear one.
+
+We can also declare an unknown function and a test function, to be used in a future variational
+problem :
+
+\verbatim
+   auto & uu = FunctionOnMesh::unknown ( u, "Lagrange degree one");
+   auto & w = FunctionOnMesh::test ( uu );
+\endverbatim
+
+The unknown {\codett uu} is related to the {\codett NumericField} previously declared,
+{\codett u}, which provides space to hold, at each vertex of the mesh, a real value.
+Hopefully, at the end of the day these will be the values of the solution of our PDE.
+The test function does not need to hold any values.
+The test function is an abstract object whose only use is to express the
+variational formulation.
+
+{\codett FunctionOnMesh} objects obey to usual arithmetic rules.
+For instance, {\codett (xx+yy*w)/uu} is a valid expression in \maniFEM.
+They can also be differentiated, like in {\codett (xx*yy).deriv(xx)}.
+Note that this expression will be evaluated right away, producing the result
+{\codett yy}, while expressions involving an unknown function or a test function
+will produce a delayed derivative object, to be evaluated later.
+Thus, {\codett w.deriv(xx)} will be evaluated only after replacing the test function
+{\codett w} by some function in a base of a discretized Hilbert space.
+
+{\codett FunctionOnMesh} objects can also be integrated through their method
+{\codett integrate}, which produces a delayed integral expression.
+The integral is not evaluated right away, but only later, with the use of an
+{\codett Integrator} object (which could be a Gauss quadrature).
+
+Integral expressions are stored as objects belonging to the class\hfil\break
+{\codett FunctionOnMesh::combinIntegrals}.
+These objects can be equated by using their\hfil\break
+{\codett operator==}, which returns a {VariationalProblem} object.
+Thus, the operator\hfil\break
+{\codett FunctionOnMesh::combinIntegrals::operator==} acts as a factory function
+for\hfil\break {\codett VariationalProblem} objects.
+For instance, {\codett x.integrate(rect\_mesh) == y.integrate(south)} is a syntactically valid
+expression which would produce a {\codett VariationalProblem} but actually
+gives a run-time error because the {\codett operator==} checks that the right hand side
+of the variational problem actually contains a function declared as uknown and one
+declared as test, and that the left hand side contains a test function but no unknown.
+Here is a more meaningful example :
+
+\verbatim
+   auto & var_pb =
+       ( uu.deriv(xx)*w.deriv(xx) + uu.deriv(yy)*w.deriv(yy) ) .integrate(rect_mesh)
+       == w.integrate(rect_mesh) + w.integrate(south);
+\endverbatim
+
+Note how we can mix integrals on different domains; recall that {\codett south} is
+a side of {\codett rect\_mesh}.
+
+Dirichlet-type boundary conditions are implemented through the directive
+{\codett prescribe\_on} followed by one or more equalities.
+
+\verbatim
+   var_pb.prescribe_on (north);  uu == 0.;          w == 0.;
+   var_pb.prescribe_on (east);   uu == xx*(1.-yy);  w == 0.;
+   var_pb.prescribe_on (west);   uu == 0.;          w == 0.;
+\endverbatim

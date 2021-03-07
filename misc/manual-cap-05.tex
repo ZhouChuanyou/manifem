@@ -1,0 +1,215 @@
+\section{\numb section 5. \special{ps: gsave 0.6 setgray}Quotient manifolds\special{ps: grestore}}
+
+{\bf The code described in this section does not work yet.
+It should be regarded as a mere declaration of intentions.}
+\medskip
+
+The roots of {\maniFEM} go back to a PhD thesis in 2002
+% (or even earlier, to a Master thesis in 1997)
+where finite elements on a torus were implemented in {\codett FORTRAN}.%
+\footnote *{\parbox{\ftntfont\baselineskip=3pt
+See % C.~Barbarosie, Optimization of perforated domains through homogenization,
+% Structural Optimization 14, 1997
+C.~Barbarosie, Shape optimization of periodic structures,
+Computers \& Structures 30, 2003}}
+The torus is meant as a mere quotient manifold between $ \RR^2 $ and a group of
+translations of $ \RR^2 $ with two generators; you may think of it as $ \RR^2/\ZZ^2 $.
+It should be stressed that this manifold is not the usual ``donut'' built in paragraph
+\numb section 2.\numb parag 15.
+The quotient torus is a Riemann manifold with no curvature; it is locally Euclidian
+(that is, locally isometric to open sets of $ \RR^2 $); we may call it ``flat torus''.
+It cannot be embedded in $ \RR^3 $, much less be represented graphically.
+An unfolded mesh in $ \RR^2 $ can be represented graphically, where vertices and segments
+from the torus are drawn more than once.
+
+One of the goals of {\maniFEM} is to deal with meshes on quotient manifolds.
+Different quotient operations can be used, with groups of translations of $ \RR^2 $ but also
+with other groups of transformations.
+
+
+\paragraph{\numb section 5.\numb parag 1.
+\special{ps: gsave 0.6 setgray}A one-dimensional circle\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+Here is the closed curve $ \RR/\ZZ $.
+We define it as a segment from {\codett A} to {\codett A}, with a specified {\codett jump}.
+
+\verbatim
+   // begin with the one-dimensional line
+   Manifold RR ( tag::Euclid, tag::of_dim, 1 );
+   Function x = RR.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+
+   // define an action on RR2 (a translation)
+   Manifold::Action g;  g(x) = x+1;
+   Manifold circle = RR.quotient ( g );
+
+   // one vertex is enough to start the process
+   Cell A ( tag::vertex );  x(A) = 0.02;
+   // with this vertex, we build a segment
+   Mesh seg ( tag::segment, A.reverse(), A, tag::divided_in, 10, tag::jump, g );
+\endverbatim
+
+We do not bother with the graphical representation of this one-dimensional mesh.
+
+
+\paragraph{\numb section 5.\numb parag 2.
+\special{ps: gsave 0.6 setgray}A flat torus\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+Here is the classical example of $ \RR^2/\ZZ^2 $.
+
+\verbatim
+   // begin with the usual two-dimensional space
+   Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
+   Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+   Function x = xy[0], y = xy[1];
+
+   // define two actions on RR2 (translations)
+   Manifold::Action g1, g2;
+   g1(x,y) = (x+1) && y;
+   g2(x,y) = x && (y+1);
+   Manifold torus_manif = RR2.quotient ( g1, g2 );
+
+   // one vertex is enough to start the process
+   Cell A ( tag::vertex );  x(A) = 0.02;  y(A) = 0.02;
+   // with this vertex, we build two segments
+   Mesh seg_horiz ( tag::segment, A.reverse(), A,
+                    tag::divided_in, 10, tag::jump, g1 );
+   Mesh seg_vert  ( tag::segment, A.reverse(), A,
+                    tag::divided_in, 10, tag::jump, g2 );
+   // and a rectangle
+   Mesh torus ( tag::rectangle, seg_horiz, seg_vert,
+                seg_horiz.reverse(), seg_vert.reverse() );
+
+   // it would be meaningless to export 'square' as a msh file
+   // we can however export an unfolded mesh :
+   torus.unfold(-0.5,-0.2,0.5,0.2).export_msh ("unfolded-torus.msh");
+\endverbatim
+
+We have added a shadow representing the periodicity cell $ [0,1]^2 $.
+This gives a hint about the segments being repeated by the unfolding.
+
+
+\paragraph{\numb section 5.\numb parag 3.
+\special{ps: gsave 0.6 setgray}A skew flat torus\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+We can build a skew torus by simply choosing other actions on {\codett RR2}.
+
+\verbatim
+   Manifold::Action g1, g2;
+   g1(x,y) = (x+1)   && (y+0.1);
+   g2(x,y) = (x+0.1) && (y+1);
+   Manifold torus_manif = RR2.quotient ( g1, g2 );
+\endverbatim
+
+Again, we have added a shadow representing the periodicity cell, this time a parallelogram.
+
+
+\paragraph{\numb section 5.\numb parag 4.
+\special{ps: gsave 0.6 setgray}A curved circle\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+We are now in a position to resume the example in paragraph \numb section 2.\numb parag 14,
+this time in a less cumbersome manner.
+
+\verbatim
+   Manifold RR ( tag::Euclid, tag::of_dim, 1 );
+   Function theta = RR.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+   const double pi = 3.1415926536;
+   Manifold::Action g;  g(theta) = theta + 2*pi;
+   Manifold circle = RR.quotient ( g );
+
+   Cell A ( tag::vertex );  theta(A) = 0.;
+   Mesh seg ( tag::segment, A.reverse(), A, tag::divided_in, 10, tag::jump, g );
+
+   // define new coordinates x and y as arithmetic expressions of theta
+   Function x = cos(theta), y = sin(theta);
+   // forget about theta; in future statements, x and y will be used
+   circle.set_coordinates ( x && y );
+   seg.export_msh ("circle.msh");
+\endverbatim
+
+
+\paragraph{\numb section 5.\numb parag 5.
+\special{ps: gsave 0.6 setgray}A cylinder\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+Here is how to build a cylinder in $ \RR^3 $ :
+
+\verbatim
+   Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
+   Function theta_z =
+      RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+   Function theta = theta_z[0], z = theta_z[1];
+   const double pi = 3.1415926536;
+   Manifold::Action g;  g( theta, z ) = (theta+2*pi) && z;
+   Manifold cylinder_manif = RR2.quotient ( g );
+
+   Cell A ( tag::vertex );  theta(A) = 0.; z(A) = -1.;
+   Cell B ( tag::vertex );  theta(B) = 0.; z(B) =  1.;
+   Mesh AA ( tag::segment, A.reverse(), A, tag::divided_in, 10, tag::jump,  g );
+   Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );  // no jump
+   Mesh BB ( tag::segment, B.reverse(), B, tag::divided_in, 10, tag::jump, -g );
+   Mesh cylinder ( tag::rectangle, AA, AB, BB, AB.reverse() );
+
+   // define new coordinates x and y as arithmetic expressions of theta
+   Function x = cos(theta), y = sin(theta);
+   // forget about theta; in future statements, x, y and z will be used
+   cylinder_manif.set_coordinates ( x && y & z );
+   cylinder.export_msh ("circle.msh");
+\endverbatim
+
+
+\paragraph{\numb section 5.\numb parag 6.
+\special{ps: gsave 0.6 setgray}A curved torus\special{ps: grestore}}
+
+{\bf The code described in this paragraph does not work yet.
+It should be regarded as a mere declaration of intentions.}
+
+We are now in a position to resume the example in paragraph \numb section 2.\numb parag 15,
+this time by using the quotient manifold $ \RR^2/\ZZ^2 $ introduced in paragraph
+\numb section 5.\numb parag 2.
+
+\verbatim
+   Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
+   Function ab = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+   Function alpha = ab[0], beta = ab[1];
+   const double pi = 3.1415926536;
+   Manifold::Action g1, g2;
+   g1(alpha,beta) = (alpha+2.*pi) && beta;
+   g2(alpha,beta) = alpha && (beta+2.*pi);
+   Manifold torus_manif = RR2.quotient ( g1, g2 );
+
+   Cell A ( tag::vertex );  alpha(A) = 0.;  beta(A) = 0.;
+   Mesh seg_horiz ( tag::segment, A.reverse(), A,
+                    tag::divided_in, 10, tag::jump, g1 );
+   Mesh seg_vert  ( tag::segment, A.reverse(), A,
+                    tag::divided_in, 10, tag::jump, g2 );
+   Mesh torus ( tag::rectangle, seg_horiz, seg_vert,
+                seg_horiz.reverse(), seg_vert.reverse() );
+
+   // parametrize the donut
+   const double big_radius = 3., small_radius = 1.;
+   // define x, y and z as functions of alpha and beta
+   Function x = ( big_radius + small_radius*cos(beta) ) * cos(alpha),
+            y = ( big_radius + small_radius*cos(beta) ) * sin(alpha),
+            z = small_radius*sin(beta);
+
+   // forget about alpha and beta :
+   torus.set_coordinates ( x && y && z );
+   // in future statements (e.g. for graphical representation)
+   // x, y and z will be used, not alpha nor beta :
+   torus.export_msh ("torus.msh");
+
+\endverbatim
