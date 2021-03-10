@@ -1,5 +1,5 @@
 
-// progressive.cpp 2021.02.11
+// progressive.cpp 2021.03.10
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
