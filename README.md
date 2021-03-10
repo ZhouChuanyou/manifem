@@ -14,7 +14,7 @@ ManiFEM is just a collection of C++ classes. It has no user-friendly interface n
 The user shold have some understanding of programming and of C++. 
 However, maniFEM can be used at a basic level by people with no deep knowledge of C++.
 
-In its current version (21.02), maniFEM works well for mesh generation. 
+In its current version (21.03), maniFEM works well for mesh generation. 
 Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
 Variational formulations (section 6 in the manual) are not yet implemented. 
 Finite elements (section 7 in the manual) are implemented in a rather rudimentary manner for now. 
