@@ -3,7 +3,7 @@
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//   Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
 //   https://github.com/cristian-barbarosie/manifem
 
 //   ManiFEM is free software: you can redistribute it and/or modify it
@@ -1430,8 +1430,8 @@ void progressive_construct
 // 'normal' is a vector tangent to the working manifold, orthogonal to 'start'
 
 {	// we don't want to change 'bdry' so we make a copy of it
-	// Mesh interface ( tag::deep_copy_of, bdry );  or maybe let the Mesh constructor do this
-	progress_interface = bdry;
+	Mesh interface ( tag::deep_copy_of, bdry );  // or maybe let the Mesh constructor do this
+	progress_interface = interface;
 	mesh_under_constr = msh;
 	Cell vertex_recently_built ( tag::non_existent );
 	std::set < Cell > set_of_nearby_vertices;
@@ -1451,7 +1451,7 @@ void progressive_construct
 	// first argument : a callable object returning the square of the distance
 	// between two points, measured in the surrounding, Euclidian, space
 	// second argument : distance for rank zero nodes, which is a mere hint
-	// about how to initialize the tree; the tree can change a lot later
+	// about how to initialize the tree (the tree can change a lot later)
 	// third argument : ratio between distances of successive ranks
 	// see paragraphs 9.15 and 9.16 in the manual
 
@@ -1802,7 +1802,8 @@ inline void progressive_construct
 	std::vector < double > tan { x(B) - x(A), y(B) - y(A), z(B) - z(A) };
 	desired_len_at_point = desired_length ( A );
 	sq_desired_len_at_point = desired_len_at_point * desired_len_at_point;
-	std::vector < double > nor = compute_tangent_vec ( tag::at_point, A, tag::orthogonal_to, tan );
+	std::vector < double > nor =
+		compute_tangent_vec ( tag::at_point, A, tag::orthogonal_to, tan );
 
 	progressive_construct ( msh, tag::start_at, start, tag::towards, nor,
 	                        tag::boundary, interface                       );	
@@ -2062,15 +2063,13 @@ Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	progressive_construct ( *this, tag::start_at, start, tag::towards, tangent,
                           tag::stop_at, stop                                  );
 
-	temporary_vertex.dispose();                                                    }
+	temporary_vertex.dispose();                                                     }
 
 //-------------------------------------------------------------------------------------------------
 
 Mesh::Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
              const tag::Towards &, std::vector<double> tangent,
              const tag::DesiredLength &, const Function & length                  )
-
-// 'start' and 'stop' may be the same cell
 
 :	Mesh ( tag::of_dimension_one )  // positive, by default
 

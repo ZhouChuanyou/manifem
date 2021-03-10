@@ -1,5 +1,5 @@
 
-// mesh.h 2021.02.27
+// mesh.h 2021.03.10
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -31,8 +31,7 @@
 
 namespace maniFEM {
 
-namespace tag {
-	// see paragraph 9.2 in the manual
+namespace tag {  // see paragraph 9.2 in the manual
 	struct IsNegative { };  static const IsNegative is_negative;
 	struct IsPositive { };  static const IsPositive is_positive;
 	struct Reverse { };  static const Reverse reverse;
@@ -50,7 +49,9 @@ namespace tag {
 	struct MightBeOne { };  static const MightBeOne might_be_one;
 	struct Oriented { };  static const Oriented oriented;
 	struct NotOriented { };  static const NotOriented not_oriented;
-	struct BuildCellsIfNecessary { };  static const BuildCellsIfNecessary build_cells_if_necessary;
+	struct DeepCopy { };  static const DeepCopy deep_copy;
+	                      static const DeepCopy deep_copy_of;
+	struct BuildCellsIfNec { };  static const BuildCellsIfNec build_cells_if_necessary;
 	struct Progressive { };  static const Progressive progressive;
 	struct StartAt { };  static const StartAt start_at;
 	struct StopAt { };  static const StopAt stop_at;
@@ -299,7 +300,9 @@ class Mesh
 	              const tag::SurelyExists &                                        );
 	// builds a negative mesh from a positive one, creating reverse cells if necessary :
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core *, const tag::IsNegative &,
-                const tag::BuildCellsIfNecessary &                                  );
+                const tag::BuildCellsIfNec &                                     );
+
+	Mesh ( const tag::DeepCopy &, const Mesh & );
 
 	// geometric constructors are defined in global.cpp
 	// segment, triangle, quadrangle, join
@@ -347,7 +350,8 @@ class Mesh
 	       const tag::DesiredLength &, const Function & length              );
 
 	inline Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
-	              const tag::DesiredLength &, const Function & length, const tag::RandomOrientation & )
+	              const tag::DesiredLength &, const Function & length,
+	              const tag::RandomOrientation &                                   )
 	:	Mesh ( tag::progressive, tag::boundary, interface, tag::desired_length, length )  { }
 
 	Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
@@ -1093,8 +1097,7 @@ inline Mesh::Mesh ( const tag::OfDimension &, size_t d, const tag::GreaterThanOn
 inline Mesh::Mesh ( const tag::OfDimension &, size_t d, const tag::MightBeOne &,
                     const tag::IsPositive & ispos                                     )
 // by default, ispos = tag::is_positive, so may be called with only three arguments
-:	core { nullptr },
-	meth { & Mesh::Positive::methods_pos }
+:	core { nullptr }, meth { & Mesh::Positive::methods_pos }
 {	if ( d > 1 )
 		this->core = new Mesh::Positive ( tag::of_dimension, d+1, tag::minus_one );
 	else
@@ -1128,7 +1131,7 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
 
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
-                    const tag::BuildCellsIfNecessary & b                                )
+                    const tag::BuildCellsIfNec & b                                     )
 // builds a negative mesh from a positive one, creating reverse cells if necessary
 // used in Mesh::Positive::reverse
 :	Mesh ( tag::whose_core_is, c, tag::is_negative, tag::surely_exists )
@@ -1142,9 +1145,11 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
 		assert ( cll_rev_p );  assert ( cll_rev_p == cll_p->reverse_p );             }     }
 
 
-inline Mesh::Mesh ( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n )
+inline Mesh::Mesh ( const tag::Segment &, const Cell & A, const Cell & B,
+                    const tag::DividedIn &, size_t n                      )
 : Mesh ( tag::whose_core_is, new Mesh::OneDim::Positive
-  ( tag::segment, (Cell::Negative::Vertex*) A.core, (Cell::Positive::Vertex*) B.core, tag::divided_in, n ) )
+  ( tag::segment, (Cell::Negative::Vertex*) A.core, (Cell::Positive::Vertex*) B.core,
+    tag::divided_in, n ) )
 {	}
 
 
