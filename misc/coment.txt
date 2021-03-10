@@ -139,18 +139,37 @@ vou ter que usar dynamic_pointer_cast ou static_pointer_cast, ver simplif.cpp
 em Cell nao vale a pena porque tenho a informacao por outras vias
 
 erro estranho em main-lente.cpp
+e' porque não fizemos o deep-copy em progressive.cpp line 1433
+acabar inline Mesh::Mesh ( const tag::DeepCopy &, const Mesh & msh )
+para ale'm deste, prever um metodo  Mesh::reverse ( tag::deep_copy )
+e talvez  Mesh::Mesh ( tag::deep_copy_of, const Mesh &, tag::may_become_disconnected )
+
+rever em pormenor progressive.cpp lines 1787-1834
 
 neste momento, instrucoes como
 Function xi_eta_phys ( xi_eta, tag::composed_with, transf )
 nao funcionam bem; xi_eta_phys fica a herdar de Function::Scalar
 
-em github/manifem : copiar coment.txt function.cpp function.h Makefile maniFEM.h
-                           finite-elem.cpp finite-elem.h manifold.cpp manifold.h mesh.h
-													 main-2.1.cpp main-2.2.cpp main-2.10.cpp and above main-7.2.cpp
-										eliminar cloud.cpp
+refazer completamente as malhas
+malhas caoticas mante^em a lista de ce'lulas como ate' agora
+malhas ordenadas te^em iteradores diferentes, ordenados
+as operacoes de acrescentar ou retirar uma ce'lula serao diferenciados
+introduzir um tag::do_not_worry para acrescentar ou retirar uma ce'lula
+a uma malha ordenada mas como se fosse caotica
+
+cinco tipos de malhas
+* 1D connected
+* 1D multiply connected
+* connected
+* multiply connected
+* fuzzy - any dim
+multiple inheritance ?
+
+em github/manifem :
 
 no disco azul :   copiar coment.txt function.cpp test.cpp finite-elem.cpp finite-elem.h
-                         manifold.cpp manifold.h mesh.h Makefile maniFEM.h
+                         Makefile maniFEM.h manifold.cpp manifold.h mesh.h mesh.cpp progressive.cpp
                          main-2.1.cpp main-2.2.cpp main-2.10.cpp and above main-7.2.cpp
+												 metric-tree ? 
+									eliminar cloud ?
 
-Anca :  finite-elem.cpp finite-elem.h  Makefile
