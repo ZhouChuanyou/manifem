@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.10
+// mesh.h 2021.03.15
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -38,6 +38,7 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct ReverseOf { };  static const ReverseOf reverse_of;
 	struct NonExistent { };  static const NonExistent non_existent;
 	struct BuildIfNotExists { };  static const BuildIfNotExists build_if_not_exists;
+	struct SeenFrom { };  static const SeenFrom seen_from;
 	struct MayNotExist { };  static const MayNotExist may_not_exist;
 	struct SurelyExists { };  static const SurelyExists surely_exists;
 	struct OfDimension { };  static const OfDimension of_dim;
@@ -127,7 +128,7 @@ class Cell
 
 	class Core;
 	
-	Cell::Core * core;  // use sharedptr ?
+	Cell::Core * core;
 
 	// many constructors defined after class Mesh::Negative
 
@@ -193,8 +194,6 @@ class Cell
 	inline void add_to ( Mesh & msh );
 	inline void remove_from ( Mesh & msh );
 
-	inline void dispose ( ) { };  //  do intersting things !!
-	
 	inline void project ( ) const;
 	
 	inline void project ( const tag::Onto &, const Manifold m ) const;
@@ -221,7 +220,7 @@ class Cell
 		                         std::list<Cell::Core*>::iterator w )
 		:	counter_pos {i}, counter_neg {j}, where {w} { }                    };
 
-  class Positive;  class Negative;  class Vertex;  class Segment;
+  class Positive;  class Negative;
 	
 }; // end of  class Cell
 
@@ -239,14 +238,8 @@ inline bool operator< ( const Cell & c1, const Cell & c2 )
 
 
 // roughly speaking, a mesh is a collection of cells of the same dimension
-// however, for efficiency purposes, we keep lists of cells of lower
-// dimension as well; that's the purpose of 'IndexedList <Cell*> cells' :
-// to keep lists of cells indexed by their dimension
-// this implies quite some amount of redundant information,
-// but this redundancy makes the classes fast, especially for remeshing
-
 // an orientation of the mesh
-// is nothing more than an orientation of each of its cells (of maximum dimension).
+// is nothing more than an orientation of each of its cells (of maximum dimension)
 // but these orientations cannot be arbitrary, they must be compatible
 // in the sense that a face common to two cells must be seen as positive
 // from one of the cells and as negative from the other cell
@@ -257,25 +250,26 @@ inline bool operator< ( const Cell & c1, const Cell & c2 )
 // the first one to be created is positive, the other one will be negative,
 // created when we call the 'reverse' method
 
-// negative meshes will appear only as boundaries of negative cells
+// negative meshes will appear mostly as boundaries of negative cells
 // that's why we do not store their core in the computer's memory
 // wrappers for negative meshes are built on-the-fly, e.g. in method Cell::boundary
 // their core points to the (positive) reverse, the only difference is in 'meth'
 
 class Mesh
 
+// a thin wrapper around a Mesh::Core, with most methods delegated to 'core'
+
 {	public :
 	
 	class Core;
 
-	struct Methods
-	{	bool (*is_positive) ( );
-		Mesh (*reverse) ( Mesh::Core * );  };
-
-	// use sharedptr ?
 	Mesh::Core * core;  // there are no cores for negative meshes
 	// instead, we keep here a pointer to the direct (positive) core
 	// thus, for meshes, 'core' points always to a positive Mesh::Core
+
+	struct Methods
+	{	bool (*is_positive) ( );
+		Mesh (*reverse) ( Mesh::Core * );  };
 
 	// emulate virtual methods
 	// this is how we distinguish between a positive mesh and a negative one
@@ -323,10 +317,11 @@ class Mesh
 	              const tag::WithTriangles & wt = tag::not_with_triangles );
 	inline Mesh ( const tag::Join &, const std::list<Mesh> & l );
 	inline Mesh ( const tag::Join &, const Mesh &, const Mesh & );
-  inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh & );
-  inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
-  inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
-
+	inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh & );
+	inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
+	inline Mesh ( const tag::Join &,
+	const Mesh &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
+ 
 	// constructors with tag::Progressive are defined in progressive.cpp
 	
 	Mesh ( const tag::Progressive &, const tag::DesiredLength &, const Function & length );
@@ -338,7 +333,7 @@ class Mesh
 	       const tag::RandomOrientation &                                                 );
 
 	Mesh ( const tag::Progressive &, const tag::EntireManifold, Manifold manif,
-         const tag::DesiredLength &, const Function & length, const tag::RandomOrientation & );
+	       const tag::DesiredLength &, const Function & length, const tag::RandomOrientation & );
 
 	Mesh ( const tag::Progressive &, const tag::DesiredLength &, const Function & length,
 	       const tag::InherentOrientation &                                               );
@@ -356,7 +351,7 @@ class Mesh
 
 	Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 	       const tag::DesiredLength &, const Function & length, const tag::IntrinsicOrientation & );
-
+ 
 	Mesh ( const tag::Progressive &, const tag::Boundary &, Mesh interface,
 	       const tag::DesiredLength &, const Function & length, const tag::InherentOrientation & );
 
@@ -386,7 +381,8 @@ class Mesh
 
 	inline Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
 	              const tag::StopAt &, const Cell & stop,
-	              const tag::DesiredLength &, const Function & length, const tag::RandomOrientation & )
+	              const tag::DesiredLength &, const Function & length,
+	              const tag::RandomOrientation & )
 	:	Mesh ( tag::progressive, tag::start_at, start, tag::stop_at, stop,
 		       tag::desired_length, length                                 )  { }
 
@@ -395,13 +391,15 @@ class Mesh
 	       const tag::DesiredLength &, const Function & length, const tag::InherentOrientation & );
 
 	inline Mesh ( const tag::Progressive &, const tag::StartAt &, const Cell & start,
-	              const tag::DesiredLength &, const Function & length, const tag::InherentOrientation & )
+	              const tag::DesiredLength &, const Function & length,
+	              const tag::InherentOrientation & )
 	:	Mesh ( tag::progressive, tag::start_at, start, tag::stop_at, start,
 		       tag::desired_length, length, tag::inherent_orientation       )  { }
 
 	void pretty_constructor ( const tag::Segment &, const Cell & A, const Cell & B,
-                            const tag::DividedIn &, size_t n );
-	void pretty_constructor ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA );
+	                          const tag::DividedIn &, size_t n );
+	void pretty_constructor ( const tag::Triangle &, const Mesh & AB,
+	                          const Mesh & BC, const Mesh & CA         );
 	void pretty_constructor ( const tag::Quadrangle &, const Mesh & south, const Mesh & east,
 	             const Mesh & north, const Mesh & west, const tag::WithTriangles & wt        );
 
@@ -439,9 +437,41 @@ class Mesh
 
 	inline Cell::Core * cell_behind
 	( const Cell::Core * face_p, const tag::MayNotExist & ) const;
-	
-	inline void dispose ( ) { };  //  do intersting things !!
-	
+		
+	// the eight methods below are only relevant for STSI meshes
+
+	inline Cell cell_in_front_of
+	( const Cell face, const tag::SeenFrom &, const Cell neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists              ) const;
+
+	inline Cell cell_behind
+	( const Cell face, const tag::SeenFrom &, const Cell neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists              ) const;
+
+	inline Cell cell_in_front_of
+	( const Cell face, const tag::SeenFrom &, const Cell neighbour,
+	  const tag::MayNotExist &                                       ) const;
+
+	inline Cell cell_behind
+	( const Cell face, const tag::SeenFrom &, const Cell neighbour,
+	  const tag::MayNotExist &                                       ) const;
+
+	inline Cell::Core * cell_in_front_of
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+
+	inline Cell::Core * cell_in_front_of
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::MayNotExist &                                                       ) const;
+
+	inline Cell::Core * cell_behind
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+
+	inline Cell::Core * cell_behind
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::MayNotExist &                                                       ) const;
+		
 	void join_list ( const std::list<Mesh> & l );
 
 	void inline baricenter ( const Cell & ver, const Cell & seg );
@@ -505,8 +535,10 @@ class Mesh
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
 	// methods action_* are passed to 'deep_connections' from  Cell::add_to and Cell::remove_from
 
-	class Positive;  class Negative;
-	struct OneDim  {  class Positive;  };
+	struct Connected  {  class OneDim;  class HighDim;  };
+	struct MultiplyConnected  {  class OneDim;  class HighDim; };
+	class Fuzzy;  class STSI;
+	struct Negative;
 	
 }; // end of  class Mesh
 
@@ -554,14 +586,16 @@ class Cell::Core
 
 	virtual ~Core ( ) { };
 
-	class Positive;  class Negative;
-
 	virtual bool is_positive ( ) const = 0;
-	virtual Cell::Core::Positive * get_positive ( ) = 0;
+	virtual Cell::Positive * get_positive ( ) = 0;
 	virtual size_t get_dim ( ) const = 0;
 	virtual Cell::Core * reverse ( const tag::BuildIfNotExists & ) = 0;
+	virtual Cell::Core * build_reverse ( ) = 0;
+
 	virtual Cell::Core * tip ();
 	virtual Cell::Core * base ();
+	// execution forbidden
+	// overridden by Cell::Positive::Segment and Cell::Negative::Segment
 
 	virtual bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const = 0;
 	virtual bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const = 0;
@@ -586,11 +620,11 @@ class Cell::Core
 	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
 	// so we suggest to use those (see above)
 
-	virtual void forget () { };
+	virtual void dispose () { };
 	// assert there are no meshes above
 	// for each face, cut_from_bdry
-	// if the face has no other meshes above, forget it
-	// forget the (now empty) boundary, then delete this cell
+	// if the face has no other meshes above, dispose of it
+	// dispose the (now empty) boundary, then delete this cell
 
 #ifndef NDEBUG
 	std::string name;
@@ -602,7 +636,7 @@ class Cell::Core
 
 //-----------------------------------------------------------------------------//
 
-class Cell::Core::Positive : public Cell::Core
+class Cell::Positive : public Cell::Core
 
 {	public :
 
@@ -633,28 +667,39 @@ class Cell::Core::Positive : public Cell::Core
 	{	}
 
 	bool is_positive ( ) const;  // virtual from Cell::Core
-	Cell::Core::Positive * get_positive ( );  // virtual from Cell::Core
+	Cell::Positive * get_positive ( );  // virtual from Cell::Core
+	// virtual size_t get_dim ( ) const = 0;  // declared in Cell::Core
 
 	Cell::Core * reverse ( const tag::BuildIfNotExists & );  // virtual from Cell::Core
-	virtual Cell::Core * build_reverse ( ) = 0;
+	// virtual Cell::Core * build_reverse ( ) = 0;  // declared in Cell::Core
+	// tip  and  base  defined by Cell::Core, execution forbidden
+	// overridden by Cell::Positive::Segment
 
 	bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const;  // virtual from Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
 
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+	// virtual void add_to ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
+	// virtual void remove_from ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
+	// virtual void glue_on_my_bdry ( Cell::Core * ) = 0;  // declared in Cell::Core
+	// virtual void cut_from_my_bdry ( Cell::Core * ) = 0;  // declared in Cell::Core
+
 	inline void glue_common ( Cell::Core * face );
 	inline void cut_common ( Cell::Core * face );
 	// do not use directly; called from glue_on_my_bdry and cut_from_my_bdry
-		
-}; // end of class Cell::Core::Positive
+
+	class Vertex;  class Segment;  class HighDim;
+	
+}; // end of class Cell::Positive
 
 //-----------------------------------------------------------------------------//
 
-class Cell::Core::Negative : public Cell::Core
+class Cell::Negative : public Cell::Core
 
 {	public :
 
 	inline Negative ( const tag::OfDimension &, size_t d,
-														const tag::ReverseOf &, Cell::Core::Positive * rev )
+														const tag::ReverseOf &, Cell::Positive * rev )
 	: Cell::Core ( tag::is_negative, tag::reverse_of, rev, tag::of_dim, d )
 	{	}
 
@@ -663,12 +708,20 @@ class Cell::Core::Negative : public Cell::Core
 	{	}
 
 	bool is_positive ( ) const;  // virtual from Cell::Core
-	Cell::Core::Positive * get_positive ( );  // virtual from Cell::Core
+	Cell::Positive * get_positive ( );  // virtual from Cell::Core
+	// virtual size_t get_dim ( ) const = 0;  // declared in Cell::Core
 
 	Cell::Core * reverse ( const tag::BuildIfNotExists & );  // virtual from Cell::Core
+	Cell::Core * build_reverse ( );  // virtual from Cell::Core, execution forbidden
+	// tip  and  base  defined by Cell::Core, execution forbidden
+	// overridden by Cell::Negative::Segment
 
 	bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const;  // virtual from Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+	// virtual void add_to ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
+	// virtual void remove_from ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
 
 	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
@@ -679,91 +732,14 @@ class Cell::Core::Negative : public Cell::Core
 	std::string get_name();
 #endif
 	
-}; // end of class Cell::Core::Negative
-
-//-----------------------------------------------------------------------------//
-
-
-class Cell::Positive : public Cell::Core::Positive
-
-// a cell of dimension >= 2
-
-{	public :
-
-	Mesh::Core * boundary_p;
-
-	inline Positive ( const tag::OfDimension &, size_t d,
-                        const tag::WhoseBoundaryIs &, Mesh::Core * msh );
-	inline Positive ( const tag::WhoseBoundaryIs &, Mesh::Core * msh );
-	inline Positive ( const tag::Triangle &, Cell::Core * AB,
-	                        Cell::Core * BC, Cell::Core * CA );
-	inline Positive ( const tag::Quadrangle &, Cell::Core * AB, Cell::Core * BC,
-	                                           Cell::Core * CD, Cell::Core * DA );
-
-	Positive ( const Cell::Positive & ) = delete;
-	Positive ( const Cell::Positive && ) = delete;
-	Cell::Positive & operator= ( const Cell::Positive & ) = delete;
-	Cell::Positive & operator= ( const Cell::Positive && ) = delete;
-
-	size_t get_dim ( ) const; // virtual
-	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
-
-	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
-	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
-	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
-
-	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
-	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
-	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
-	// so we suggest to use those (see class Cell::Core)
-
-#ifndef NDEBUG
-	void print_everything ( ); // virtual from Cell::Core
-#endif
-
-	class Vertex;  class Segment;
-}; // end of  class Cell::Positive
-
-//-----------------------------------------------------------------------------//
-
-
-class Cell::Negative : public Cell::Core::Negative
-
-// a cell of dimension >= 2
-
-{	public :
-
-	inline Negative ( const tag::OfDimension, size_t d,
-                        const tag::ReverseOf &, Cell::Positive * direct_cell_p );
-	inline Negative ( const tag::ReverseOf &, Cell::Positive * direct_cell_p );
-
-	Negative ( const Cell::Negative & ) = delete;
-	Negative ( const Cell::Negative && ) = delete;
-	Cell::Negative & operator= ( const Cell::Negative & ) = delete;
-	Cell::Negative & operator= ( const Cell::Negative && ) = delete;
-
-	size_t get_dim ( ) const; // virtual from Cell::Core
-
-	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
-	void add_to ( Mesh::Core * msh ); // virtual
-	void remove_from ( Mesh::Core * msh ); // virtual
-
-#ifndef NDEBUG
-	void print_everything ( ); // virtual from Cell::Core
-#endif
-
-	class Vertex;  class Segment;
+	class Vertex;  class Segment;  class HighDim;
 	
-}; // end of  class Cell::Negative
+}; // end of class Cell::Negative
 
 //-----------------------------------------------------------------------------//
 
 
-class Cell::Positive::Vertex : public Cell::Core::Positive
+class Cell::Positive::Vertex : public Cell::Positive
 
 {	public :
 
@@ -774,36 +750,43 @@ class Cell::Positive::Vertex : public Cell::Core::Positive
 	Cell::Positive::Vertex & operator= ( const Cell::Positive::Vertex & ) = delete;
 	Cell::Positive::Vertex & operator= ( const Cell::Positive::Vertex && ) = delete;
 
+	// is_positive  and  get_positive  defined by Cell::Positive
 	size_t get_dim ( ) const; // virtual from Cell::Core
-	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
+
+	// reverse  defined by Cell::Positive
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Core
+	// tip  and  base  defined by Cell::Core, execution forbidden
 	
-	// Methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'.
-	// If 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead.
+	// two versions of  belongs_to  defined by Cell::Positive
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+
+	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
+	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
+	// and 'cut_from_bdry_of' should be used instead
 	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
 
-	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
-	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
-	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
-	// so we suggest to use those (see class Cell::Core)
+	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core, execution forbidden
+	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core, execution forbidden
 
+	// glue_common  and  cut_common  defined by Cell::Positive
+	
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
 #endif
 	
 }; // end of  class Cell::Positive::Vertex
 
-//-----------------------------------------------------------------------------//
 
-class Cell::Negative::Vertex : public Cell::Core::Negative
+class Cell::Negative::Vertex : public Cell::Negative
 
 {	public :
 
 	inline Vertex ( const tag::ReverseOf &, Cell::Positive::Vertex * direct_ver_p );
 
 	inline Vertex ( const tag::Ghost & )
-	:	Cell::Core::Negative ( tag::ghost )
+	:	Cell::Negative ( tag::ghost )
 	{	}
 
 	Vertex ( const Cell::Negative::Vertex & ) = delete;
@@ -811,13 +794,24 @@ class Cell::Negative::Vertex : public Cell::Core::Negative
 	Cell::Negative::Vertex & operator= ( const Cell::Negative::Vertex & ) = delete;
 	Cell::Negative::Vertex & operator= ( const Cell::Negative::Vertex && ) = delete;
 
+	// is_positive  and  get_positive  defined by Cell::Negative
 	size_t get_dim ( ) const; // virtual from Cell::Core
 	
+	// reverse  defined by Cell::Negative
+	// build_reverse  defined by Cell::Negative, execution forbidden
+	// tip  and  base  defined by Cell::Core, execution forbidden
+
+	// two versions of  belongs_to  defined by Cell::Negative
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
+
+	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
 
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
@@ -827,7 +821,8 @@ class Cell::Negative::Vertex : public Cell::Core::Negative
 
 //-----------------------------------------------------------------------------//
 
-class Cell::Positive::Segment : public Cell::Core::Positive
+
+class Cell::Positive::Segment : public Cell::Positive
 
 {	public :
 
@@ -838,14 +833,15 @@ class Cell::Positive::Segment : public Cell::Core::Positive
 
 	Segment ( const Cell::Positive::Segment & ) = delete;
 	Segment ( const Cell::Positive::Segment && ) = delete;
-	Cell::Segment & operator= ( const Cell::Positive::Segment & ) = delete;
-	Cell::Segment & operator= ( const Cell::Positive::Segment && ) = delete;
+	Cell::Positive::Segment & operator= ( const Cell::Positive::Segment & ) = delete;
+	Cell::Positive::Segment & operator= ( const Cell::Positive::Segment && ) = delete;
 
 	Cell::Core * tip () override; // virtual, overrides definition by Cell::Core
 	Cell::Core * base () override; // virtual, overrides definition by Cell::Core
 
+	// is_positive  and  get_positive  defined by Cell::Positive
 	size_t get_dim ( ) const; // virtual from Cell::Core
-	Cell::Core * build_reverse ( );  // virtual from  Cell::Core::Positive
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Positive
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
@@ -860,10 +856,9 @@ class Cell::Positive::Segment : public Cell::Core::Positive
 
 	// here is the core linking between cells and meshes
 	// do not use directly; this is called from add_to and remove_from
-	void deep_connections
-	(	Cell::Core::Positive * cll,
-		void (*action) ( Cell::Core *, Cell::Core *,
-		                 Mesh::Core *, short int, short int )  );
+	void deep_connections ( Cell::Positive * cll,
+	                        void (*action) ( Cell::Core *, Cell::Core *,
+		                                       Mesh::Core *, short int, short int )  );
 
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
@@ -871,9 +866,8 @@ class Cell::Positive::Segment : public Cell::Core::Positive
 	
 }; // end of  class Cell::Positive::Segment
 
-//-----------------------------------------------------------------------------//
 
-class Cell::Negative::Segment : public Cell::Core::Negative
+class Cell::Negative::Segment : public Cell::Negative
 
 {	public :
 
@@ -884,22 +878,127 @@ class Cell::Negative::Segment : public Cell::Core::Negative
 	Cell::Negative::Segment & operator= ( const Cell::Negative::Segment & ) = delete;
 	Cell::Negative::Segment & operator= ( const Cell::Negative::Segment && ) = delete;
 
+	// is_positive  and  get_positive  defined by Cell::Negative
+	size_t get_dim ( ) const; // virtual from Cell::Core
+	
+	// reverse  defined by Cell::Negative
+	// build_reverse  defined by Cell::Negative, execution forbidden
 	Cell::Core * tip () override;  // virtual, overrides definition by Cell::Core
 	Cell::Core * base () override;  // virtual, overrides definition by Cell::Core
 
-	size_t get_dim ( ) const; // virtual from Cell::Core
-	
+	// two versions of  belongs_to  defined by Cell::Negative
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	void add_to ( Mesh::Core * msh ); // virtual
 	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
 
+	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
+
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
 #endif
 	
 }; // end of  class Cell::Negative::Segment
+
+//-----------------------------------------------------------------------------//
+
+
+class Cell::Positive::HighDim : public Cell::Positive
+
+// a cell of dimension >= 2
+
+{	public :
+
+	Mesh::Core * boundary_p;
+
+	inline HighDim ( const tag::OfDimension &, size_t d,
+	                 const tag::WhoseBoundaryIs &, Mesh::Core * msh );
+	inline HighDim ( const tag::WhoseBoundaryIs &, Mesh::Core * msh );
+	inline HighDim ( const tag::Triangle &, Cell::Core * AB,
+	                       Cell::Core * BC, Cell::Core * CA );
+	inline HighDim ( const tag::Quadrangle &, Cell::Core * AB, Cell::Core * BC,
+	                                          Cell::Core * CD, Cell::Core * DA );
+
+	HighDim ( const Cell::Positive::HighDim & ) = delete;
+	HighDim ( const Cell::Positive::HighDim && ) = delete;
+	Cell::Positive::HighDim & operator= ( const Cell::Positive::HighDim & ) = delete;
+	Cell::Positive::HighDim & operator= ( const Cell::Positive::HighDim && ) = delete;
+
+
+	// is_positive  and  get_positive  defined by Cell::Positive
+	size_t get_dim ( ) const; // virtual
+
+	// reverse  defined by Cell::Positive
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Core
+	// tip  and  base  defined by Cell::Core, execution forbidden
+
+	// two versions of  belongs_to  defined by Cell::Positive
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+
+	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
+	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
+	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
+
+	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
+	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
+	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
+	// so we suggest to use those (see class Cell::Core)
+
+	// glue_common  and  cut_common  defined by Cell::Positive
+	
+#ifndef NDEBUG
+	void print_everything ( ); // virtual from Cell::Core
+#endif
+
+}; // end of  class Cell::Positive::HighDim
+
+
+class Cell::Negative::HighDim : public Cell::Negative
+
+// a negative cell of dimension >= 2
+
+{	public :
+
+	inline HighDim ( const tag::OfDimension, size_t d,
+                        const tag::ReverseOf &, Cell::Positive * direct_cell_p );
+	inline HighDim ( const tag::ReverseOf &, Cell::Positive * direct_cell_p );
+
+	HighDim ( const Cell::Negative::HighDim & ) = delete;
+	HighDim ( const Cell::Negative::HighDim && ) = delete;
+	Cell::Negative::HighDim & operator= ( const Cell::Negative::HighDim & ) = delete;
+	Cell::Negative::HighDim & operator= ( const Cell::Negative::HighDim && ) = delete;
+
+	// is_positive  and  get_positive  defined by Cell::Negative
+	size_t get_dim ( ) const; // virtual from Cell::Core
+
+	// reverse  defined by Cell::Negative
+	// build_reverse  defined by Cell::Negative, execution forbidden
+	// tip  and  base  defined by Cell::Core, execution forbidden
+	
+	// two versions of  belongs_to  defined by Cell::Negative
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+
+	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
+	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
+	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
+
+	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
+
+#ifndef NDEBUG
+	void print_everything ( ); // virtual from Cell::Core
+#endif
+
+}; // end of  class Cell::Negative::HighDim
 
 //-----------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------//
@@ -914,16 +1013,6 @@ class Mesh::Core
 
 	Cell::Positive * cell_enclosed { nullptr };
 
-	// the 'cells' attribute holds lists of cells of 'this' mesh, indexed by their dimension
-	// for maximum dimension, the cells are oriented
-	// for lower dimension, the cells are always positive
-
-	// in the future, 'cells' will belong to Mesh::Positive
-	// thus, Mesh::OneDim::Positive will have no 'cells' attribute
-	// vamos ter que rever muita coisa em add_to, remove_from etc
-
-	std::vector < std::list < Cell::Core* > > cells;
-
 	inline Core ( const tag::OfDimension &, size_t d , const tag::MinusOne & )
 	:	cells ( d )
 	{	}
@@ -937,90 +1026,45 @@ class Mesh::Core
 	virtual Cell::Core * first_segment ( ) = 0;
 	virtual Cell::Core * last_segment ( ) = 0;
 
+	virtual void dispose () = 0;
+	// remove_from this mesh each cell of maximum dimension
+	// if the cell has no other meshes above, dispose of it
+	// delete this (now empty) mesh
+	
 	//private :
 
+	// the two methods below are only relevant for STSI meshes
+	// so we forbid execution for now and then override them in Mesh::STSI
+	virtual Cell::Core * cell_in_front_of
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+	virtual Cell::Core * cell_behind
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+	
 	virtual const Mesh::Methods & get_meth_pos() = 0;
 	virtual const Mesh::Methods & get_meth_neg() = 0;
 	
 	// here is where the low-level linking between cells and meshes happens
 	// do not use directly
 	// deep_connections is called from add_to and remove_from
-	void deep_connections
-	( Cell::Core::Positive * cll,  Cell::Core * o_cll,
-	  void (*action) ( Cell::Core *, Cell::Core *,
-	                   Mesh::Core *, short int, short int ) );
+	void deep_connections ( Cell::Positive * cll,  Cell::Core * o_cll,
+	                        void (*action) ( Cell::Core *, Cell::Core *,
+	                                         Mesh::Core *, short int, short int ) );
 
 #ifndef NDEBUG
 	std::string name;
   virtual std::string get_name() = 0;
  	virtual void print_everything () = 0;
 #endif
-	
+
 }; // end of  class Mesh::Core
 
 
-class Mesh::Positive : public Mesh::Core
+class Mesh::Connected::OneDim : public Mesh::Core
 
-// represents a positive mesh of dimension > 1
-// negative meshes have no core (wrappers for negative meshes are built on-the-fly)
-
-{	public :
-	
-	static const Mesh::Methods methods_pos;
-	static const Mesh::Methods methods_neg;
-	
-	inline Positive ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
-	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
-	{	}
-
-  Positive ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA );
-	// defined in global.cpp
-
-	inline Positive ( const tag::Quadrangle &, const Mesh & south, const Mesh & east,
-	  const Mesh & north, const Mesh & west, const tag::WithTriangles & wt = tag::not_with_triangles );
-
-	inline Positive ( const tag::Quadrangle &, const Cell & SW, const Cell & SE, const Cell & NE,
-		const Cell & NW, size_t m, size_t n, const tag::WithTriangles & wt = tag::not_with_triangles );
-
-	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
-
-	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
-
-	Cell::Core * first_vertex ( );  // virtual from Mesh::Core
-	// returns a negative vertex
-	Cell::Core * last_vertex ( );  // virtual from Mesh::Core
-	// returns a positive vertex
-	Cell::Core * first_segment ( );  // virtual from Mesh::Core
-	Cell::Core * last_segment ( );  // virtual from Mesh::Core
-
-	void build_rectangle ( const Mesh & south, const Mesh & east,
-		const Mesh & north, const Mesh & west, bool cut_rectangles_in_half );
-	// defined in global.cpp
-
-	void forget () { };
-	// remove_from this mesh each cell of maximum dimension
-	// if the cell has no other meshes above, forget it
-	// delete this (now empty) mesh
-	
-	static bool is_positive ( );
-	static Mesh reverse ( Mesh::Core * core );
-
-	// private :
-	
-	const Mesh::Methods & get_meth_pos(); // virtual
-	const Mesh::Methods & get_meth_neg(); // virtual
-	
-	inline CellIterator iter_over ( const tag::CellsOfDim &, size_t d );
-	
-#ifndef NDEBUG
-  std::string get_name();  // virtual from Mesh::Core
- 	void print_everything ();  // virtual from Mesh::Core
-#endif
-	
-}; // end of  class Mesh::Positive
-
-
-class Mesh::OneDim::Positive : public Mesh::Core
+// represents a connected positive mesh of dimension 1
+// a chain of segments, either open or closed
 
 {	public :
 
@@ -1032,25 +1076,29 @@ class Mesh::OneDim::Positive : public Mesh::Core
 	static const Mesh::Methods methods_pos;
 	static const Mesh::Methods methods_neg;
 	
-	inline Positive ( )
+	inline OneDim ( )
 	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
 	{ }
 
-	Positive ( const tag::Segment &, Cell::Negative::Vertex * A, Cell::Positive::Vertex * B,
-             const tag::DividedIn &, size_t n );
+	OneDim ( const tag::Segment &, Cell::Negative::Vertex * A, Cell::Positive::Vertex * B,
+	            const tag::DividedIn &, size_t n );
 	// defined in global.cpp
 	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
 	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
 
-	Cell::Core * first_vertex ( );  // virtual from Mesh::Core
-	Cell::Core * last_vertex ( );  // virtual from Mesh::Core
+	Cell::Core * first_vertex ( );  // virtual from Mesh::Core, returns a negative vertex
+	Cell::Core * last_vertex ( );  // virtual from Mesh::Core, returns a positive vertex
 	Cell::Core * first_segment ( );  // virtual from Mesh::Core
 	Cell::Core * last_segment ( );  // virtual from Mesh::Core
 
+	virtual void dispose ();  // virtual from Mesh::Core
+
 	// private:
-	
+
+	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
+
 	const Mesh::Methods & get_meth_pos();  // virtual from Mesh::Core
 	const Mesh::Methods & get_meth_neg();  // virtual from Mesh::Core
 
@@ -1065,7 +1113,289 @@ class Mesh::OneDim::Positive : public Mesh::Core
 	void print_everything ();  // virtual from Mesh::Core
 #endif
 
-}; // end of  class Mesh::OneDim::Positive
+}; // end of  class Mesh::Connected::OneDim
+
+
+class Mesh::Connected::HighDim : public Mesh::Core
+
+// represents a connected positive mesh of dimension >= 2
+
+{	public :
+	
+	static const Mesh::Methods methods_pos;
+	static const Mesh::Methods methods_neg;
+	
+	inline HighDim ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
+	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
+	{	}
+
+  HighDim ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA );
+	// defined in global.cpp
+
+	inline HighDim ( const tag::Quadrangle &,
+		const Mesh & south, const Mesh & east, const Mesh & north, const Mesh & west,
+		const tag::WithTriangles & wt = tag::not_with_triangles                       );
+
+	inline HighDim ( const tag::Quadrangle &,
+		const Cell & SW, const Cell & SE, const Cell & NE, const Cell & NW,
+		size_t m, size_t n, const tag::WithTriangles & wt = tag::not_with_triangles );
+
+	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
+
+	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
+
+	Cell::Core * first_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * first_segment ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_segment ( );  // virtual from Mesh::Core, here execution forbidden
+
+	void build_rectangle ( const Mesh & south, const Mesh & east,
+		const Mesh & north, const Mesh & west, bool cut_rectangles_in_half );
+	// defined in global.cpp
+
+	virtual void dispose ();  // virtual from Mesh::Core
+	
+	static bool is_positive ( );
+	static Mesh reverse ( Mesh::Core * core );
+
+	// private :
+	
+	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
+
+	const Mesh::Methods & get_meth_pos(); // virtual from Mesh::Core
+	const Mesh::Methods & get_meth_neg(); // virtual from Mesh::Core
+	
+	inline CellIterator iter_over ( const tag::CellsOfDim &, size_t d );
+	
+#ifndef NDEBUG
+  std::string get_name();  // virtual from Mesh::Core
+ 	void print_everything ();  // virtual from Mesh::Core
+#endif
+	
+}; // end of  class Mesh::Connected::HighDim
+
+
+class Mesh::MultiplyConnected::OneDim : public Mesh::Core
+
+// represents a positive mesh of dimension 1 with several connected components
+
+{	public :
+
+	Cell::Negative::Vertex * first_ver { nullptr };
+	Cell::Positive::Vertex * last_ver;
+
+	// we will have here a list of segments (no vertices kept)
+
+	static const Mesh::Methods methods_pos;
+	static const Mesh::Methods methods_neg;
+	
+	inline OneDim ( )
+	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
+	{ }
+
+  OneDim ( const tag::Segment &, Cell::Negative::Vertex * A,
+		Cell::Positive::Vertex * B, const tag::DividedIn &, size_t n );
+	// defined in global.cpp
+	
+	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
+
+	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
+
+	Cell::Core * first_vertex ( );  // virtual from Mesh::Core, returns a negative vertex
+	Cell::Core * last_vertex ( );  // virtual from Mesh::Core, returns a positive vertex
+	Cell::Core * first_segment ( );  // virtual from Mesh::Core
+	Cell::Core * last_segment ( );  // virtual from Mesh::Core
+
+	virtual void dispose ();  // virtual from Mesh::Core
+
+	// private:
+	
+	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
+
+	const Mesh::Methods & get_meth_pos();  // virtual from Mesh::Core
+	const Mesh::Methods & get_meth_neg();  // virtual from Mesh::Core
+
+	inline void order ( );
+	// run over all segments, order them linearly, check that the mesh is connected
+	// if it is a loop, set first_ver = Cell::ghost
+	// if it is an open chain, set first_ver and last_ver
+	// see paragraph 9.14 in the manual
+	
+#ifndef NDEBUG
+	std::string get_name();  // virtual from Mesh::Core
+	void print_everything ();  // virtual from Mesh::Core
+#endif
+
+}; // end of  class Mesh::MultiplyConnected::OneDim
+
+
+class Mesh::MultiplyConnected::HighDim : public Mesh::Core
+
+// represents a positive mesh of dimension >= 2 with several connected components
+
+{	public :
+	
+	static const Mesh::Methods methods_pos;
+	static const Mesh::Methods methods_neg;
+	
+	inline HighDim ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
+	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
+	{	}
+
+	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
+
+	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
+
+	Cell::Core * first_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * first_segment ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_segment ( );  // virtual from Mesh::Core, here execution forbidden
+
+	void build_rectangle ( const Mesh & south, const Mesh & east,
+		const Mesh & north, const Mesh & west, bool cut_rectangles_in_half );
+	// defined in global.cpp
+
+	virtual void dispose ();  // virtual from Mesh::Core
+	
+	static bool is_positive ( );
+	static Mesh reverse ( Mesh::Core * core );
+
+	// private :
+	
+	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
+
+	const Mesh::Methods & get_meth_pos(); // virtual
+	const Mesh::Methods & get_meth_neg(); // virtual
+	
+	inline CellIterator iter_over ( const tag::CellsOfDim &, size_t d );
+	
+#ifndef NDEBUG
+  std::string get_name();  // virtual from Mesh::Core
+ 	void print_everything ();  // virtual from Mesh::Core
+#endif
+	
+}; // end of  class Mesh::MultiplyConnected::HighDim
+
+
+class Mesh::Fuzzy : public Mesh::Core
+
+// represents a positive mesh, disordered (includes 1D meshes)
+// use this class for fast code
+
+// roughly speaking, a mesh is a collection of cells of the same dimension
+// however, for efficiency purposes, we keep lists of cells of lower
+// dimension as well; that's the purpose of the 'cells' vector :
+// to keep lists of cells indexed by their dimension
+// this implies quite some amount of redundant information,
+// but this redundancy makes the iterators of this class fast
+
+{	public :
+	
+	static const Mesh::Methods methods_pos;
+	static const Mesh::Methods methods_neg;
+	
+	// the 'cells' attribute holds lists of cells of 'this' mesh, indexed by their dimension
+	// for maximum dimension, the cells are oriented
+	// for lower dimension, the cells are always positive
+
+	std::vector < std::list < Cell::Core* > > cells;
+
+	inline Fuzzy ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
+	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
+	{	}
+
+	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
+
+	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
+
+	Cell::Core * first_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_vertex ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * first_segment ( );  // virtual from Mesh::Core, here execution forbidden
+	Cell::Core * last_segment ( );  // virtual from Mesh::Core, here execution forbidden
+
+	void build_rectangle ( const Mesh & south, const Mesh & east,
+		const Mesh & north, const Mesh & west, bool cut_rectangles_in_half );
+	// defined in global.cpp
+
+	virtual void dispose ();  // virtual from Mesh::Core
+	
+	static bool is_positive ( );
+	static Mesh reverse ( Mesh::Core * core );
+
+	// private :
+	
+	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
+
+	const Mesh::Methods & get_meth_pos(); // virtual from Mesh::Core
+	const Mesh::Methods & get_meth_neg(); // virtual from Mesh::Core
+	
+	inline CellIterator iter_over ( const tag::CellsOfDim &, size_t d );
+	
+#ifndef NDEBUG
+  std::string get_name();  // virtual from Mesh::Core
+ 	void print_everything ();  // virtual from Mesh::Core
+#endif
+	
+}; // end of  class Mesh::Fuzzy
+
+
+class Mesh::STSI : public Mesh::Fuzzy
+
+// represents a positive mesh, maybe self-touching, maybe self-intersecting
+// (includes 1D meshes)
+
+// mainly used for iterators over connected meshes
+
+{	public :
+	
+	// methods_pos  and  methods_neg  inherited from Mesh::Fuzzy
+	// 'cells' attribute  inherited from Mesh::Fuzzy
+
+	inline STSI ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
+	:	Mesh::Fuzzy ( tag::of_dimension, dim_p1, tag::minus_one )
+	{	}
+
+	// in 'singular' we keep pair of adjacent cells
+	// the common face of such a pair is a singular face
+	// that is, a face where the mesh touches itself
+	std::vector < std::pair < Cell, Cell > > singular;
+	
+	// size_t get_dim_plus_one ( )  defined in Mesh::Fuzzy
+	// size_t number_of ( const tag::CellsOfDim &, size_t d )  defined in Mesh::Fuzzy
+
+	// first_vertex, last_vertex, first_segment and last_segment
+	// are defined by Mesh::Fuzzy, execution forbidden
+
+	void build_rectangle ( const Mesh & south, const Mesh & east,
+		const Mesh & north, const Mesh & west, bool cut_rectangles_in_half );
+	// defined in global.cpp
+
+	virtual void dispose ();  // virtual from Mesh::Core
+	
+	static bool is_positive ( );
+	static Mesh reverse ( Mesh::Core * core );
+
+	// private :
+
+	// the two methods below are defined in Cell::Core, we override them here
+	virtual Cell::Core * cell_in_front_of
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                   ) const override;
+	virtual Cell::Core * cell_behind
+	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+	  const tag::SurelyExists & se = tag::surely_exists                   ) const override;
+
+	const Mesh::Methods & get_meth_pos(); // virtual from Mesh::Core
+	const Mesh::Methods & get_meth_neg(); // virtual from Mesh::Core
+	
+	inline CellIterator iter_over ( const tag::CellsOfDim &, size_t d );
+	
+#ifndef NDEBUG
+  std::string get_name();  // virtual from Mesh::Core
+ 	void print_everything ();  // virtual from Mesh::Core
+#endif
+	
+}; // end of  class Mesh::STSI
 
 //-----------------------------------------------------------------------------//
 
@@ -1264,20 +1594,17 @@ inline Cell::Cell ( const tag::BehindFace &, const Cell & face,
 // 'se' defaults to tag::surely_exists, so constructor may be called with only four arguments
 :	core { msh.cell_behind ( face.core, tag::may_not_exist ) }
 {	assert ( this->core );   }
-	
 
 inline Cell::Cell ( const tag::BehindFace &, const Cell & face,
 	const tag::WithinMesh &, const Mesh & msh, const tag::MayNotExist & )
 :	core { msh.cell_behind ( face.core, tag::may_not_exist ) }
 {	}
-	
 
 inline Cell::Cell ( const tag::InFrontOfFace &, const Cell & face,
 	const tag::WithinMesh &, const Mesh & msh, const tag::SurelyExists & se )
 // 'se' defaults to tag::surely_exists, so constructor may be called with only four arguments
 :	core { msh.cell_in_front_of ( face.core, tag::may_not_exist ) }
 {	assert ( this->core );   }
-		
 
 inline Cell::Cell ( const tag::InFrontOfFace &, const Cell & face,
 	const tag::WithinMesh &, const Mesh & msh, const tag::MayNotExist & )
@@ -1374,9 +1701,11 @@ inline Cell Mesh::cell_behind ( const Cell face, const tag::MayNotExist & ) cons
 
 
 inline bool Cell::belongs_to ( const Mesh & msh, const tag::Oriented & ) const
+// what about negative meshes ? haa ?!!	
 {	return this->core->belongs_to ( msh.core, tag::oriented );  }
 
 inline bool Cell::belongs_to ( const Mesh & msh, const tag::NotOriented & ) const
+// what about negative meshes ? haa ?!!	
 {	return this->core->belongs_to ( msh.core, tag::not_oriented );  }
 
 //-----------------------------------------------------------------------------//
@@ -1417,26 +1746,53 @@ inline Mesh::Positive::Positive ( const tag::Quadrangle &, const Cell & SW, cons
 //-----------------------------------------------------------------------------//
 
 
+inline Cell::Core * Mesh::cell_in_front_of
+( const Cell::Core * face_p, const tag::MayNotExist & ) const
+
+// return the cell towards which 'face' is looking
+// recall that the faces of a cell are looking outwards
+
+{	Cell::Core * face_rev = face_p->reverse_p;
+	if ( face_rev == nullptr ) return nullptr;
+	else return this->cell_behind ( face_rev, tag::may_not_exist );  }
+	
+
+inline Cell::Core * Mesh::cell_in_front_of
+( const Cell::Core * face_p, const tag::SurelyExists & se ) const
+
+// 'se' defaults to tag::surely_exists, so method may be called with only one argument
+
+// return the cell towards which 'face' is looking
+// recall that the faces of a cell are looking outwards
+
+{	Cell::Core * face_rev = face_p->reverse_p;
+	assert ( face_rev );
+	return this->cell_behind ( face_rev, tag::surely_exists );  }
+	
+
 inline Cell::Core * Mesh::cell_behind
 ( const Cell::Core * face_p, const tag::MayNotExist & ) const
 
-// return the cell to which 'face' belongs
+// return the cell to which 'face' belongs, nullptr if we are facing the boundary
 
 {	assert ( this->dim() == face_p->get_dim() + 1 );
 	if ( this->is_positive() )
 	{	std::map<Mesh::Core*,Cell::Core*>::const_iterator
 			it = face_p->cell_behind_within.find ( this->core );
 		if ( it == face_p->cell_behind_within.end() ) return nullptr;
+			// nothing behind us, we are touching the boundary
+		assert ( it->second );
 		return it->second;                                                }
 		// face_p->cell_behind_within[this->core]
 	else
 	{	Cell::Core * face_rev_p = face_p->reverse_p;
-		if ( face_rev_p == nullptr ) return nullptr;
+		assert ( face_rev_p );  // we are in a negative mesh, all faces must have reverse
 		std::map<Mesh::Core*,Cell::Core*>::const_iterator
 			it = face_rev_p->cell_behind_within.find ( this->core );
-		if ( it == face_rev_p->cell_behind_within.end() ) return nullptr;
+		if ( it == face_rev_p->cell_behind_within.end() )
+			return nullptr;  // we are facing the boundary
 		Cell::Core * cll_rev_p = it->second;
-		assert ( cll_rev_p );
+		assert ( cll_rev_p );  assert ( cll_rev_p->reverse_p );
 		return cll_rev_p->reverse_p;                                        }  }
 
 
@@ -1465,35 +1821,38 @@ inline Cell::Core * Mesh::cell_behind
 		assert ( cll_rev_p );  assert ( cll_rev_p->reverse_p );
 		return cll_rev_p->reverse_p;                                        }  }
 
-
-inline Cell::Core * Mesh::cell_in_front_of
-( const Cell::Core * face_p, const tag::MayNotExist & ) const
-
-// return the cell towards which 'face' is looking
-// recall that the faces of a cell are looking outwards
-
-{	Cell::Core * face_rev = face_p->reverse_p;
-	if ( face_rev == nullptr ) return nullptr;
-	else return this->cell_behind ( face_rev, tag::may_not_exist );  }
-	
-
-inline Cell::Core * Mesh::cell_in_front_of
-( const Cell::Core * face_p, const tag::SurelyExists & se ) const
-
-// 'se' defaults to tag::surely_exists, so method may be called with only one argument
-
-// return the cell towards which 'face' is looking
-// recall that the faces of a cell are looking outwards
-
-{	Cell::Core * face_rev = face_p->reverse_p;
-	assert ( face_rev );
-	return this->cell_behind ( face_rev, tag::surely_exists );  }
-	
 // use :
 // Cell f (...);
 // Cell A ( tag::in_front_of_face, f, tag::within_mesh, msh );
-// Cell A = msh.cell_in_front_of ( f.core );
+// Cell::Core * A_p = msh.cell_in_front_of ( f.core );
 // Cell::Core * A_p = msh.cell_in_front_of ( f.core, tag::may_not_exist );
+
+
+// the four methods below are only relevant for STSI meshes
+
+inline Cell::Core * Mesh::cell__in_front_of
+( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+  const tag::MayNotExist &                                                       ) const
+// return the cell towards which 'face' points, as seen from neighbour
+{	return this->core->cell__in_front_of ( face_p, tag::seen_from, neighbour, tag::may_not_exist );  }
+
+inline Cell::Core * Mesh::cell_in_front_of
+( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+// return the cell towards which 'face' points, as seen from neighbour
+{	return this->core->cell__in_front_of ( face_p, tag::seen_from, neighbour, se );  }
+
+inline Cell::Core * Mesh::cell_behind
+( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+  const tag::MayNotExist &                                                       ) const
+// return the cell to which 'face' belongs, as seen from neighbour
+{	return this->core->cell_behind ( face_p, tag::seen_from, neighbour, tag::may_not_exist );  }
+
+inline Cell::Core * Mesh::cell_behind
+( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
+  const tag::SurelyExists & se = tag::surely_exists                             ) const;
+// return the cell to which 'face' belongs, as seen from neighbour
+{	return this->core->cell_behind ( face_p, tag::seen_from, neighbour, se );  }
 
 
 #ifndef NDEBUG
@@ -1614,20 +1973,20 @@ inline void Cell::remove_from ( Mesh & msh )
 
 
 inline Cell::Positive::Vertex::Vertex ( )
-: Cell::Core::Positive ( tag::of_dim, 0, tag::size_meshes, Mesh::maximum_dimension_plus_one )
+: Cell::Positive ( tag::of_dim, 0, tag::size_meshes, Mesh::maximum_dimension_plus_one )
 {	}
 
 
 inline Cell::Negative::Vertex::Vertex
 ( const tag::ReverseOf &, Cell::Positive::Vertex * direct_ver_p )
-: Cell::Core::Negative ( tag::of_dim, 0, tag::reverse_of, direct_ver_p )
+: Cell::Negative ( tag::of_dim, 0, tag::reverse_of, direct_ver_p )
 {	}
 
 
 inline Cell::Positive::Segment::Segment
 ( Cell::Negative::Vertex * Aa, Cell::Positive::Vertex * Bb )
 
-: Cell::Core::Positive
+: Cell::Positive
 		( tag::of_dim, 1, tag::size_meshes, Mesh::diff ( Mesh::maximum_dimension_plus_one, 1 ) ),
 	// Mesh::diff provides a safe way to substract two 'size_t' numbers
 	base_p { Aa }, tip_p { Bb }
@@ -1659,7 +2018,7 @@ inline Cell::Positive::Segment::Segment
 inline Cell::Negative::Segment::Segment
 ( const tag::ReverseOf &, Cell::Positive::Segment * direct_seg_p )
 
-: Cell::Core::Negative ( tag::of_dim, 1, tag::reverse_of, direct_seg_p )
+: Cell::Negative ( tag::of_dim, 1, tag::reverse_of, direct_seg_p )
 
 // we must make sure that both extremities of 'direct_seg_p' have a reverse
 // well, the base surely has one since it's a Negative::Vertex
@@ -1671,10 +2030,10 @@ inline Cell::Negative::Segment::Segment
 	assert ( direct_seg_p->tip_p->reverse_p );                  }
 
 		
-inline Cell::Positive::Positive
+inline Cell::Positive::HighDim::HighDim
 ( const tag::OfDimension &, size_t d, const tag::WhoseBoundaryIs &, Mesh::Core * msh )
 
-:	Cell::Core::Positive ( tag::of_dim, d, tag::size_meshes,
+:	Cell::Positive ( tag::of_dim, d, tag::size_meshes,
 	                           Mesh::diff ( Mesh::maximum_dimension_plus_one, d ) ),
 	// Mesh::diff provides a safe way to substract two 'size_t' numbers
 	boundary_p ( msh )
@@ -1684,16 +2043,16 @@ inline Cell::Positive::Positive
 	msh->cell_enclosed = this;                }
 
 
-inline Cell::Positive::Positive
+inline Cell::Positive::HighDim::HighDim
 ( const tag::WhoseBoundaryIs &, Mesh::Core * msh )
 :	Cell::Positive ( tag::of_dim, msh->get_dim_plus_one(), tag::whose_bdry_is, msh )
 {	}
 
 
-inline Cell::Negative::Negative
+inline Cell::Negative::HighDim::HighDim
 ( const tag::OfDimension, size_t d, const tag::ReverseOf &, Cell::Positive * direct_cell_p )
 	
-: Cell::Core::Negative ( tag::of_dim, d, tag::reverse_of, direct_cell_p )
+: Cell::Negative ( tag::of_dim, d, tag::reverse_of, direct_cell_p )
 
 // we must make sure that all faces of 'direct_cell_p' have a reverse
 
@@ -1710,12 +2069,13 @@ inline Cell::Negative::Negative
 		assert ( cll_rev_p == cll_p->reverse_p );  assert ( cll_rev_p );             }    }
 
 
-inline Cell::Negative::Negative ( const tag::ReverseOf &, Cell::Positive * direct_cell_p )
+inline Cell::Negative::HighDim::HighDim
+( const tag::ReverseOf &, Cell::Positive * direct_cell_p )
 : Cell::Negative ( tag::of_dim, direct_cell_p->get_dim(), tag::reverse_of, direct_cell_p )
 {	}
 
 
-inline Cell::Positive::Positive ( const tag::Triangle &,
+inline Cell::Positive::HighDim::HighDim ( const tag::Triangle &,
 	Cell::Core * AB, Cell::Core * BC, Cell::Core * CA )
 	
 : Cell::Positive ( tag::whose_boundary_is, new Mesh::OneDim::Positive )
@@ -1733,7 +2093,7 @@ inline Cell::Positive::Positive ( const tag::Triangle &,
 	CA->add_to ( this->boundary_p );                }
 	
 
-inline Cell::Positive::Positive ( const tag::Quadrangle &,
+inline Cell::Positive::HighDim::HighDim ( const tag::Quadrangle &,
 	Cell::Core * AB, Cell::Core * BC, Cell::Core * CD, Cell::Core * DA )
 	
 : Cell::Positive ( tag::whose_boundary_is, new Mesh::OneDim::Positive )
@@ -1754,7 +2114,7 @@ inline Cell::Positive::Positive ( const tag::Quadrangle &,
 	DA->add_to ( this->boundary_p );                }
 
 
-inline void Cell::Core::Positive::glue_common ( Cell::Core * face )
+inline void Cell::Positive::glue_common ( Cell::Core * face )
 	
 {	if ( this->meshes.size() == 0 ) return;
 	std::map < Mesh::Core*, Cell::field_to_meshes > & tm0 = this->meshes[0];
@@ -1778,7 +2138,7 @@ inline void Cell::Core::cut_from_bdry_of ( Cell::Core * cll )
 {	cll->cut_from_my_bdry ( this );   }
 
 
-inline void Cell::Core::Positive::cut_common ( Cell::Core * face )
+inline void Cell::Positive::cut_common ( Cell::Core * face )
 	
 {	if ( this->meshes.size() == 0 ) return;
 	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
