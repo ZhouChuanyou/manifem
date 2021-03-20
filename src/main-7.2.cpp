@@ -85,9 +85,9 @@ int main ()
 			Function psiV = fe.basis_function(V),
 			         psiW = fe.basis_function(W),
 			         d_psiV_dx = psiV.deriv(x),
-		           d_psiV_dy = psiV.deriv(y),
-		           d_psiW_dx = psiW.deriv(x),
-		           d_psiW_dy = psiW.deriv(y);
+			         d_psiV_dy = psiV.deriv(y),
+			         d_psiW_dx = psiW.deriv(x),
+			         d_psiW_dy = psiW.deriv(y);
 			// 'fe' is already docked on 'small_square' so this will be the domain of integration
 			matrix_A.coeffRef ( numbering[V.core]-1, numbering[W.core]-1 ) +=
 				fe.integrate ( d_psiV_dx * d_psiW_dx + d_psiV_dy * d_psiW_dy );

@@ -1,5 +1,5 @@
 
-// function.h 2021.02.11
+// function.h 2021.03.19
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -167,8 +167,8 @@ inline void Function::Core::release ( )
 {	assert ( this->number_of_wrappers > 0 );
 	// std::cout << "Function destructor " << this->number_of_wrappers << " "
 	//					<< this << " " << Function::name[this] << std::endl;
-	this->number_of_wrappers --;
-	if ( this->number_of_wrappers == 0 ) delete this;  }
+	this->number_of_wrappers --;               }
+//	if ( this->number_of_wrappers == 0 ) delete this;  }
 
 
 inline Function::Function ( const tag::WhoseCoreIs &, Function::Core * c )
