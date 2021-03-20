@@ -1,6 +1,4 @@
 
-muita coisa que funcionava em 2019.09 deixou de funcionar ...
-
 deveriamos prever a possibilidade de "desactivar" um campo NumericField
 Por exemplo, criamos uma malha com as coordenadas xyz, depois criamos o
 elemento master com as coordenadas xi eta, depois queremos remalhar.
@@ -165,10 +163,22 @@ as malhas multiply connected ficam para mais tarde
 
 antes de insistir nas malhas STSI tenho que verificar como fica
 acrescentar ou retirar uma celula duma tal malha
+talvez nao seja necessario declarar 'deep_connections' como virtual
+basta fornecer diferentes metodos 'action'
+e usar o iterador mencionado no codigo 
+
 o campo 'cell_behind_within' precisa dum tratamento `a parte
 talvez proibir que a fronteira duma celula seja STSI
 
+introduzir malhas zero-dimensionais
+
 em github/manifem :
+  master:
+    copiar  main-7.2.cpp  function.h
+	fuzzy-stsi :
+		copiar  mesh.cpp  mesh.h  main-7.2.cpp
+	aquando da fusão :
+	  copiar de fuzzy-stsi para master  mesh.cpp  mesh.h
 
 no disco azul :   copiar  2021.03 e current
 
