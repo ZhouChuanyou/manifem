@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.03.15
+// mesh.cpp 2021.03.18
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -665,11 +665,12 @@ void Cell::Negative::cut_from_my_bdry ( Cell::Core * cll )
 void Cell::Positive::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
 	
 {	assert ( msh );
-	Cell::Positive::Segment * seg = ( Cell::Positive::Segment * ) msh;
+	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' vertex does not belong yet to the mesh 'msh'
-	assert ( this->meshes[0].find(msh) == this->meshes[0].end() );
+	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
+	assert ( tm0.find(msh) == tm0.end() );
 	// '[0]' means meshes of the same dimension as the cell
 	assert ( seg->tip_p == nullptr );
 	seg->tip_p = this;
@@ -683,11 +684,12 @@ void Cell::Positive::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::C
 void Cell::Positive::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
 	
 {	assert ( msh );
-	Cell::Positive::Segment * seg = ( Cell::Positive::Segment * ) msh;
+	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
-	assert ( this->meshes[0].find(msh) != this->meshes[0].end() );
+	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
+	assert ( tm0.find(msh) != tm0.end() );
 	// '[0]' means meshes of the same dimension as the cell
 	assert ( seg->tip_p == this );
 	seg->tip_p = nullptr;
@@ -704,13 +706,14 @@ void Cell::Positive::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Ce
 void Cell::Negative::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
 
 { assert ( msh );
-	Cell::Positive::Segment * seg = ( Cell::Positive::Segment * ) msh;
+	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->reverse_p );
 	Cell::Positive::Vertex * pos_ver = (Cell::Positive::Vertex*) this->reverse_p;
 	assert ( pos_ver->meshes.size() > 0 );
 	// assert that 'this' vertex does not belong yet to the mesh 'msh'
-	assert ( pos_ver->meshes[0].find(msh) == pos_ver->meshes[0].end() );
+	std::map < Mesh::Core *, Cell::field_to_meshes > & pvm0 = pos_ver->meshes[0];
+	assert ( pvm0.find(msh) == pvm0.end() );
 	// '[0]' means meshes of the same dimension as the cell
 	assert ( seg->base_p == nullptr );
 	seg->base_p = this;
@@ -724,13 +727,14 @@ void Cell::Negative::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::C
 void Cell::Negative::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
 
 { assert ( msh );
-	Cell::Positive::Segment * seg = ( Cell::Positive::Segment * ) msh;
+	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->reverse_p );
 	Cell::Positive::Vertex * pos_ver = (Cell::Positive::Vertex*) this->reverse_p;
 	assert ( pos_ver->meshes.size() > 0 );
 	// assert that 'this' vertex belongs to the mesh 'msh'
-	assert ( pos_ver->meshes[0].find(msh) != pos_ver->meshes[0].end() );
+	std::map < Mesh::Core *, Cell::field_to_meshes > & pvm0 = pos_ver->meshes[0];
+	assert ( pvm0.find(msh) != pvm0.end() );
 	// '[0]' means meshes of the same dimension as the cell
 	assert ( seg->base_p );
 	seg->base_p = nullptr;
@@ -747,7 +751,8 @@ void Cell::Negative::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Ce
 void Cell::Positive::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell::Core
 
 {	assert ( mmsh );
-	Mesh::OneDim::Positive * msh = (Mesh::OneDim::Positive*) mmsh;
+	Mesh::OneDim::Positive * msh =
+		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment does not belong yet to the mesh 'msh'
 	assert ( this->meshes[0].find(msh) == this->meshes[0].end() );
@@ -778,7 +783,8 @@ void Cell::Positive::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from Cell::Core
 
 {	assert ( mmsh );
-	Mesh::OneDim::Positive * msh = (Mesh::OneDim::Positive*) mmsh;
+	Mesh::OneDim::Positive * msh =
+		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
 	assert ( this->meshes[0].find(msh) != this->meshes[0].end() );
@@ -812,9 +818,11 @@ void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 void Cell::Negative::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell::Core
 
 {	assert ( mmsh );
-	Mesh::OneDim::Positive * msh = (Mesh::OneDim::Positive*) mmsh;
-	Cell::Positive::Segment * pos_seg = ( Cell::Positive::Segment * ) this->reverse_p;
-	assert ( pos_seg );
+	assert ( this->reverse_p );
+	Mesh::OneDim::Positive * msh =
+		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+	Cell::Positive::Segment * pos_seg =
+	  assert_cast < Cell:Core*, Cell::Positive::Segment * > ( this->reverse_p );
 	assert ( pos_seg->meshes.size() > 0 );
 	// assert that 'this' segment does not belong yet to the mesh 'msh'
 	assert ( pos_seg->meshes[0].find(msh) == pos_seg->meshes[0].end() );
@@ -848,9 +856,11 @@ void Cell::Negative::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from Cell::Core
 
 {	assert ( mmsh );
-	Mesh::OneDim::Positive * msh = (Mesh::OneDim::Positive*) mmsh;
 	assert ( this->reverse_p );
-	Cell::Positive::Segment * pos_seg = ( Cell::Positive::Segment * ) this->reverse_p;
+	Mesh::OneDim::Positive * msh =
+		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+	Cell::Positive::Segment * pos_seg =
+	  assert_cast < Cell::Core*, Cell::Positive::Segment * > ( this->reverse_p );
 	assert ( pos_seg->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
 	assert ( pos_seg->meshes[0].find(msh) != pos_seg->meshes[0].end() );
@@ -933,7 +943,7 @@ void Cell::Positive::HighDim::remove_from ( Mesh::Core * msh ) // virtual from C
 } // end of Cell::Positive::HighDim::remove_from
 
 
-void Cell::Negative::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Negative::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
@@ -941,9 +951,8 @@ void Cell::Negative::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
 {	assert ( msh );
 	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
 	assert ( this->reverse_p );
-	// use static_cast !
-	Cell::Positive::HighDim * pos_cll = ( Cell::Positive::HighDim* ) this->reverse_p;
-	assert ( pos_cll );
+	Cell::Positive::HighDim * pos_cll =
+		assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
 	assert ( pos_cll->meshes.size() > 0 );
 	// assert that 'this' cell does not belong yet to the mesh 'msh'
 	assert ( pos_cll->meshes[0].find(msh) == pos_cll->meshes[0].end() );
@@ -962,10 +971,10 @@ void Cell::Negative::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
 		         rev_face->cell_behind_within.end() );
 		rev_face->cell_behind_within[msh] = this;             }
 
-} // end of Cell::Negative::add_to
+} // end of Cell::Negative::HighDim::add_to
 
 
-void Cell::Negative::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Negative::HighDim::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
 
 // remove 'this' cell from the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'cut_from_bdry_of'
@@ -973,9 +982,8 @@ void Cell::Negative::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
 {	assert ( msh );
 	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
 	assert ( this->reverse_p );
-	// use static_cast !
-	Cell::Positive::HighDim * pos_cll = ( Cell::Positive::HighDim* ) this->reverse_p;
-	assert ( pos_cll );
+	Cell::Positive::HighDim * pos_cll =
+		assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
 	assert ( pos_cll->meshes.size() > 0 );
 	// assert that 'this' cell belongs to the mesh 'msh'
 	assert ( pos_cll->meshes[0].find(msh) != pos_cll->meshes[0].end() );
@@ -995,7 +1003,7 @@ void Cell::Negative::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
 		assert ( rev_face->cell_behind_within[msh] == this );
 		rev_face->cell_behind_within.erase(msh);              }
 
-} // end of Cell::Negative::remove_from
+} // end of Cell::Negative::HighDim::remove_from
 
 //-----------------------------------------------------------------------------//
 
@@ -1016,7 +1024,7 @@ void Mesh::action_add ( Cell::Core * cll, Cell::Core * o_cll,
 
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
-	Cell::Positive * cll_pos = (Cell::Positive*) cll;
+	Cell::Positive * cll_pos = (Cell::Positive*) cll;  // use static_cast !
 	size_t cll_dim = cll_pos->get_dim(),
 	       msh_dim_p1 = msh->get_dim_plus_one();
 	assert ( msh_dim_p1 > cll_dim );
@@ -1066,7 +1074,7 @@ void Mesh::action_remove ( Cell::Core * cll, Cell::Core * o_cll,
 
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
-	Cell::Positive * cll_pos = (Cell::Positive*) cll;
+	Cell::Positive * cll_pos = (Cell::Positive*) cll;  // use static_cast !
 	size_t cll_dim = cll_pos->get_dim(),
 	       msh_dim_p1 = msh->get_dim_plus_one();
 	assert ( msh_dim_p1 > cll_dim );
@@ -1074,13 +1082,13 @@ void Mesh::action_remove ( Cell::Core * cll, Cell::Core * o_cll,
 	assert ( cll_pos->meshes.size() > dif_dim );
 	typedef std::map <Mesh::Core*, Cell::field_to_meshes> maptype;
 	maptype & cmd = cll_pos->meshes[dif_dim];
-	maptype::iterator cmdm = cmd.find(msh);
-	assert ( cmdm != cmd.end() );
-	short int c_p = cmdm->second.counter_pos -= cp;
-	short int c_n = cmdm->second.counter_neg -= cn;
+	maptype::iterator cmdfm = cmd.find(msh);
+	assert ( cmdfm != cmd.end() );
+	short int c_p = cmdfm->second.counter_pos -= cp;
+	short int c_n = cmdfm->second.counter_neg -= cn;
 	assert ( ( c_p >= 0 ) and ( c_n >= 0 ) );
 	if ( ( c_p == 0 ) and ( c_n == 0 ) )
-	{	std::list<Cell::Core*>::iterator w = cmdm->second.where;
+	{	std::list<Cell::Core*>::iterator w = cmdfm->second.where;
 		msh->cells[cll_dim].erase(w);
 		cmd.erase(cmdm);                                                 }
 } // end of Mesh::action_remove
@@ -1157,128 +1165,19 @@ void Mesh::Core::deep_connections
 	// see Cell::Positive::Segment::deep_connections
 	assert ( this->get_dim_plus_one() == cll->get_dim() + 1 );
 
-	// We build two lists, a list of cells "below" 'cll'
-	// (that is, belonging to the boundary of 'cll')
-	// and a list of meshes "above" 'this' mesh
-	// (that is, meshes to which 'this->cell_enclosed' belongs).
-	// We then use these two lists to create or destroy all connections.
+	// link 'cll' to 'this'
+	action ( cll, o_cll, this, 1, 0 );
 
-	struct triplet_cell
-	{	Cell::Positive * obj;
-		size_t dim;
-		short int counter_pos;
-		short int counter_neg;
-		triplet_cell ( Cell::Positive * o, size_t d, short int cp, short int cn )
-			: obj {o}, dim {d}, counter_pos {cp}, counter_neg {cn}  { }                        };
-	std::forward_list < triplet_cell > all_cells;
-	size_t cll_dim = cll->get_dim();
-	all_cells.emplace_front ( cll, cll_dim, 1, 0 );
-	if ( cll_dim == 1 ) // 'cll' is a segment
-	{	Cell::Positive::Segment * seg = (Cell::Positive::Segment*) cll;
-		assert ( seg->base_p );  assert ( seg->tip_p );
-		assert ( not ( seg->base_p->is_positive() ) );  assert ( seg->tip_p->is_positive() );
-		assert ( seg->base_p->reverse_p );
-		Cell::Positive::Vertex * pos_base = (Cell::Positive::Vertex*) seg->base_p->reverse_p;
-		all_cells.emplace_front ( pos_base, 0, 0, 1 );
-		all_cells.emplace_front ( seg->tip_p, 0, 1, 0 );                                        }
-	else
-	{	assert ( cll_dim > 1 );
-		// use static_cast !	
-		Cell::Positive::HighDim * cll_loc = (Cell::Positive::HighDim*) cll;
-		Mesh::Core * cell_bdry = cll_loc->boundary_p;
-		assert ( cell_bdry );
-		size_t cell_bdry_dim = cell_bdry->get_dim_plus_one() - 1; // debug mode
-		assert ( cell_bdry_dim == cll_dim - 1 );
-		// we loop over all cells of cell_bdry (of all dimensions)	
-		for ( size_t d = 0; d < cell_bdry_dim; d++ )
-		{ // we now loop over all cells of given dimension 'd' (not maximum)
-			std::list<Cell::Core*> & cbcd = cell_bdry->cells[d];
-			std::list<Cell::Core*>::iterator
-				list_iter = cbcd.begin(), cbcd_end = cbcd.end();
-			for ( ; list_iter != cbcd_end; ++list_iter )
-			{	Cell::Positive* lower_cell = (Cell::Positive*) *list_iter;
-				assert ( lower_cell->get_dim() == d );
-				assert ( cell_bdry_dim >= d );
-				size_t dif_dim = cell_bdry_dim - d;
-				assert ( lower_cell->meshes.size() > dif_dim );
-				// code below should be equivalent to & fcb = lower_cell->meshes[dif_dim][cell_bdry]
-				// but apparantly it's not, probably because operator[]
-				// is designed to create a new element if it doesn't find the key
-				std::map<Mesh::Core*,Cell::field_to_meshes >::iterator
-					it = lower_cell->meshes[dif_dim].find(cell_bdry);
-				assert ( it != lower_cell->meshes[dif_dim].end() );
-				Cell::field_to_meshes & fcb = it->second ;
-				all_cells.emplace_front ( lower_cell, d, fcb.counter_pos, fcb.counter_neg );  }  }
-		// we now loop over all cells of maximum dimension
-		std::list<Cell::Core*> & cbcd = cell_bdry->cells[cell_bdry_dim];
-		std::list<Cell::Core*>::iterator
-			list_iter = cbcd.begin(), cbcd_end = cbcd.end();
-		for ( ; list_iter != cbcd_end; ++list_iter )
-		{	Cell::Core* lower_cell = *list_iter;
-			assert ( lower_cell );
-			assert ( lower_cell->get_dim() == cell_bdry_dim );
-			Cell::Positive* pos_lower_cll = lower_cell->get_positive();
-			assert ( pos_lower_cll );
-			assert ( pos_lower_cll->meshes.size() > 0 );
-			// code below should be equivalent to & fcb = pos_lower_cll->meshes[0][cell_bdry]
-			// but apparantly it's not, probably because operator[] is designed to
-			// create a new element if the key does not exist
-			std::map<Mesh::Core*,Cell::field_to_meshes >::iterator
-				it = pos_lower_cll->meshes[0].find(cell_bdry);
-			// 'meshes[0]' means meshes of dimension equal to the dimension of the cell
-			assert ( it != pos_lower_cll->meshes[0].end() );
-			Cell::field_to_meshes & fcb = it->second ;
-			all_cells.emplace_front ( pos_lower_cll, cell_bdry_dim,
-		                            fcb.counter_pos, fcb.counter_neg );                 }
-	} // end of if-else cll_dim
-	
-	struct triplet_mesh
-	{	Mesh::Core * obj;
-		size_t dim;
-		short int counter_pos;
-		short int counter_neg;
-		triplet_mesh ( Mesh::Core * o, size_t d, short int cp, short int cn )
-			: obj (o), dim (d), counter_pos (cp), counter_neg (cn)  { }                   };
-	std::forward_list < triplet_mesh > all_meshes;
-	all_meshes.emplace_front ( this, cll_dim, 1, 0 );
-	if ( this->cell_enclosed )
-	{	// we now loop over all meshes above 'this->cell_enclosed' (of all dimensions)
-		for ( size_t dif_dim = 0; dif_dim < this->cell_enclosed->meshes.size(); dif_dim++ )
-		{	std::map<Mesh::Core*,Cell::field_to_meshes> &
-				cemd = this->cell_enclosed->meshes[dif_dim];
-			std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-				map_iter = cemd.begin(), cemd_end = cemd.end();
-			// we now loop over all meshes of given dimension
-			for (; map_iter != cemd_end; ++map_iter)
-			{	assert ( map_iter->first->get_dim_plus_one() ==
-			           dif_dim + this->cell_enclosed->get_dim() + 1                );
-				size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
-				Cell::field_to_meshes & mis = map_iter->second;
-				all_meshes.emplace_front ( map_iter->first, current_mesh_dim,
-			                             mis.counter_pos, mis.counter_neg );	            }  }         }
+	// for all meshes strictly above 'this'
+	action ( lower_cell_tri.obj, lower_cell_tri.obj, higher_mesh_tri.obj,
+	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
 
-	// we loop over cells "below" 'cell'
-	std::forward_list<triplet_cell>::iterator cells_iter, cells_end = all_cells.end();
-	for ( cells_iter = all_cells.begin(); cells_iter != cells_end; ++cells_iter)
-	{	std::forward_list <triplet_mesh>::iterator
-			meshes_iter = all_meshes.begin(),  meshes_end = all_meshes.end();
-		triplet_cell & lower_cell_tri = *cells_iter;
-		short int cell_counter_pos = lower_cell_tri.counter_pos;
-		short int cell_counter_neg = lower_cell_tri.counter_neg;
-		// we loop over "superior" dimensions	
-		for (; meshes_iter != meshes_end; ++meshes_iter)
-		{	triplet_mesh & higher_mesh_tri = *meshes_iter;
-			short int mesh_counter_pos = higher_mesh_tri.counter_pos;
-			short int mesh_counter_neg = higher_mesh_tri.counter_neg;
-			if ( lower_cell_tri.dim == higher_mesh_tri.dim )
-			{	assert ( lower_cell_tri.obj == cll );
-				action ( cll, o_cll, higher_mesh_tri.obj,
-				         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-				         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );  }
-			else
-				action ( lower_cell_tri.obj, lower_cell_tri.obj, higher_mesh_tri.obj,
-				         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-				         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
+	// for all cells strictly below 'cll'			
+	// for all meshes above 'this' (including this)
+	action ( lower_cell_tri.obj, lower_cell_tri.obj, higher_mesh_tri.obj,
+	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
 		}  }
 
 } // end of Mesh::Core::deep_connections

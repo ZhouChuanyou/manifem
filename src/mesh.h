@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.15
+// mesh.h 2021.03.18
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -162,6 +162,8 @@ class Cell
                 const tag::WithinMesh &, const Mesh &, const tag::MayNotExist & );
 	// use : Cell tri ( tag::in_front_of_face, f, tag::within_mesh, msh );
 
+	// we are still in class Cell
+	
 	// methods delegated to 'core', defined after class Mesh::Negative
 
 	inline Cell reverse
@@ -193,6 +195,8 @@ class Cell
 	// and 'cut_from_bdry_of' (see above) should be used instead
 	inline void add_to ( Mesh & msh );
 	inline void remove_from ( Mesh & msh );
+
+	// we are still in class Cell
 
 	inline void project ( ) const;
 	
@@ -767,8 +771,8 @@ class Cell::Positive::Vertex : public Cell::Positive
 	void add_to ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from ( Mesh::Core * msh ); // virtual from Cell::Core
 
-	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core, execution forbidden
-	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core, execution forbidden
+	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core, here execution forbidden
+	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core, here execution forbidden
 
 	// glue_common  and  cut_common  defined by Cell::Positive
 	
@@ -836,12 +840,18 @@ class Cell::Positive::Segment : public Cell::Positive
 	Cell::Positive::Segment & operator= ( const Cell::Positive::Segment & ) = delete;
 	Cell::Positive::Segment & operator= ( const Cell::Positive::Segment && ) = delete;
 
+	// is_positive  and  get_positive  defined by Cell::Positive
+	size_t get_dim ( ) const; // virtual from Cell::Core
+
+	// reverse  defined by Cell::Positive
+	Cell::Core * build_reverse ( );  // virtual from  Cell::Positive
+
 	Cell::Core * tip () override; // virtual, overrides definition by Cell::Core
 	Cell::Core * base () override; // virtual, overrides definition by Cell::Core
 
-	// is_positive  and  get_positive  defined by Cell::Positive
-	size_t get_dim ( ) const; // virtual from Cell::Core
-	Cell::Core * build_reverse ( );  // virtual from  Cell::Positive
+	// two versions of  belongs_to  defined by Cell::Negative
+
+	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
@@ -2231,6 +2241,13 @@ inline void Mesh::OneDim::Positive::order ( )
 	
 //-----------------------------------------------------------------------------//
 
+
+template < typename X, typename Y > inline Y assert_cast ( X x )
+#ifndef NDEBUG
+{	Y y = dynamic_cast < Y > (x);  assert (x);  }
+#else
+{	Y y = static_cast < Y > (x);  }
+#endif
 
 }  // namespace maniFEM
 
