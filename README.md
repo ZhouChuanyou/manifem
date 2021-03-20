@@ -22,7 +22,7 @@ To check which version of maniFEM is installed in your computer, see at the begi
 
 A component of maniFEM, [MetricTree](https://github.com/cristian-barbarosie/MetricTree), can be used independently.
 
-ManiFEM is being developped by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
+ManiFEM is being developed by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/).
 
 To learn maniFEM, you should read the 
