@@ -1,9 +1,9 @@
 
-// function.h 2021.02.11
+// function.h 2021.03.21
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//   Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
 //   https://github.com/cristian-barbarosie/manifem
 
 //   ManiFEM is free software: you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ class Function
 	static std::map < const Function::Core*, std::string > name;
 	#endif
 
-	Function::Core * core;
+	std::shared_ptr < Function::Core > core;
 
 	inline Function ( const tag::NonExistent & ) : core { nullptr } { };
 

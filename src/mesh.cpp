@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.03.18
+// mesh.cpp 2021.03.21
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -72,43 +72,16 @@ Mesh::Mesh ( const tag::DeepCopy &, const Mesh & msh )
 //-----------------------------------------------------------------------------//
 
 
-const Mesh::Methods Mesh::Positive::methods_pos  // static data member
-{	& Mesh::Positive::is_positive, & Mesh::Positive::reverse  };
-
-const Mesh::Methods & Mesh::Positive::get_meth_pos ( ) // virtual from Mesh::Core
-{	return Mesh::Positive::methods_pos;  }
-	
-const Mesh::Methods Mesh::OneDim::Positive::methods_pos  // static data member
-{	& Mesh::Positive::is_positive, & Mesh::Positive::reverse  };
-
-const Mesh::Methods & Mesh::OneDim::Positive::get_meth_pos ( ) // virtual from Mesh::Core
-{	return Mesh::OneDim::Positive::methods_pos;  }
-	
-const Mesh::Methods Mesh::Positive::methods_neg  // static data member
-{ & Mesh::Negative::is_positive, & Mesh::Negative::reverse  };
-
-const Mesh::Methods & Mesh::Positive::get_meth_neg ( ) // virtual from Mesh::Core
-{	return Mesh::Positive::methods_neg;  }
-	
-const Mesh::Methods Mesh::OneDim::Positive::methods_neg  // static data member
-{ & Mesh::Negative::is_positive, & Mesh::Negative::reverse  };
-
-const Mesh::Methods & Mesh::OneDim::Positive::get_meth_neg ( ) // virtual from Mesh::Core
-{	return Mesh::OneDim::Positive::methods_neg;  }
-	
-//-----------------------------------------------------------------------------//
-
-
 bool Cell::Positive::is_positive ( ) const  // virtual from Cell::Core
 {	return true;  }
 
 bool Cell::Core::Negative::is_positive ( ) const  // virtual from Cell::Core
 {	return false;  }
 
-bool Mesh::Positive::is_positive ( ) // static
+bool Mesh::Sign::Positive::is_positive ( ) // static
 {	return true;  }
 
-bool Mesh::Negative::is_positive ( ) // NegativeMesh is a namespace
+bool Mesh::Sign::Negative::is_positive ( ) // NegativeMesh is a namespace
 {	return false;  }
 
 Cell::Positive * Cell::Positive::get_positive ( )  // virtual from Cell::Core
@@ -118,6 +91,40 @@ Cell::Positive * Cell::Core::Negative::get_positive ( )  // virtual from Cell::C
 {	assert ( this->reverse_p );
 	assert ( this->reverse_p->is_positive() );
 	return (Cell::Positive*) this->reverse_p;     }
+
+
+Cell::Core * Cell::Negative::build_reverse ( )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "do not use build_reverse on a negative cell" << std::endl;
+	exit ( 1 );                                                                                     }
+
+Cell::Core * Cell::Positive::Vertex::build_reverse ( )
+// virtual from Cell::Core
+{	this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this );
+	return this->reverse_p;                                                    }
+
+Cell::Core * Cell::Positive::Segment::build_reverse ( )
+// virtual from Cell::Core
+{	this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this );
+	return this->reverse_p;                                                     }
+
+Cell::Core * Cell::Positive::HighDim::build_reverse ( )
+// virtual from Cell::Core
+{	this->reverse_p = new Cell::Negative ( tag::reverse_of, this );
+	return this->reverse_p;                                                   }
+
+Cell::Core * Cell::Positive::reverse ( const tag::BuildIfNotExists & )
+// virtual from Cell::Core
+{	if ( this->reverse_p == nullptr )  this->reverse_p = this->build_reverse();
+	assert ( this->reverse_p );
+	assert ( not this->reverse_p->is_positive() );
+	return this->reverse_p;                                                      }
+
+Cell::Core * Cell::Negative::reverse ( const tag::BuildIfNotExists & )
+// virtual from Cell::Core
+{	assert ( this->reverse_p );
+	assert ( this->reverse_p->is_positive() );
+	return this->reverse_p;                      }
 
 //-----------------------------------------------------------------------------//
 
@@ -143,45 +150,110 @@ size_t Cell::Negative::HighDim::get_dim ( ) const  // virtual from Cell::Core
 	return this->reverse_p->get_dim();  }
 
 
-size_t Mesh::Positive::get_dim_plus_one ( )  // virtual from Mesh::Core
-{	return this->cells.size();  }
+size_t Mesh::ZeroDim::get_dim_plus_one ( )  // virtual from Mesh::Core
+{	return 1;  }
 
-size_t Mesh::OneDim::Positive::get_dim_plus_one ( )  // virtual from Mesh::Core
+size_t Mesh::Connected::OneDim::get_dim_plus_one ( )  // virtual from Mesh::Core
 {	return 2;  }
 
+size_t Mesh::Connected::HighDim::get_dim_plus_one ( )  // virtual from Mesh::Core
+{	return this->nb_of_cells.size();  }
+
+size_t Mesh::MultiplyConnected::OneDim::get_dim_plus_one ( )  // virtual from Mesh::Core
+{	return 2;  }
+
+size_t Mesh::MultiplyConnected::HighDim::get_dim_plus_one ( )  // virtual from Mesh::Core
+{	return this->nb_of_cells.size();  }
+
+size_t Mesh::Fuzzy::get_dim_plus_one ( )  // virtual from Mesh::Core
+{	return this->cells.size();  }
+
 	
-size_t Mesh::Positive::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::ZeroDim::number_of ( const tag::CellsOfDim &, size_t d )
+// virtual from Mesh::Core
+{	assert ( d == 0 );  return 2;  }
+	
+size_t Mesh::ZeroDim::number_of ( const tag::Vertices & )
+// virtual from Mesh::Core
+{	return 2;  }
+	
+size_t Mesh::ZeroDim::number_of ( const tag::Segments & )
+// virtual from Mesh::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "zero-dimensional meshes have have no segments" << std::endl;
+	exit ( 1 );                                                                                     }
+	
+size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, size_t d )
+// virtual from Mesh::Core
+{	if ( d == 1 ) return this->nb_of_segments;
+	assert ( d == 0 );
+	return this->nb_of_segments + 1;             }
+	
+size_t Mesh::Connected::OneDim::number_of ( const tag::Vertices & )
+// virtual from Mesh::Core
+{	return this->nb_of_segments + 1;  }  // !!!
+// a loop has the same number of vertices as segments !!
+	
+size_t Mesh::Connected::OneDim::number_of ( const tag::Segments & )
+// virtual from Mesh::Core
+{	return this->nb_of_segments;  }
+	
+size_t Mesh::Connected::HighDim::number_of ( const tag::CellsOfDim &, size_t d )
 // virtual from Mesh::Core
 {	assert ( d < this->get_dim_plus_one() );
-	return this->cells[d].size();             }
+	assert ( this->nb_of_cells.size() > d );
+	return this->nb_of_cells[d];             }
 	
-size_t Mesh::OneDim::Positive::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::Connected::HighDim::number_of ( const tag::Vertices )
 // virtual from Mesh::Core
-{	assert ( d <= 1 );
-	return this->cells[d].size();  }  // will change
+{	assert ( this->nb_of_cells.size() > 0 );
+	return this->nb_of_cells[0];             }
+	
+size_t Mesh::Connected::HighDim::number_of ( const tag::Segments & )
+// virtual from Mesh::Core
+{	assert ( this->nb_of_cells.size() > 1 );
+	return this->nb_of_cells[1];             }
+	
+size_t Mesh::Fuzzy::number_of ( const tag::CellsOfDim &, size_t d )
+// virtual from Mesh::Core
+{	assert ( d < this->get_dim_plus_one() );
+	assert ( this->nb_of_cells.size() > d );
+	return this->nb_of_cells[d];             }
+	
+size_t Mesh::Fuzzy::number_of ( const tag::Vertices )
+// virtual from Mesh::Core
+{	assert ( this->cells.size() > 0 );
+	return this->cells[0].size();       }
+	
+size_t Mesh::Fuzzy::number_of ( const tag::Segments & )
+// virtual from Mesh::Core
+{	assert ( 1 < this->get_dim_plus_one() );
+	assert ( this->cells.size() > 1 );
+	return this->cells[1].size();       }
+	
 
-
-Cell::Core * Mesh::Positive::first_vertex ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Core::first_vertex ( )  // virtual
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "only one-dimensional meshes have first vertex" << std::endl;
 	exit ( 1 );                                                                                     }
 
-Cell::Core * Mesh::Positive::last_vertex ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Core::last_vertex ( )  // virtual
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "only one-dimensional meshes have last vertex" << std::endl;
 	exit ( 1 );                                                                                     }
 
-Cell::Core * Mesh::Positive::first_segment ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Core::first_segment ( )  // virtual
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "only one-dimensional meshes have first segment" << std::endl;
 	exit ( 1 );                                                                                     }
 
-Cell::Core * Mesh::Positive::last_segment ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Core::last_segment ( )  // virtual
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "only one-dimensional meshes have last segment" << std::endl;
 	exit ( 1 );                                                                                     }
 
-Cell::Core * Mesh::OneDim::Positive::first_vertex ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Connected::OneDim::first_vertex ( )
+// virtual from Mesh::Core, here overriden
 // returns a negative vertex
 {	this->order();
 	assert ( this->first_ver );
@@ -191,7 +263,8 @@ Cell::Core * Mesh::OneDim::Positive::first_vertex ( )  // virtual from Mesh::Cor
 	assert ( this->last_ver->is_positive() );
 	return this->first_ver;                         }
 
-Cell::Core * Mesh::OneDim::Positive::last_vertex ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Connected::OneDim::last_vertex ( )
+// virtual from Mesh::Core, here overriden
 {	this->order();
 	assert ( this->first_ver );
 	assert ( this->first_ver != Cell::ghost );
@@ -200,7 +273,8 @@ Cell::Core * Mesh::OneDim::Positive::last_vertex ( )  // virtual from Mesh::Core
 	assert ( this->last_ver->is_positive() );
 	return this->last_ver;                          }
 
-Cell::Core * Mesh::OneDim::Positive::first_segment ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Connected::OneDim::first_segment ( )
+// virtual from Mesh::Core, here overriden
 {	this->order();
 	assert ( this->first_ver );
 	assert ( this->first_ver != Cell::ghost );
@@ -215,7 +289,8 @@ Cell::Core * Mesh::OneDim::Positive::first_segment ( )  // virtual from Mesh::Co
 	assert ( it->second );  // check what happens for an empty mesh
 	return it->second;                                               }
 
-Cell::Core * Mesh::OneDim::Positive::last_segment ( )  // virtual from Mesh::Core
+Cell::Core * Mesh::Connected::OneDim::last_segment ( )
+// virtual from Mesh::Core, here overriden
 {	Cell::Core * ver = this->last_vertex();
 	assert ( ver );  assert ( ver->is_positive() );
 	std::map<Mesh::Core*,Cell::Core*>::const_iterator
@@ -377,51 +452,6 @@ bool Cell::Negative::belongs_to ( Mesh::Core * msh, const tag::NotOriented & ) c
 		rev->meshes [ Mesh::diff ( msh->get_dim_plus_one(), this->get_dim() + 1 ) ];
 	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it = mmap.find(msh);
 	return ( it != mmap.end() );                                                                }
-
-//-----------------------------------------------------------------------------//
-
-
-Cell::Core * Cell::Negative::build_reverse ( )
-{	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
-	std::cout << "do not use build_reverse on a negative cell" << std::endl;
-	exit ( 1 );                                                                                     }
-
-Cell::Core * Cell::Positive::Vertex::build_reverse ( )
-// virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this );
-	return this->reverse_p;                                                    }
-
-Cell::Core * Cell::Positive::Segment::build_reverse ( )
-// virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this );
-	return this->reverse_p;                                                     }
-
-Cell::Core * Cell::Positive::HighDim::build_reverse ( )
-// virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative ( tag::reverse_of, this );
-	return this->reverse_p;                                                   }
-
-Cell::Core * Cell::Positive::reverse ( const tag::BuildIfNotExists & )
-// virtual from Cell::Core
-{	if ( this->reverse_p == nullptr )  this->reverse_p = this->build_reverse();
-	assert ( this->reverse_p );
-	assert ( not this->reverse_p->is_positive() );
-	return this->reverse_p;                                                      }
-
-Cell::Core * Cell::Negative::reverse ( const tag::BuildIfNotExists & )
-// virtual from Cell::Core
-{	assert ( this->reverse_p );
-	assert ( this->reverse_p->is_positive() );
-	return this->reverse_p;                      }
-
-Mesh Mesh::Positive::reverse ( Mesh::Core * core )  // static
-// negative meshes have no core, the core points to the (positive) reverse mesh
-{	return Mesh ( tag::whose_core_is, core, tag::is_negative, tag::build_cells_if_necessary );  }
-
-Mesh Mesh::Negative::reverse ( Mesh::Core * core )
-// NegativeMesh is a namespace
-// negative meshes have no core, the core points to the (positive) reverse mesh
-{	return Mesh ( tag::whose_core_is, core, tag::is_positive );  }
 
 //-----------------------------------------------------------------------------//
 
