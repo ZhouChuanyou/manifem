@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.21
+// mesh.h 2021.03.24
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -42,6 +42,7 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct SeenFrom { };  static const SeenFrom seen_from;
 	struct MayNotExist { };  static const MayNotExist may_not_exist;
 	struct SurelyExists { };  static const SurelyExists surely_exists;
+	struct CellsSurelyExist { };  static const CellsSurelyExist cells_surely_exist;
 	struct OfDimension { };  static const OfDimension of_dim;
 	                         static const OfDimension of_dimension;
 	struct OfDimensionOne { };  static const OfDimensionOne of_dim_one;
@@ -85,6 +86,7 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct HasSize { };  static const HasSize has_size;
 	struct ReserveSize { };  static const ReserveSize reserve_size;
 	struct Pretty { };  static const Pretty pretty;
+	struct Adapt { };  static const Adapt adapt;
 	struct OfDegree { };  static const OfDegree of_degree;
 	enum WithTriangles { with_triangles, not_with_triangles };
 	struct Join { };  static const Join join;
@@ -243,6 +245,7 @@ inline bool operator< ( const Cell & c1, const Cell & c2 )
 
 
 // roughly speaking, a mesh is a collection of cells of the same dimension
+
 // an orientation of the mesh
 // is nothing more than an orientation of each of its cells (of maximum dimension)
 // but these orientations cannot be arbitrary, they must be compatible
@@ -272,8 +275,7 @@ class Mesh
 	// instead, we keep here a pointer to the direct (positive) core
 	// thus, for meshes, 'core' points always to a positive Mesh::Core
 
-	class Sign;  // mimiks virtual methods
-	// emulate virtual methods
+	class Sign;  // emulate virtual methods
 	// this is how we distinguish between a positive mesh and a negative one
 	const Sign sign;
 
@@ -293,15 +295,17 @@ class Mesh
                 const tag::IsPositive & ispos = tag::is_positive );
 	// builds a negative mesh from a positive one, assuming all cells have reverse :
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core *, const tag::IsNegative &,
-	              const tag::SurelyExists &                                        );
+	              const tag::CellsSurelyExist &                                    );
 	// builds a negative mesh from a positive one, creating reverse cells if necessary :
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core *, const tag::IsNegative &,
                 const tag::BuildCellsIfNec &                                     );
 
 	Mesh ( const tag::DeepCopy &, const Mesh & );
 
+	// we are still in class Mesh
 	// geometric constructors are defined in global.cpp
 	// segment, triangle, quadrangle, join
+	
 	inline Mesh ( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n );
 	inline Mesh ( const tag::Pretty &, const tag::Segment &,
                 const Cell & A, const Cell & B, const tag::DividedIn &, size_t n );
@@ -322,8 +326,9 @@ class Mesh
 	inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh & );
 	inline Mesh ( const tag::Join &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
 	inline Mesh ( const tag::Join &,
-	const Mesh &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
+	              const Mesh &, const Mesh &, const Mesh &, const Mesh &, const Mesh & );
  
+	// we are still in class Mesh
 	// constructors with tag::Progressive are defined in progressive.cpp
 	
 	Mesh ( const tag::Progressive &, const tag::DesiredLength &, const Function & length );
@@ -398,6 +403,8 @@ class Mesh
 	:	Mesh ( tag::progressive, tag::start_at, start, tag::stop_at, start,
 		       tag::desired_length, length, tag::inherent_orientation       )  { }
 
+	// we are still in class Mesh
+	
 	void pretty_constructor ( const tag::Segment &, const Cell & A, const Cell & B,
 	                          const tag::DividedIn &, size_t n );
 	void pretty_constructor ( const tag::Triangle &, const Mesh & AB,
@@ -418,6 +425,8 @@ class Mesh
 	inline Cell first_segment ( ) const;
 	inline Cell last_segment ( ) const;
 
+	// we are still in class Mesh
+	
 	inline Cell cell_in_front_of
 	( const Cell face, const tag::SurelyExists & se = tag::surely_exists ) const;
 
@@ -440,6 +449,7 @@ class Mesh
 	inline Cell::Core * cell_behind
 	( const Cell::Core * face_p, const tag::MayNotExist & ) const;
 		
+	// we are still in class Mesh
 	// the eight methods below are only relevant for STSI meshes
 
 	inline Cell cell_in_front_of
@@ -473,37 +483,39 @@ class Mesh
 	inline Cell::Core * cell_behind
 	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
 	  const tag::MayNotExist &                                                       ) const;
-		
+
+	// we are still in class Mesh
+	
 	void join_list ( const std::list<Mesh> & l );
 
+	// method baricenter defined in manifold.h
 	void inline baricenter ( const Cell & ver, const Cell & seg );
-	// defined in manifold.h
 
-	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d ) const;
-	inline CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & ) const;
-	inline CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::Reverse & ) const;
-	inline CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-	  const tag::ReverseOrder &                                          ) const;
-	inline CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
-	  const tag::ForcePositive &                                        ) const;
 	inline CellIterator iterator ( const tag::OverVertices & ) const;
-	inline CellIterator iterator ( const tag::OverVertices &, const tag::ForcePositive & ) const;
 	inline CellIterator iterator ( const tag::OverVertices &, const tag::ReverseOrder & ) const;
-	inline CellIterator iterator
-	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ReverseOrder & ) const;
+	inline CellIterator iterator ( const tag::OverVertices &, const tag::ForcePositive & ) const;
 	inline CellIterator iterator
 	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ForcePositive & ) const;
+	inline CellIterator iterator
+	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ReverseOrder & ) const;
 	inline CellIterator iterator ( const tag::OverSegments & ) const;
 	inline CellIterator iterator ( const tag::OverSegments &, const tag::ForcePositive & ) const;
 	inline CellIterator iterator ( const tag::OverSegments &, const tag::ReverseOrder & ) const;
 	inline CellIterator iterator
-	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ReverseOrder & ) const;
-	inline CellIterator iterator
 	( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ForcePositive & ) const;
+	inline CellIterator iterator
+	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ReverseOrder & ) const;
+	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d ) const;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::Reverse & ) const;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & ) const;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ForcePositive &                                        ) const;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+	  const tag::ReverseOrder &                                          ) const;
 
 	// methods draw_ps and export_msh defined in global.cpp
 
@@ -682,10 +694,10 @@ class Cell::Positive : public Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
 
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
-	// virtual void add_to ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
-	// virtual void remove_from ( Mesh::Core * msh ) = 0;  // declared in Cell::Core
-	// virtual void glue_on_my_bdry ( Cell::Core * ) = 0;  // declared in Cell::Core
-	// virtual void cut_from_my_bdry ( Cell::Core * ) = 0;  // declared in Cell::Core
+	// void add_to ( Mesh::Core * msh ) remains pure virtual from Cell::Core
+	// void remove_from ( Mesh::Core * msh ) remains pure virtual from Cell::Core
+	// void glue_on_my_bdry ( Cell::Core * ) remains pure virtual from Cell::Core
+	// void cut_from_my_bdry ( Cell::Core * ) remains pure virtual from Cell::Core
 
 	inline void glue_common ( Cell::Core * face );
 	inline void cut_common ( Cell::Core * face );
@@ -1056,27 +1068,14 @@ class Mesh::Core
 
 	// iterators defined in iterator.cpp
 	virtual CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::this_mesh_is_positive & ) = 0;
-	virtual CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::this_mesh_is_negative & ) = 0;
-	virtual CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::Reverse & ) = 0;
-	virtual CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-	  const tag::ReverseOrder &                                          ) = 0;
-	virtual CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
-	  const tag::ForcePositive &                                        ) = 0;
-	virtual CellIterator iterator
 	( const tag::OverVertices &, const tag::ThisMeshIsPositive & ) = 0;
 	virtual CellIterator iterator
-	( const tag::OverVertices &, const tag::ThisMeshIsNegative & ) = 0;
-	virtual CellIterator iterator ( const tag::OverVertices &, const tag::ForcePositive & ) = 0;
-	virtual CellIterator iterator ( const tag::OverVertices &, const tag::ReverseOrder & ) = 0;
+	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ThisMeshIsPositive & ) = 0;
 	virtual CellIterator iterator
-	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ReverseOrder & ) = 0;
+	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & ) = 0;
 	virtual CellIterator iterator
-	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ForcePositive & ) = 0;
+	( const tag::OverVertices &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsPositive & ) = 0;
 	virtual CellIterator iterator ( const tag::OverSegments & ) = 0;
 	virtual CellIterator iterator ( const tag::OverSegments &, const tag::ForcePositive & ) = 0;
 	virtual CellIterator iterator ( const tag::OverSegments &, const tag::ReverseOrder & ) = 0;
@@ -1084,6 +1083,31 @@ class Mesh::Core
 	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ReverseOrder & ) = 0;
 	virtual CellIterator iterator
 	( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ForcePositive & ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & ) = 0;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & );
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & );
+	virtual CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder & ) = 0;
+	inline CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+	  const tag::ReverseOrder &                                          );
+	virtual CellIterator iterator
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ForcePositive &                                        ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverVertices &, const tag::ThisMeshIsNegative & ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ThisMeshIsNegative & ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsNegative & ) = 0;
+	virtual CellIterator iterator
+	( const tag::OverVertices &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsNegative & ) = 0;
 
 	// here is where the low-level linking between cells and meshes happens
 	// do not use directly
@@ -1135,54 +1159,80 @@ class Mesh::ZeroDim : public Mesh::Core
 	// iterators are virtual from Mesh::Core and are defined in iterator.cpp
 
 	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & );
-
-	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & );
-
-	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & );
-
-	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::Reverse & );
-
-	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-	  const tag::ReverseOrder &                                          );
-
-	CellIterator iterator
-	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
-	  const tag::ForcePositive &                                        );
-
-	CellIterator iterator
 	( const tag::OverVertices &, const tag::ThisMeshIsPositive & );
 	// we iterate over the two vertices, first base (negative) then tip (positive)
 
 	CellIterator iterator
+	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ThisMeshIsPositive & );
+	// we iterate over the two vertices, first tip (positive) then base (negative)
+
+	CellIterator iterator
+	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & );
+	// we iterate over the two vertices, first base then tip (both positive)
+
+	CellIterator iterator
+	( const tag::OverVertices &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsPositive & );
+	// we iterate over the two vertices, first tip then base (both positive)
+
+	CellIterator iterator
 	( const tag::OverVertices &, const tag::ThisMeshIsNegative & );
-	// we iterate over the two vertices, first tip.reverse() then base.reverse()
-
-	CellIterator iterator ( const tag::OverVertices &, const tag::ForcePositive & );
-
-	CellIterator iterator ( const tag::OverVertices &, const tag::ReverseOrder & );
+	// we iterate over the two vertices, first base (negative) then tip (positive)
 
 	CellIterator iterator
-	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ReverseOrder & );
+	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ThisMeshIsNegative & );
+	// we iterate over the two vertices, first tip (positive) then base (negative)
 
 	CellIterator iterator
-	( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ForcePositive & );
-
-	CellIterator iterator ( const tag::OverSegments & );
-
-	CellIterator iterator ( const tag::OverSegments &, const tag::ForcePositive & );
-
-	CellIterator iterator ( const tag::OverSegments &, const tag::ReverseOrder & );
+	( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsNegative & );
+	// we iterate over the two vertices, first base then tip (both positive)
 
 	CellIterator iterator
-	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ReverseOrder & );
+	( const tag::OverVertices &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsNegative & );
+	// we iterate over the two vertices, first tip then base (both positive)
 
-	CellIterator iterator
-	( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ForcePositive & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ThisMeshIsPositive & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ThisMeshIsPositive & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsPositive & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ThisMeshIsNegative & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ThisMeshIsNegative & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ForcePositive &, const tag::ThisMeshIsNegative & );
+	CellIterator iterator  // execution forbidden
+	( const tag::OverSegments &, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsNegative & );
+
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ThisMeshIsPositive &                                   );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+	  const tag::ThisMeshIsPositive &                                    );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsPositive &       );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ThisMeshIsNegative &                                   );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+	  const tag::ThisMeshIsNegative &                                    );
+	CellIterator iterator  // only allowed for d == 0
+	( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+	  const tag::ForcePositive &, const tag::ThisMeshIsNegative &       );
 
 #ifndef NDEBUG
 	std::string get_name();  // virtual from Mesh::Core
@@ -1561,7 +1611,7 @@ inline Mesh::Mesh ( const tag::OfDimensionOne &, const tag::IsPositive & ispos )
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsPositive & ispos )
 // by default, ispos = tag::is_positive, so may be called with only two arguments
-// used in Mesh::Negative::reverse and Cell::boundary
+// used in Mesh::Negative::reverse and in Cell::boundary
 : core { c }, meth { & Mesh::Positive::methods }
 {	assert ( c );
 	assert ( ( meth == & Mesh::Positive::methods_pos ) or
@@ -1569,11 +1619,14 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsPosit
 
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
-                    const tag::SurelyExists &                                          )
+                    const tag::CellsSurelyExist &                                      )
 // builds a negative mesh from a positive one, assuming that reverse cells exist
-// used in Cell::boundary and Mesh::Mesh below
+// used in Cell::boundary and in Mesh::Mesh below
 : core { c }, meth { & Mesh::Negative::methods }
 {	assert ( c );
+#IFNDEF NDEBUG
+	// check that all cells have reverse
+#ENDIF
 	assert ( ( meth == & Mesh::Positive::methods_neg ) or
 	         ( meth == & Mesh::OneDim::Positive::methods_neg ) );  }
 
@@ -1582,7 +1635,7 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
                     const tag::BuildCellsIfNec & b                                     )
 // builds a negative mesh from a positive one, creating reverse cells if necessary
 // used in Mesh::Positive::reverse
-:	Mesh ( tag::whose_core_is, c, tag::is_negative, tag::surely_exists )
+:	Mesh ( tag::whose_core_is, c, tag::is_negative, tag::cells_surely_exist )
 {	std::list < Cell::Core * > & cls = c->cells.back();  // maximum dimension
 	std::list<Cell::Core*>::iterator it = cls.begin(), it_e = cls.end();
 	// cell[0] means cells of same dimension as the mesh
@@ -2033,15 +2086,15 @@ inline Mesh Cell::boundary ( ) const
 	else // negative mesh, boundary of negative cell, faces already have reverse
 	{	assert ( this->core->reverse_p );
 		if ( this->dim() == 1 )
-		{	Cell::Positive::Segment * seg =
-				assert_cast < Cell::Core*, Cell::Positive::Segment* > ( this->core );
+		{	Cell::Positive::Segment * rev_seg =
+				assert_cast < Cell::Core*, Cell::Positive::Segment* > ( this->core->reverse_p );
 			// return reversed mesh, extremities surely exist
-			return Mesh ( tag::boundary_of, tag::positive, tag::segment, seg,
-		                tag::is_negative, tag::surely_exists );                    }
+			return Mesh ( tag::boundary_of, tag::positive, tag::segment, rev_seg,
+		                tag::is_negative, tag::cells_surely_exist                );  }
 		Cell::Positive * cll = (Cell::Positive*) this->core->reverse_p;
 		// return reversed mesh, faces surely exist
 		return Mesh ( tag::whose_core_is, cll->boundary_p,
-		              tag::is_negative, tag::surely_exists );                         }        }
+		              tag::is_negative, tag::cells_surely_exist );                             }  }
 
 
 inline Cell Cell::tip () const
@@ -2364,46 +2417,6 @@ inline void Mesh::OneDim::Positive::order ( )
 //-----------------------------------------------------------------------------//
 
 
-inline CellIterator Mesh::iterator	( const tag::OverCellsOfDim &, size_t d ) const
-{	if ( this->is_positive() )
-		return this->core->iterator ( tag::over_cells_of_dim, d, tag::this_mesh_is_positive );
-	// else
-	return this->core->iterator ( tag::over_cells_of_dim, d, tag::this_mesh_is_negative );   }
-
-inline CellIterator Mesh::iterator
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder & ) const
-{	if ( this->is_positive() )
-		return this->core->iterator
-			( tag::over_cells_of_dim, d, tag::reverse_order, tag::this_mesh_is_positive );
-	// else
-	return this->core->iterator
-		( tag::over_cells_of_dim, d, tag::reverse_order, tag::this_mesh_is_negative );    }
-
-inline CellIterator Mesh::iterator
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & ) const
-{	if ( this->is_positive() )
-		return this->core->iterator
-			( tag::over_cells_of_dim, d, tag::force_positive, tag::this_mesh_is_positive );
-	// else
-	return this->core->iterator
-		( tag::over_cells_of_dim, d, tag::force_positive, tag::this_mesh_is_negative );    }
-
-inline CellIterator Mesh::iterator
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-  const tag::ReverseOrder &                                           ) const
-{	if ( this->is_positive() )
-		return this->core->iterator ( tag::over_cells_of_dim, d, tag::force_positive,
-		                              tag::reverse_order, tag::this_mesh_is_positive );
-	// else
-	return this->core->iterator ( tag::over_cells_of_dim, d, tag::force_positive,
-	                              tag::reverse_order, tag::this_mesh_is_negative );     }
-
-inline CellIterator Mesh::iterator
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
-  const tag::ForcePositive &                                         ) const
-{	return this->iterator
-		( tag::over_cells_of_dim, d, tag::force_positive, tag::reverse_order );  }
-
 inline CellIterator Mesh::iterator ( const tag::OverVertices & ) const
 {	if ( this->is_positive() )
 		return this->core->iterator ( tag::over_vertices, tag::this_mesh_is_positive );
@@ -2417,7 +2430,7 @@ inline CellIterator Mesh::iterator
 			( tag::over_vertices, tag::force_positive, tag::this_mesh_is_positive );
 	// else
 	return this->core->iterator
-		( tag::over_vertices, tag::force_positive, tag::this_mesh_is_negative );     }
+		( tag::over_vertices, tag::force_positive, tag::this_mesh_is_positive );    }
 
 inline CellIterator Mesh::iterator
 ( const tag::OverVertices &, const tag::ReverseOrder & ) const
@@ -2431,11 +2444,13 @@ inline CellIterator Mesh::iterator
 inline CellIterator Mesh::iterator
 ( const tag::OverVertices &, const tag::ForcePositive &, const tag::ReverseOrder & ) const
 {	if ( this->is_positive() )
-		return this->core->iterator ( tag::over_vertices, tag::force_positive,
-		                              tag::reverse_order, tag::this_mesh_is_positive );
+		return this->core->iterator
+			( tag::over_vertice, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_positive );
 	// else
-	return this->core->iterator ( tag::over_vertices, tag::force_positive,
-	                              tag::reverse_order, tag::this_mesh_is_negative );     }
+	return this->core->iterator
+			( tag::over_vertices, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_negative );  }
 
 inline CellIterator Mesh::iterator
 ( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ForcePositive & ) const
@@ -2455,7 +2470,7 @@ inline CellIterator Mesh::iterator
 			( tag::over_segments, tag::force_positive, tag::this_mesh_is_positive );
 	// else
 	return this->core->iterator
-		( tag::over_segments, tag::force_positive, tag::this_mesh_is_negative );     }
+		( tag::over_segments, tag::force_positive, tag::this_mesh_is_positive );    }
 
 inline CellIterator Mesh::iterator
 ( const tag::OverSegments &, const tag::ReverseOrder & ) const
@@ -2469,16 +2484,56 @@ inline CellIterator Mesh::iterator
 inline CellIterator Mesh::iterator
 ( const tag::OverSegments &, const tag::ForcePositive &, const tag::ReverseOrder & ) const
 {	if ( this->is_positive() )
-		return this->core->iterator ( tag::over_segments, tag::force_positive,
-		                              tag::reverse_order, tag::this_mesh_is_positive );
+		return this->core->iterator
+			( tag::over_segments, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_positive );
 	// else
-	return this->core->iterator ( tag::over_segments, tag::force_positive,
-	                              tag::reverse_order, tag::this_mesh_is_negative );     }
+	return this->core->iterator
+			( tag::over_segments, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_negative );  }
 
 inline CellIterator Mesh::iterator
 ( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ForcePositive & ) const
 {	return this->iterator
 		( tag::over_segments, tag::force_positive, tag::reverse_order );  }
+
+inline CellIterator Mesh::iterator	( const tag::OverCellsOfDim &, size_t d ) const
+{	if ( this->is_positive() )
+		return this->core->iterator ( tag::over_cells_of_dim, d, tag::this_mesh_is_positive );
+	// else
+	return this->core->iterator ( tag::over_cells_of_dim, d, tag::this_mesh_is_negative );   }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder & ) const
+{	if ( this->is_positive() )
+		return this->core->iterator
+			( tag::over_cells_of_dim, d, tag::reverse_order, tag::this_mesh_is_positive );
+	// else
+	return this->core->iterator
+		( tag::over_cells_of_dim, d, tag::reverse_order, tag::this_mesh_is_negative );    }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & ) const
+{	return CellIterator ( tag::adapt, tag::force_positive,
+		std::move ( this->iterator ( const tag::OverCellsOfDim &, size_t d ) ) );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+  const tag::ReverseOrder &                                           ) const
+{	if ( this->is_positive() )
+		return this->core->iterator
+			( tag::over_cells_of_dim, d, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_positive );
+	// else
+	return this->core->iterator
+			( tag::over_cells_of_dim, d, tag::reverse_order,
+			  tag::force_positive, tag::this_mesh_is_negative );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+  const tag::ForcePositive &                                         ) const
+{	return this->iterator
+		( tag::over_cells_of_dim, d, tag::force_positive, tag::reverse_order );  }
 
 //-----------------------------------------------------------------------------//
 

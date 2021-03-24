@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.03.21
+// mesh.cpp 2021.03.24
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -622,16 +622,17 @@ void Mesh::OneDim::Positive::print_everything ( )  // virtual from Mesh::Core
 
 void Cell::Positive::Vertex::glue_on_my_bdry ( Cell::Core * )
 // virtual from Cell::Core
-{	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "Vertices have no boundary." << std::endl;
-	exit ( 1 );                                                                                   }
+	exit ( 1 );                                               }
 
 
 void Cell::Positive::Segment::glue_on_my_bdry ( Cell::Core * ver )
 // virtual from Cell::Core
 
 {	assert ( ver->get_dim() == 0 );
-	ver->add_to ( (Mesh::Core*) this );
+	ver->add_to ( (Mesh::Core*) this );  // now there are zero-dim meshes !!
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	// 'add_to' is virtual, so the computer will choose the right version
 	// (Cell::Positive::Vertex::add_to or Cell::Negative::Vertex::add_to)
@@ -657,16 +658,17 @@ void Cell::Negative::glue_on_my_bdry ( Cell::Core * cll )
 
 void Cell::Positive::Vertex::cut_from_my_bdry ( Cell::Core * )
 // virtual from Cell::Core
-{	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "Vertices have no boundary." << std::endl;
-	exit ( 1 );                                                                                   }
+	exit ( 1 );                                               }
 
 
 void Cell::Positive::Segment::cut_from_my_bdry ( Cell::Core * ver )
 // virtual from Cell::Core
 
 {	assert ( ver->get_dim() == 0 );
-	ver->remove_from ( (Mesh::Core*) this );
+	ver->remove_from ( (Mesh::Core*) this );  // now there are zero-dim meshes !!
 	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	// 'remove_from' is virtual, so the computer will choose the right version
 	// (Cell::Positive::Vertex::remove_from or Cell::Negative::Vertex::remove_from)
