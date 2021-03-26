@@ -169,10 +169,6 @@ size_t Mesh::Fuzzy::get_dim_plus_one ( )  // virtual from Mesh::Core
 {	return this->cells.size();  }
 
 	
-size_t Mesh::ZeroDim::number_of ( const tag::CellsOfDim &, size_t d )
-// virtual from Mesh::Core
-{	assert ( d == 0 );  return 2;  }
-	
 size_t Mesh::ZeroDim::number_of ( const tag::Vertices & )
 // virtual from Mesh::Core
 {	return 2;  }
@@ -183,20 +179,27 @@ size_t Mesh::ZeroDim::number_of ( const tag::Segments & )
 	std::cout << "zero-dimensional meshes have have no segments" << std::endl;
 	exit ( 1 );                                                                                     }
 	
-size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::ZeroDim::number_of ( const tag::CellsOfDim &, size_t d )
 // virtual from Mesh::Core
-{	if ( d == 1 ) return this->nb_of_segments;
-	assert ( d == 0 );
-	return this->nb_of_segments + 1;             }
+{	assert ( d == 0 );  return 2;  }
 	
 size_t Mesh::Connected::OneDim::number_of ( const tag::Vertices & )
 // virtual from Mesh::Core
-{	return this->nb_of_segments + 1;  }  // !!!
-// a loop has the same number of vertices as segments !!
+{	if ( first_ver == last_ver )  // closed loop
+		return this->nb_of_segments;
+	return this->nb_of_segments + 1;  }
 	
 size_t Mesh::Connected::OneDim::number_of ( const tag::Segments & )
 // virtual from Mesh::Core
 {	return this->nb_of_segments;  }
+	
+size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, size_t d )
+// virtual from Mesh::Core
+{	if ( d == 1 ) return this->nb_of_segments;
+	assert ( d == 0 );
+	if ( first_ver == last_ver )  // closed loop
+		return this->nb_of_segments;
+	return this->nb_of_segments + 1;             }
 	
 size_t Mesh::Connected::HighDim::number_of ( const tag::CellsOfDim &, size_t d )
 // virtual from Mesh::Core

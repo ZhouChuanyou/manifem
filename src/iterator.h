@@ -1,5 +1,5 @@
 
-// iterator.h 2021.03.23
+// iterator.h 2021.03.25
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -31,6 +31,12 @@ namespace tag {
 	static const OverTwoVerticesOfPosSeg over_two_vertices_of_pos_seg;
 	struct OverTwoVerticesOfNegSeg;
 	static const OverTwoVerticesOfNegSeg over_two_vertices_of_neg_seg;
+	struct OverVerticesOf { };  static const OverVerticesOf over_vertices_of;
+	struct OverSegmentsOf { };  static const OverSegmentsOf over_segments_of;
+	struct OverCellsOf { };  static const OverCellsOf over_cells_of;
+	struct FuzzyPosMesh { };  static const FuzzyPosMesh fuzzy_pos_mesh;
+	struct AsTheyAre { };  static const AsTheyAre as_they_are;
+	struct ReverseEachCell { };  static const ReverseEachCell reverse_each_cell;
 }
 
 
@@ -41,7 +47,7 @@ class CellIterator
 // iterates over all cells of a given mesh (cells of given dimension)
 
 // for maximum dimension (equal to the dimension of the mesh) returns oriented cells
-// which may be positive or negative
+// which may be positive or negative (tag::force_positive overrides this)
 // for lower dimension, returns positive cells
 
 // or, iterates over all cells above a given cell
@@ -55,20 +61,73 @@ class CellIterator
 	inline CellIterator ( const CellIterator & it );
 	inline CellIterator ( CellIterator && it );
 
-	inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &, Cell::Positive::Segment * );
 	inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
-	                      const tag::ForcePositive &, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg         )
+	// we iterate over the two vertices, first base (negative) then tip (positive)
+	:	core { new CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder ( seg ) }
+	{ }
+		
 	inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
-	                      const tag::ReverseOrder &, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg, const tag::ReverseOrder & )
+	// we iterate over the two vertices, first tip (positive) then base (negative)
+	:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder ( seg ) }
+	{ }
+
 	inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
-    const tag::ReverseOrder &, const tag::ForcePositive &,, Cell::Positive::Segment * );
-	inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg, const tag::ForcePositive & )
+	// we iterate over the two vertices, first base then tip (both positive)
+	:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ForcePositive ( seg ) }
+	{ }
+
+	inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
+	                      Cell::Positive::Segment * seg,
+	                      const tag::ReverseOrder &, const tag::ForcePositive & )
+	// we iterate over the two vertices, first tip then base (both positive)
+	:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::ForcePositive ( seg ) }
+	{ }
+		
 	inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
-	                      const tag::ForcePositive &, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg         )
+	// we iterate over the two vertices, first base (negative) then tip (positive)
+	:	core { new CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder ( seg ) }
+	{ }
+		
 	inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
-	                      const tag::ReverseOrder &, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg, const tag::ReverseOrder & )
+	// we iterate over the two vertices, first tip (positive) then base (negative)
+	:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder ( seg ) }
+	{ }
+
 	inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
-    const tag::ReverseOrder &, const tag::ForcePositive &,, Cell::Positive::Segment * );
+	                      Cell::Positive::Segment * seg, const tag::ForcePositive & )
+	// we iterate over the two vertices, first base then tip (both positive)
+	:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ForcePositive ( seg ) }
+	{ }
+
+	inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
+	                      Cell::Positive::Segment * seg,
+	                      const tag::ReverseOrder &, const tag::ForcePositive & )
+	// we iterate over the two vertices, first tip then base (both positive)
+	:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::ForcePositive ( seg ) }
+	{ }
+		
+	inline CellIterator ( const tag::OverCellsOf &, Mesh::Fuzzy * msh,
+	                      const tag::FuzzyPosMesh &,
+	                      const tag::CellsOfDim &, size_t, const tag::AsTheyAre & )
+	: core { new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( d )  }
+	{ }
+
+	inline CellIterator ( const tag::OverCellsOf &, Mesh::Fuzzy * msh,
+	                      const tag::FuzzyPosMesh &,
+	                      const tag::CellsOfDim &, size_t, const tag::ReverseEachCell & )
+	: core { new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell ( d )  }
+	{ }
+
+	inline CellIterator ( const tag::OverCellsOf &, Mesh::Fuzzy * msh,
+	                      const tag::FuzzyPosMesh &,
+	                      const tag::CellsOfDim &, size_t, const tag::ForcePositive &         )
+	: core { new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive ( d )  }
+	{ }
 
 	inline ~CellIterator ( ) { };
 	
@@ -81,9 +140,9 @@ class CellIterator
 	inline bool in_range ( );
 
 	struct Over
-	{	class TwoVerticesOfSeg;  };
-	struct TwoVerticesOfPosSeg  {  class NormalOrder;  class ReverseOrder;  };
-	struct TwoVerticesOfNegSeg  {  class NormalOrder;  class ReverseOrder;  };
+	{	class TwoVerticesOfSeg;  class CellsOfFuzzyMesh;
+		struct TwoVerticesOfPosSeg  {  class NormalOrder;  class ReverseOrder;  };
+		struct TwoVerticesOfNegSeg  {  class NormalOrder;  class ReverseOrder;  };  };
 	struct Adaptor  {  class ForcePositive;  };
 
 };  // end of class CellIterator
@@ -166,7 +225,7 @@ class CellIterator::Over::TwoVerticesOfSeg : public CellIterator::Core
 	size_t try;
 
 	inline TwoVerticesOfSeg ( Cell::Positive::Segment * seg )
-	:	seg_p { seg } { };
+	:	CellIterator::Core (), seg_p { seg } { };
 	
 	void reset ( );  // virtual from CellIterator::Core
 	void reset ( Cell::Core * cll );
@@ -256,55 +315,98 @@ class CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::ForcePositive
 };  // end of class CellIterator::Over::TwoVerticesOfSeg::ReverseOrder
 
 
-inline CellIterator::CellIterator
-( const tag::OverTwoVerticesOfPosSeg &, Cell::Positive::Segment * seg )
-// we iterate over the two vertices, first base (negative) then tip (positive)
-:	core { new CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder ( seg ) }
-{ }
-	
-inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
-                      const tag::ReverseOrder &, Cell::Positive::Segment * )
-// we iterate over the two vertices, first tip (positive) then base (negative)
-:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder ( seg ) }
-{ }
-	
-inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &,
-                      const tag::ForcePositive &, Cell::Positive::Segment * )
-// we iterate over the two vertices, first base then tip (both positive)
-:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ForcePositive ( seg ) }
-{ }
+class CellIterator::Over::CellsOfFuzzyMesh : public CellIterator::Core
 
-inline CellIterator ( const tag::OverTwoVerticesOfPosSeg &, const tag::ReverseOrder &,
-                      const tag::ForcePositive &, Cell::Positive::Segment *            )
-// we iterate over the two vertices, first tip then base (both positive)
-:	core { new CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::ForcePositive ( seg ) }
-{ }
+{	public :
 
-inline CellIterator::CellIterator
-( const tag::OverTwoVerticesOfNegSeg &, Cell::Positive::Segment * seg )
-// we iterate over the two vertices, first base (negative) then tip (positive)
-:	core { new CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder ( seg ) }
-{ }
+	std::list<Cell::Core*> * list_p;
+  std::list<Cell::Core*>::iterator iter;
+
+	inline CellsOfFuzzyMesh ( Mesh::Fuzzy * msh, size_t dim )
+	:	CellIterator::Core (), list_p { & ( msh->cells[dim] ) }
+	{	}  // no need to initialize 'iter', 'reset' will do that
 	
-inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
-                      const tag::ReverseOrder &, Cell::Positive::Segment * )
-// we iterate over the two vertices, first tip (positive) then base (negative)
-:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder ( seg ) }
-{ }
+	void reset ( );  // virtual from CellIterator::Core
+	void reset ( Cell::Core * cll );
+	// virtual from CellIterator::Core, here execution forbidden
+	// Cell::Core * deref ( )  remains pure virtual from CellIterator::Core
+	void advance ( );  // virtual from CellIterator::Core
+	bool in_range ( );  // virtual from CellIterator::Core
+
+	class AsTheyAre;  class ForcePositive;  class ReverseEachCell;
 	
-inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &,
-                      const tag::ForcePositive &, Cell::Positive::Segment * )
-// we iterate over the two vertices, first base then tip (both positive)
-:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ForcePositive ( seg ) }
-{ }
-	
-inline CellIterator ( const tag::OverTwoVerticesOfNegSeg &, const tag::ReverseOrder &,
-                      const tag::ForcePositive &, Cell::Positive::Segment *            )
-// we iterate over the two vertices, first tip then base (both positive)
-:	core { new CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::ForcePositive ( seg ) }
-{ }
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh
 
 
+class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+: public CellIterator::Over::CellsOfFuzzyMesh
+
+{	public :
+
+	std::list<Cell::Core*> * list_p;
+  std::list<Cell::Core*>::iterator iter;
+
+	inline AsTheyAre ( Mesh::Fuzzy * msh, size_t dim )
+	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
+	{	}  // no need to initialize 'iter', 'reset' will do that
+	
+	// void reset ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// void reset ( Cell::Core * cll )
+	// defined by CellIterator::Over::CellsOfFuzzyMesh, execution forbidden
+	Cell::Core * deref ( );  // virtual from CellIterator::Core
+	// void advance ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// bool in_range ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+
+
+class CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell
+: public CellIterator::Over::CellsOfFuzzyMesh
+
+{	public :
+
+	std::list<Cell::Core*> * list_p;
+  std::list<Cell::Core*>::iterator iter;
+
+	inline ReverseEachCell ( Mesh::Fuzzy * msh, size_t dim )
+	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
+	{	}  // no need to initialize 'iter', 'reset' will do that
+	
+	// void reset ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// void reset ( Cell::Core * cll )
+	// defined by CellIterator::Over::CellsOfFuzzyMesh, execution forbidden
+	Cell::Core * deref ( );  // virtual from CellIterator::Core
+	// we trust each cell has already a reverse
+	// void advance ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// bool in_range ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell
+
+
+class CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+: public CellIterator::Over::CellsOfFuzzyMesh
+
+{	public :
+
+	std::list<Cell::Core*> * list_p;
+  std::list<Cell::Core*>::iterator iter;
+
+	inline ForcePositive ( Mesh::Fuzzy * msh, size_t dim )
+	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
+	{	}  // no need to initialize 'iter', 'reset' will do that
+	
+	// void reset ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// void reset ( Cell::Core * cll )
+	// defined by CellIterator::Over::CellsOfFuzzyMesh, execution forbidden
+	Cell::Core * deref ( );  // virtual from CellIterator::Core
+	// void advance ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+	// bool in_range ( )  defined by CellIterator::Over::CellsOfFuzzyMesh
+
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+
+------------------------------------------------------------------------------------
+
+	
 class CellIterator::Adaptor::ForcePositive : public CellIterator::Core
 
 // modifies the behaviour of another CellIterator
