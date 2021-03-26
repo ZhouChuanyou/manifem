@@ -1,5 +1,5 @@
 
-// iterator.cpp 2021.03.25
+// iterator.cpp 2021.03.26
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -158,7 +158,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	exit ( 1 );                                                             }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ThisMeshIsPositive & )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // we iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
@@ -168,7 +168,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_pos_seg, seg );                         }
 	
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
   const tag::ThisMeshIsPositive &                                   )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // we iterate over the two vertices, first tip (positive) then base (negative)
@@ -179,7 +179,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_pos_seg, seg, tag::reverse_order );     }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
   const tag::ThisMeshIsPositive &                                     )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // we iterate over the two vertices, first base then tip (both positive)
@@ -190,7 +190,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_pos_seg, seg, tag::force_positive );    }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
   const tag::ForcePositive &, const tag::ThisMeshIsPositive &        )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // we iterate over the two vertices, first tip then base (both positive)
@@ -202,7 +202,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
                         tag::reverse_order, tag::force_positive );                        }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ThisMeshIsNegative & )
 // a negative zero-dimensional mesh is the boundary of a negative segment	
 // we iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
@@ -212,7 +212,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_neg_seg, seg );                         }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
   const tag::ThisMeshIsNegative &                                    )
 // a negative zero-dimensional mesh is the boundary of a negative segment	
 // we iterate over the two vertices, first tip (positive) then base (negative)
@@ -222,7 +222,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_neg_seg, seg, tag::reverse_order );     }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
   const tag::ThisMeshIsNegative &                                    )
 // a negative zero-dimensional mesh is the boundary of a negative segment	
 // we iterate over the two vertices, first base then tip (both positive)
@@ -233,7 +233,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 	return CellIterator ( tag::over_two_vertices_of_neg_seg, seg, tag::force_positive );    }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
   const tag::ReverseOrder &, const tag::ThisMeshIsNegative &          )
 // a negative zero-dimensional mesh is the boundary of a negative segment	
 // we iterate over the two vertices, first tip then base (both positive)
@@ -372,13 +372,13 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 	exit ( 1 );                                                                        }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsPositive & )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ThisMeshIsPositive & )
 {	assert ( this->get_dim_plus_one() > d );
 	return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
 												tag::cells_of_dim, 1, tag::as_they_are          );  }
 	
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
   const tag::ThisMeshIsPositive &                                   )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
@@ -386,8 +386,8 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 	exit ( 1 );                                                                        }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-  const tag::ThisMeshIsPositive &                                     )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+  const tag::ThisMeshIsPositive &                                          )
 {	assert ( this->get_dim_plus_one() > d );
 	if ( this->get_dim_plus_one() == d+1 )  // cells of maximum dimension
 		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
@@ -397,15 +397,15 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 													tag::cells_of_dim, d, tag::as_they_are          );  }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
-  const tag::ForcePositive &, const tag::ThisMeshIsPositive &        )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
+  const tag::ForcePositive &, const tag::ThisMeshIsPositive &             )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ThisMeshIsNegative & )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ThisMeshIsNegative & )
 {	assert ( this->get_dim_plus_one() > d );
 	if ( this->get_dim_plus_one() == d+1 )  // cells of maximum dimension
 		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
@@ -415,7 +415,7 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 													tag::cells_of_dim, d, tag::as_they_are          );  }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ReverseOrder &,
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
   const tag::ThisMeshIsNegative &                                    )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
@@ -423,8 +423,8 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 	exit ( 1 );                                                                        }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-  const tag::ThisMeshIsNegative &                                    )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+  const tag::ThisMeshIsNegative &                                          )
 {	assert ( this->get_dim_plus_one() > d );
 	if ( this->get_dim_plus_one() == d+1 )  // cells of maximum dimension
 		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
@@ -434,8 +434,8 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 													tag::cells_of_dim, d, tag::as_they_are          );  }
 
 CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
-  const tag::ReverseOrder &, const tag::ThisMeshIsNegative &          )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsNegative &               )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;

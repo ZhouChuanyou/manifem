@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.03.24
+// mesh.cpp 2021.03.26
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -34,6 +34,8 @@ size_t Mesh::maximum_dimension_plus_one { 4 };  // static data member
 // '3' means two-dimensional meshes, including surfaces in R^3
 // '2' would be for just polygonal lines
 // '1' doesn't make much sense - just points ?
+
+// see method Mesh::set_max_dim and paragraph 9.5 in the manual
 
 // static data members :
 std::vector < size_t > Cell::double_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0. );
@@ -697,11 +699,10 @@ void Cell::Negative::cut_from_my_bdry ( Cell::Core * cll )
 //-----------------------------------------------------------------------------//
 
 
-void Cell::Positive::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Positive::Vertex::add_to_seg ( Cell::Positive::Segment * seg )
+// virtual from Cell::Core
 	
 {	assert ( msh );
-	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
-	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' vertex does not belong yet to the mesh 'msh'
 	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
@@ -716,11 +717,17 @@ void Cell::Positive::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::C
 	seg->deep_connections ( this, Mesh::action_add );                 }
 
 
-void Cell::Positive::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Positive::Vertex::add_to_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot add a vertex to a mesh, use add_to_seg." << std::endl;
+	exit ( 1 );                                                                  }
+
+
+void Cell::Positive::Vertex::remove_from_seg ( Cell::Positive::Segment * seg )
 	
 {	assert ( msh );
-	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
-	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
 	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
@@ -738,11 +745,17 @@ void Cell::Positive::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Ce
 	seg->deep_connections ( this, Mesh::action_remove );                  }
 
 
-void Cell::Negative::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Positive::Vertex::remove_from_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot remove a vertex from a mesh, use remove_from_seg." << std::endl;
+	exit ( 1 );                                                                            }
+
+
+void Cell::Negative::Vertex::add_to_seg ( Cell::Positive::Segment * seg )
 
 { assert ( msh );
-	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
-	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->reverse_p );
 	Cell::Positive::Vertex * pos_ver = (Cell::Positive::Vertex*) this->reverse_p;
 	assert ( pos_ver->meshes.size() > 0 );
@@ -756,14 +769,20 @@ void Cell::Negative::Vertex::add_to ( Mesh::Core * msh ) // virtual from Cell::C
 	// the third component 'where' is irrelevant here
 	pos_ver->meshes[0].emplace ( std::piecewise_construct,
 		std::forward_as_tuple(msh), std::forward_as_tuple(0,1) );
-	seg->deep_connections ( pos_ver, Mesh::action_add_rev );                       }
+	seg->deep_connections ( pos_ver, Mesh::action_add_rev );                        }
 
 
-void Cell::Negative::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Negative::Vertex::add_to_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot add a vertex to a mesh, use add_to_seg." << std::endl;
+	exit ( 1 );                                                                 }
+
+
+void Cell::Negative::Vertex::remove_from_seg ( Cell::Positive::Segment * seg )
 
 { assert ( msh );
-	Cell::Positive::Segment * seg = std::static_cast < Cell::Positive::Segment * > msh;
-	// ver.meshes[0] contains segments disguised as zero-dimensional meshes
 	assert ( this->reverse_p );
 	Cell::Positive::Vertex * pos_ver = (Cell::Positive::Vertex*) this->reverse_p;
 	assert ( pos_ver->meshes.size() > 0 );
@@ -780,14 +799,31 @@ void Cell::Negative::Vertex::remove_from ( Mesh::Core * msh ) // virtual from Ce
 	assert ( field.counter_neg == 1 );
 	// field.where is meaningless
 	pos_ver->meshes[0].erase ( it );
-	seg->deep_connections ( pos_ver, Mesh::action_remove_rev );                     }
+	seg->deep_connections ( pos_ver, Mesh::action_remove_rev );                      }
 
 
-void Cell::Positive::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell::Core
+void Cell::Negative::Vertex::remove_from_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot remove a vertex from a mesh, use remove_from_seg." << std::endl;
+	exit ( 1 );                                                                            }
+
+
+void Cell::Negative::NotVertex::add_to_seg ( Cell::Positive::Segment * seg )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot add a cell to a segment, use add_to_mesh." << std::endl;
+	exit ( 1 );                                                                   }
+
+
+void Cell::Positive::Segment::add_to_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Positive::NotVertex
 
 {	assert ( mmsh );
 	Mesh::OneDim::Positive * msh =
-		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+		Util::assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment does not belong yet to the mesh 'msh'
 	assert ( this->meshes[0].find(msh) == this->meshes[0].end() );
@@ -815,11 +851,20 @@ void Cell::Positive::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 } // end of Cell::Positive::Segment::add_to
 
 
-void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from Cell::Core
+void Cell::Negative::NotVertex::remove_from_seg ( Cell::Positive::Segment * seg )
+// virtual from Cell::Core
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+            << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "Cannot remove a cell from a segment, use remove_from_mesh." << std::endl;
+	exit ( 1 );                                                                             }
+
+
+void Cell::Positive::Segment::remove_from_mesh ( Mesh::Core * mmsh )
+// virtual from Cell::Positive::NotVertex
 
 {	assert ( mmsh );
 	Mesh::OneDim::Positive * msh =
-		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+		Util::assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	assert ( this->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
 	assert ( this->meshes[0].find(msh) != this->meshes[0].end() );
@@ -850,14 +895,15 @@ void Cell::Positive::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 } // end of Cell::Positive::Segment::remove_from
 
 
-void Cell::Negative::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell::Core
+void Cell::Negative::Segment::add_to_mesh ( Mesh::Core * mmsh 
+// virtual from Cell::Negative::NotVertex
 
 {	assert ( mmsh );
 	assert ( this->reverse_p );
 	Mesh::OneDim::Positive * msh =
-		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+		Util::assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	Cell::Positive::Segment * pos_seg =
-	  assert_cast < Cell:Core*, Cell::Positive::Segment * > ( this->reverse_p );
+	  Util::assert_cast < Cell:Core*, Cell::Positive::Segment * > ( this->reverse_p );
 	assert ( pos_seg->meshes.size() > 0 );
 	// assert that 'this' segment does not belong yet to the mesh 'msh'
 	assert ( pos_seg->meshes[0].find(msh) == pos_seg->meshes[0].end() );
@@ -888,14 +934,15 @@ void Cell::Negative::Segment::add_to ( Mesh::Core * mmsh ) // virtual from Cell:
 } // end of Cell::Negative::Segment::add_to
 
 
-void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from Cell::Core
+void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh )
+// virtual from Cell::Negative::NotVertex
 
 {	assert ( mmsh );
 	assert ( this->reverse_p );
 	Mesh::OneDim::Positive * msh =
-		assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
+		Util::assert_cast < Mesh::Core*, Mesh::OneDim::Positive* > mmsh;
 	Cell::Positive::Segment * pos_seg =
-	  assert_cast < Cell::Core*, Cell::Positive::Segment * > ( this->reverse_p );
+	  Util::assert_cast < Cell::Core*, Cell::Positive::Segment * > ( this->reverse_p );
 	assert ( pos_seg->meshes.size() > 0 );
 	// assert that 'this' segment belongs to the mesh 'msh'
 	assert ( pos_seg->meshes[0].find(msh) != pos_seg->meshes[0].end() );
@@ -927,7 +974,8 @@ void Cell::Negative::Segment::remove_from ( Mesh::Core * mmsh ) // virtual from 
 } // end of Cell::Negative::Segment::remove_from
 
 
-void Cell::Positive::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Positive::HighDim::add_to_mesh ( Mesh::Core * msh )
+// virtual from Cell::Positive::NotVertex
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
@@ -952,7 +1000,8 @@ void Cell::Positive::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::
 } // end of Cell::Positive::HighDim::add_to
 
 
-void Cell::Positive::HighDim::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Positive::HighDim::remove_from_mesh ( Mesh::Core * msh )
+// virtual from Cell::Positive::NotVertex
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'cut_from_bdry_of'
@@ -978,7 +1027,8 @@ void Cell::Positive::HighDim::remove_from ( Mesh::Core * msh ) // virtual from C
 } // end of Cell::Positive::HighDim::remove_from
 
 
-void Cell::Negative::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Negative::HighDim::add_to_mesh ( Mesh::Core * msh )
+// virtual from Cell::Negative::NotVertex
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
@@ -987,7 +1037,7 @@ void Cell::Negative::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::
 	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
 	assert ( this->reverse_p );
 	Cell::Positive::HighDim * pos_cll =
-		assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
+		Util::assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
 	assert ( pos_cll->meshes.size() > 0 );
 	// assert that 'this' cell does not belong yet to the mesh 'msh'
 	assert ( pos_cll->meshes[0].find(msh) == pos_cll->meshes[0].end() );
@@ -1009,7 +1059,8 @@ void Cell::Negative::HighDim::add_to ( Mesh::Core * msh ) // virtual from Cell::
 } // end of Cell::Negative::HighDim::add_to
 
 
-void Cell::Negative::HighDim::remove_from ( Mesh::Core * msh ) // virtual from Cell::Core
+void Cell::Negative::HighDim::remove_from_mesh ( Mesh::Core * msh )
+// virtual from Cell::Negative::NotVertex
 
 // remove 'this' cell from the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'cut_from_bdry_of'
@@ -1018,7 +1069,7 @@ void Cell::Negative::HighDim::remove_from ( Mesh::Core * msh ) // virtual from C
 	assert ( msh->get_dim_plus_one() == this->get_dim() + 1 );
 	assert ( this->reverse_p );
 	Cell::Positive::HighDim * pos_cll =
-		assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
+		Util::assert_cast < Cell::Core*, Cell::Positive::HighDim* > this->reverse_p;
 	assert ( pos_cll->meshes.size() > 0 );
 	// assert that 'this' cell belongs to the mesh 'msh'
 	assert ( pos_cll->meshes[0].find(msh) != pos_cll->meshes[0].end() );
