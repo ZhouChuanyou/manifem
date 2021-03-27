@@ -19,6 +19,7 @@
 //   You should have received a copy of the GNU Lesser General Public License
 //   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
+
 #ifndef MANIFEM_MESH_H
 #define MANIFEM_MESH_H
 
