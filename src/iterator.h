@@ -1,5 +1,5 @@
 
-// iterator.h 2021.03.25
+// iterator.h 2021.03.28
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -52,6 +52,8 @@ class CellIterator
 
 // or, iterates over all cells above a given cell
 
+// see paragraphs 8.5 and 8.6 in the manual
+	
 {	public :
 
 	class Core;
@@ -125,7 +127,7 @@ class CellIterator
 
 	inline CellIterator ( const tag::OverCellsOf &, Mesh::Fuzzy * msh,
 	                      const tag::FuzzyPosMesh &,
-	                      const tag::CellsOfDim &, size_t, const tag::ForcePositive &         )
+	                      const tag::CellsOfDim &, size_t d, const tag::ForcePositive &  )
 	: core { new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive ( d )  }
 	{ }
 

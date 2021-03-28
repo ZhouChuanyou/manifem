@@ -1,5 +1,5 @@
 
-// iterator.cpp 2021.03.26
+// iterator.cpp 2021.03.28
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 

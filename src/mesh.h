@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.27
+// mesh.h 2021.03.28
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -558,13 +558,13 @@ class Mesh
 		Cell::short_int_heap_size_pos.resize ( maximum_dimension_plus_one, 0 );
 		Cell::short_int_heap_size_neg.resize ( maximum_dimension_plus_one, 0 );  }
 	
-	inline static void action_add
+	inline static void add_link
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
-	inline static void action_remove
+	inline static void remove_link
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
-	inline static void action_add_rev
+	inline static void add_link_rev
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
-	inline static void action_remove_rev
+	inline static void remove_link_rev
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
 
 	struct Connected  {  class OneDim;  class HighDim;  };
@@ -960,10 +960,10 @@ class Cell::Positive::Segment : public Cell::Positive
 	// here is the core linking between cells and meshes
 	// do not use directly
 	// deep_connections_*** is called from add_to and remove_from
-	static inline void deep_connections_add ( seg, Cell::Positive::Vertex * cll );
-	static inline void deep_connections_remove ( seg, Cell::Positive::Vertex * cll );
-	static inline void deep_connections_add_rev ( seg, Cell::Positive::Vertex * cll );
-	static inline void deep_connections_remove_rev ( seg, Cell::Positive::Vertex * cll );
+	static inline void make_deep_connections ( seg, Cell::Positive::Vertex * cll );
+	static inline void break_deep_connections ( seg, Cell::Positive::Vertex * cll );
+	static inline void make_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
+	static inline void break_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
 
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
@@ -1775,10 +1775,10 @@ class Mesh::Fuzzy : public Mesh::Core
 	// here is where the low-level linking between cells and meshes happens
 	// do not use directly
 	// deep_connections_*** is called from add_to and remove_from
-	static inline void deep_connections_add ( msh, Cell::Positive * cll, Cell::Core * o_cll );
-	static inline void deep_connections_remove ( msh, Cell::Positive * cll, Cell::Core * o_cll );
-	static inline void deep_connections_add_rev ( msh, Cell::Positive * cll, Cell::Core * o_cll );
-	static inline void deep_connections_remove_rev ( msh, Cell::Positive * cll, Cell::Core * o_cll );
+	static inline void make_deep_connections ( msh, Cell::Positive * cll, Cell::Core * o_cll );
+	static inline void break_deep_connections ( msh, Cell::Positive * cll, Cell::Core * o_cll );
+	static inline void make_deep_connections_rev ( msh, Cell::Positive * cll, Cell::Core * o_cll );
+	static inline void break_deep_connections_rev ( msh, Cell::Positive * cll, Cell::Core * o_cll );
 
 #ifndef NDEBUG
   std::string get_name();  // virtual from Mesh::Core
@@ -2784,8 +2784,9 @@ inline CellIterator Mesh::iterator
 
 inline CellIterator Mesh::iterator
 ( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive & ) const
-{	return CellIterator ( tag::adapt, tag::force_positive,
-		std::move ( this->iterator ( const tag::OverCellsOfDim &, size_t d ) ) );  }
+{	if ( d < this->dim() )
+		return this->core->iterator ( tag::over_cells_of_max_dim, tag::force_positive );
+	return this->core->iterator ( tag::over_cells_of_dim, d, tag::lower_dimension );   }
 
 inline CellIterator Mesh::iterator
 ( const tag::OverCellsOfDim &, size_t d, const tag::ForcePositive &,
@@ -2809,7 +2810,7 @@ inline CellIterator Mesh::iterator
 
 
 inline void Mesh::add_link  // static
-( Cell::Core * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
+( Cell::Positive * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
 	
 // This function "makes the link" between a cell and a mesh.
 // This "link" asserts that the cell belongs to the mesh.
@@ -2821,18 +2822,22 @@ inline void Mesh::add_link  // static
 // in the mesh with positive orientation,
 // while 'cn' says the same thing for negative orientation.
 
+// this function updates cll->meshes_same_dim and cll->meshes
+// also, calls the virtual method msh->add_to_cells
+// which, for fuzzy and stsi meshes, updates msh->cells
+// for other kinds of meshes, returns garbage
+
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
-	Cell::Positive * cll_pos = (Cell::Positive*) cll;  // use static_cast !
-	size_t cll_dim = cll_pos->get_dim(),
+	size_t cll_dim = cll->get_dim(),
 	       msh_dim_p1 = msh->get_dim_plus_one();
 	assert ( msh_dim_p1 > cll_dim );
 	size_t dif_dim = msh_dim_p1 - cll_dim - 1;
-	assert ( cll_pos->meshes.size() > dif_dim );
+	assert ( cll->meshes.size() > dif_dim );
 //////////////////////////////////////////////////////////////////////////////
 	// inspired in item 24 of the book : Scott Meyers, Effective STL          //
 	typedef std::map<Mesh::Core*,Cell::field_to_meshes> maptype;              //
-	maptype & cmd = cll_pos->meshes[dif_dim];                                 //
+	maptype & cmd = cll->meshes[dif_dim];                                     //
 	maptype::iterator lb = cmd.lower_bound(msh);                              //
 	if ( ( lb == cmd.end() ) or ( cmd.key_comp()(msh,lb->first) ) )           //
 		cmd.emplace_hint ( lb, std::piecewise_construct,                        //
@@ -2854,28 +2859,27 @@ inline void Mesh::add_link  // static
 //	  cll->meshes[dif_dim][msh].counter_neg += cn;   }                  //
 //////////////////////////////////////////////////////////////////////////
 
-} // end of Mesh::action_add
+} // end of Mesh::add_link
 
 
-inline void Mesh::action_add_rev  // static
+inline void Mesh::add_link_rev  // static
 ( Cell::Core * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
 // we just switch the two counters
-{	Mesh::action_add ( cll, o_cll, msh, cn, cp );  }
+{	Mesh::add_link ( cll, o_cll, msh, cn, cp );  }
 
 
-inline void Mesh::action_remove  // static
-( Cell::Core * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
+inline void Mesh::remove_link  // static
+( Cell::Positive * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
 
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
-	Cell::Positive * cll_pos = (Cell::Positive*) cll;  // use static_cast !
-	size_t cll_dim = cll_pos->get_dim(),
+	size_t cll_dim = cll->get_dim(),
 	       msh_dim_p1 = msh->get_dim_plus_one();
 	assert ( msh_dim_p1 > cll_dim );
 	size_t dif_dim = msh_dim_p1 - cll_dim - 1;
-	assert ( cll_pos->meshes.size() > dif_dim );
+	assert ( cll->meshes.size() > dif_dim );
 	typedef std::map <Mesh::Core*, Cell::field_to_meshes> maptype;
-	maptype & cmd = cll_pos->meshes[dif_dim];
+	maptype & cmd = cll->meshes[dif_dim];
 	maptype::iterator cmdfm = cmd.find(msh);
 	assert ( cmdfm != cmd.end() );
 	short int c_p = cmdfm->second.counter_pos -= cp;
@@ -2885,22 +2889,22 @@ inline void Mesh::action_remove  // static
 	{	std::list<Cell::Core*>::iterator w = cmdfm->second.where;
 		msh->cells[cll_dim].erase(w);
 		cmd.erase(cmdm);                                                 }
-} // end of Mesh::action_remove
+} // end of Mesh::remove_link
 
 
-inline void Mesh::action_remove_rev  // static
+inline void Mesh::remove_link_rev  // static
 ( Cell::Core * cll, Cell::Core * o_cll,
   Mesh::Core * msh, short int cp, short int cn )
 // we just switch the two counters
-{	Mesh::action_remove ( cll, o_cll, msh, cn, cp );    }
+{	Mesh::remove_link ( cll, o_cll, msh, cn, cp );    }
 
 //-----------------------------------------------------------------------------//
 
 
-inline void Cell::Positive::Segment::deep_connections_add  // static
-inline void Cell::Positive::Segment::deep_connections_remove  // static
-inline void Cell::Positive::Segment::deep_connections_add_rev  // static
-inline void Cell::Positive::Segment::deep_connections_remove_rev  // static
+inline void Cell::Positive::Segment::make_deep_connections  // static
+inline void Cell::Positive::Segment::break_deep_connections  // static
+inline void Cell::Positive::Segment::make_deep_connections_rev  // static
+inline void Cell::Positive::Segment::break_deep_connections_rev  // static
 ( seg, Cell::Positive * cll,
 	void (*action) ( Cell::Core*, Cell::Core*, Mesh::Core*, short int, short int ) )
 
@@ -2949,7 +2953,26 @@ inline void Cell::Positive::Segment::deep_connections_remove_rev  // static
 } // end of Cell::Positive::Segment::deep_connections
 
 
-inline void Mesh::Fuzzy::deep_connections_add  // static
+namespace {  // anonymous
+
+inline void link_cll_to_higher ( Cell::Positive * cll, Cell::Positive* pmce )
+// just a block of code for make_deep_connections
+
+{	for ( size_t dif_dim = 0; dif_dim < pmce->meshes.size(); dif_dim++ )
+	{	std::map<Mesh::Core*,Cell::field_to_meshes> &
+			cemd = pmce->meshes[dif_dim];
+		std::map<Mesh::Core*,Cell::field_to_meshes>::iterator map_iter;
+		// we now loop over all meshes of given dimension
+		for ( map_iter = cemd.begin(); map_iter != cemd.end(); ++map_iter )
+		{	assert ( map_iter->first->get_dim_plus_one() ==
+							 dif_dim + this->cell_enclosed->get_dim() + 1 );
+			size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
+			assert ( current_mesh_dim == mce->dim() + dif_dim );
+			Cell::field_to_meshes & mis = map_iter->second;
+			Mesh::add_link ( cll, map_iter.first, mis.counter_pos, mesh_counter_neg  );   } } }
+
+
+inline void Mesh::make_deep_connections  // static
 ( Mesh::Core * msh, Cell::Positive * cll,  Cell::Core * o_cll )
 
 // make far connections when adding a cell
@@ -2963,52 +2986,55 @@ inline void Mesh::Fuzzy::deep_connections_add  // static
 	assert ( cll );  assert ( o_cll );
 	assert ( cll == o_cll );
 
-	// link 'cll' to 'this'
-	link_add_sd ( cll, o_cll, this, 1, 0 );
+	link_cll_to_this ( cll, o_cll, this, 1, 0 );
 	
+	Mesh cll_bdry = cll->boundary();
 	// for all meshes strictly above msh
 	Cell::Core * mce = msh->cell_enclosed;
 	if ( mce )
-	{	lower_cell = cll;
-		Cell::Positive * pmce = Util::assert_cast < Cell::Core*, Cell::Positive* > ( mce );
-		// we now loop over all meshes above 'this->cell_enclosed' (of all dimensions)
-		for ( size_t dif_dim = 0; dif_dim < pmce->meshes.size(); dif_dim++ )
-		{	std::map<Mesh::Core*,Cell::field_to_meshes> &
-				cemd = pmce->meshes[dif_dim];
-			std::map<Mesh::Core*,Cell::field_to_meshes>::iterator map_iter;
-			// we now loop over all meshes of given dimension
-			for ( map_iter = cemd.begin(); map_iter != cemd.end(); ++map_iter )
-			{	assert ( map_iter->first->get_dim_plus_one() ==
-			           dif_dim + this->cell_enclosed->get_dim() + 1 );
-				size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
-				assert ( current_mesh_dim == mce->dim() + dif_dim );
-				Cell::field_to_meshes & mis = map_iter->second;
-				Mesh::add_link ( cll, cll, map_iter.first,
-				                 mis.counter_pos, mesh_counter_neg  );
-			}}}
- 	
-	// for all cells strictly below 'cll'
-	// depois copiar dentro do ciclo acima, substituindo msh por map_iter->second
-	Mesh cll_bdry = cll->boundary();
-	CellIterator it = cll_bdry.iterator
-		( tag::over_cells, tag::of_max_dim, tag::force_positive );
-	for ( it.reset(); it.in_range(); it++ )
-		Cell face = *it;
-	for ( size_t d = 0; d < cll_dim_m1 ; d++ )
-	{	CellIterator it = cll_bdry.iterator
-			( tag::over_cells, tag::of_dim, d, tag::as_they_are );
+	{	Cell::Positive * pmce = Util::assert_cast < Cell::Core*, Cell::Positive* > ( mce );
+		// link 'cll' to all meshes above 'this->cell_enclosed' (of all dimensions)
+		link_cll_to_higher ( cll, pmce );
+		CellIterator it = cll_bdry.iterator
+			( tag::over_cells, tag::of_max_dim, d, tag::force_positive );
 		for ( it.reset(); it.in_range(); it++ )
-			Cell face = *it;
-				
-	action_add ( lower_cell_tri.obj, lower_cell_tri.obj, msh
-	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
+		{	Cell face = *it;
+			// add link from face to this and
+			// to all meshes above 'this->cell_enclosed' (of all dimensions)
+		  link_face_to_this ( face, this );
+		  link_face_to_higher ( face, pmce );  }
+		for ( size_t d = 0; d < cll_dim_m1 ; d++ )
+		{	CellIterator it = cll_bdry.iterator
+				( tag::over_cells, tag::of_dim, d, tag::as_they_are );
+			for ( it.reset(); it.in_range(); it++ )
+			{	Cell face = *it;
+				// add link from face to this and
+				// to all meshes above 'this->cell_enclosed' (of all dimensions)
+				link_face_to_this ( face, this );
+			  link_face_to_higher ( face, pmce );   }                  } 
+	else  // no enclosed cell
+	{	CellIterator it = cll_bdry.iterator
+			( tag::over_cells, tag::of_max_dim, d, tag::force_positive );
+		for ( it.reset(); it.in_range(); it++ )
+		{	Cell face = *it;
+		  link_face_to_this ( face, this );    }
+		for ( size_t d = 0; d < cll_dim_m1 ; d++ )
+		{	CellIterator it = cll_bdry.iterator
+				( tag::over_cells, tag::of_dim, d, tag::as_they_are );
+			for ( it.reset(); it.in_range(); it++ )
+			{	Cell face = *it;
+			  link_face_to_this ( face, this );    }                  } 
+
+//	Mesh::add_link ( lower_cell_tri.obj, lower_cell_tri.obj, msh
+//	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+//	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
 
 
-} // end of Mesh::Fuzzy::deep_connections_add
+} // end of Mesh::Fuzzy::make_deep_connections
 
+}  // anonymous namespace
 
-inline void Mesh::Fuzzy::deep_connections_add_rev  // static
+inline void Mesh::Fuzzy::make_deep_connections_rev  // static
 ( msh, Cell::Positive * cll,  Cell::Core * o_cll )
 
 // make far connections when adding a cell
