@@ -1,6 +1,4 @@
 
-muita coisa que funcionava em 2019.09 deixou de funcionar ...
-
 deveriamos prever a possibilidade de "desactivar" um campo NumericField
 Por exemplo, criamos uma malha com as coordenadas xyz, depois criamos o
 elemento master com as coordenadas xi eta, depois queremos remalhar.
@@ -127,7 +125,8 @@ testar com os dois toros se faz diferenca diminuir este valor
 
 disponibilizar separadamente 'simplif' assim como fizemos com 'metric tree' ?
 
-em progressive_construct, poderiamos fornecer (sub)variedades como fronteiras (em vez de malhas)
+em progressive_construct, poderiamos fornecer (sub)variedades como fronteiras
+(em vez de malhas)
 especificar uma direccao (com tag::towards) atraves duma desigualdade entre duas funcoes
 
 o copy-constructor de Manifold nao deveria setar Manifold::working
@@ -137,12 +136,6 @@ introduzir shared_ptr em Function e Manifold e Field
 agora tenho release em Function mas shared_ptr e' melhor
 vou ter que usar dynamic_pointer_cast ou static_pointer_cast, ver simplif.cpp
 em Cell nao vale a pena porque tenho a informacao por outras vias
-
-erro estranho em main-lente.cpp
-e' porque não fizemos o deep-copy em progressive.cpp line 1433
-acabar inline Mesh::Mesh ( const tag::DeepCopy &, const Mesh & msh )
-para ale'm deste, prever um metodo  Mesh::reverse ( tag::deep_copy )
-e talvez  Mesh::Mesh ( tag::deep_copy_of, const Mesh &, tag::may_become_disconnected )
 
 rever em pormenor progressive.cpp lines 1787-1834
 
@@ -157,19 +150,40 @@ as operacoes de acrescentar ou retirar uma ce'lula serao diferenciados
 introduzir um tag::do_not_worry para acrescentar ou retirar uma ce'lula
 a uma malha ordenada mas como se fosse caotica
 
-cinco tipos de malhas
+sete tipos de malhas (catorze se contarmos com as negativas)
+* 0D (fronteiras de segmentos)
 * 1D connected
 * 1D multiply connected
-* connected
-* multiply connected
-* fuzzy - any dim
-multiple inheritance ?
+* connected, dim >= 2
+* multiply connected, dim >= 2
+* fuzzy, dim >= 1
+* STSI : self-touching or self-intersecting, dim >= 1
+
+as malhas multiply connected ficam para mais tarde
+
+talvez umas malhas "softly joined" ?  on-the-fly como as negativas
+
+antes de insistir nas malhas STSI tenho que verificar como fica
+acrescentar ou retirar uma celula duma tal malha
+talvez nao seja necessario declarar 'deep_connections' como virtual
+basta fornecer diferentes metodos 'action'
+e usar o iterador mencionado no codigo 
+
+o campo 'cell_behind_within' precisa dum tratamento `a parte
+tal como glue_on_bdry_of e cut_from_bdry_of
+talvez proibir que a fronteira duma celula seja STSI
+
+tenho que ver Mesh::Core::add_***, Mesh::Core::remove_*** e deep_connections
+add_*** e remove_*** tratam de Cell::Core::cell_behind_within
+deep_connections trata de Cell::Positive::meshes e de Mesh::Fuzzy::cells
+quem trata de Cell::Positive::***::meshes_same_dim ?  Mesh::add_link_sd
+tratar de glue_on_bdry e cut_from_bdry
 
 em github/manifem :
+  master:
+	fuzzy-stsi :  copiar
+	aquando da fusão : passar tudo de fuzzy-stsy para master
 
-no disco azul :   copiar coment.txt function.cpp test.cpp finite-elem.cpp finite-elem.h
-                         Makefile maniFEM.h manifold.cpp manifold.h mesh.h mesh.cpp progressive.cpp
-                         main-2.1.cpp main-2.2.cpp main-2.10.cpp and above main-7.2.cpp
-												 metric-tree ? 
-									eliminar cloud ?
+no disco azul :   copiar  master  stsi-fuzzy
+                  apagar  current
 
