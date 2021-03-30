@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.03.27
+// mesh.cpp 2021.03.30
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -763,7 +763,7 @@ void Cell::Positive::Vertex::add_to_seg ( Cell::Positive::Segment * seg )
 	seg->tip_p = this;
 	tm0.emplace ( std::piecewise_construct,
 		std::forward_as_tuple(seg), std::forward_as_tuple(1) );
-	seg->deep_connections ( this, Mesh::action_add );                                  }
+	seg->make_deep_connections ( this, Mesh::action_add );                                  }
 
 
 void Cell::Positive::Vertex::add_to_mesh ( Mesh::Core * mmsh )
@@ -786,7 +786,7 @@ void Cell::Positive::Vertex::remove_from_seg ( Cell::Positive::Segment * seg )
 	seg->tip_p = nullptr;
 	assert ( it->second == 1 );
 	tm0.erase ( it );
-	seg->deep_connections ( this, Mesh::action_remove );                             }
+	seg->break_deep_connections ( this, Mesh::action_remove );                             }
 
 
 void Cell::Positive::Vertex::remove_from_mesh ( Mesh::Core * mmsh )
@@ -811,7 +811,7 @@ void Cell::Negative::Vertex::add_to_seg ( Cell::Positive::Segment * seg )
 	seg->base_p = this;
 	pvm0.emplace ( std::piecewise_construct,
 		std::forward_as_tuple(seg), std::forward_as_tuple(-1) );
-	seg->deep_connections ( pos_ver, Mesh::action_add_rev );                               }
+	seg->make_deep_connections_rev ( pos_ver, Mesh::action_add_rev );                               }
 
 
 void Cell::Negative::Vertex::add_to_mesh ( Mesh::Core * mmsh )
@@ -837,7 +837,7 @@ void Cell::Negative::Vertex::remove_from_seg ( Cell::Positive::Segment * seg )
 	seg->base_p = nullptr;
 	assert ( it->second == -1 );
 	pvm0.erase ( it );
-	seg->deep_connections ( pos_ver, Mesh::action_remove_rev );                      }
+	seg->break_deep_connections_rev ( pos_ver, Mesh::action_remove_rev );                      }
 
 
 void Cell::Negative::Vertex::remove_from_mesh ( Mesh::Core * mmsh )
@@ -904,7 +904,7 @@ void Cell::Positive::HighDim::add_to_mesh ( Mesh::Core * msh )
 
 
 void Cell::Positive::HighDim::remove_from_mesh ( Mesh::Core * msh )
-// virtual from Cell::Positive::NotVertex
+// virtual from Cell::Core
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'cut_from_bdry_of'
@@ -915,7 +915,7 @@ void Cell::Positive::HighDim::remove_from_mesh ( Mesh::Core * msh )
 
 
 void Cell::Negative::HighDim::add_to_mesh ( Mesh::Core * msh )
-// virtual from Cell::Negative::NotVertex
+// virtual from Cell::Core
 
 // add 'this' cell to the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
@@ -926,7 +926,7 @@ void Cell::Negative::HighDim::add_to_mesh ( Mesh::Core * msh )
 
 
 void Cell::Negative::HighDim::remove_from_mesh ( Mesh::Core * msh )
-// virtual from Cell::Negative::NotVertex
+// virtual from Cell::Core
 
 // remove 'this' cell from the mesh 'msh'
 // if 'msh' is the boundary of a cell, use instead 'cut_from_bdry_of'
@@ -937,6 +937,7 @@ void Cell::Negative::HighDim::remove_from_mesh ( Mesh::Core * msh )
 
 //-----------------------------------------------------------------------------//
 
+// see paragraph 10.1 in the manual
 
 void Mesh::ZeroDim::add_pos_seg ( Cell::Positive::Segment * )
 // virtual from Mesh::Core, here execution forbidden
@@ -1012,7 +1013,7 @@ void Mesh::Fuzzy::add_pos_seg ( Cell::Positive::Segment * seg )
 	// assert that 'seg' does not belong yet to 'this' mesh
 	assert ( seg->meshes_same_dim.find(this) == seg->meshes_same_dim.end() );
 
-	Mesh::Fuzzy::deep_connections_add ( this, seg, seg );  // check !!
+	Mesh::Fuzzy::make_deep_connections ( this, seg, seg );  // check !!
 
 	assert ( seg->base_p->cell_behind_within.find(this) ==
 	         seg->base_p->cell_behind_within.end()         );
@@ -1031,7 +1032,7 @@ void Mesh::Fuzzy::remove_pos_seg ( Cell::Positive::Segment * seg )
 	// assert that 'seg' belongs to 'this' mesh
 	assert ( seg->meshes_same_dim.find(this) != seg->meshes_same_dim.end() );
 
-	Mesh::Fuzzy::deep_connections_remove ( this, seg, seg );  // check !!
+	Mesh::Fuzzy::break_deep_connections ( this, seg, seg );  // check !!
 
 	assert ( seg->base_p->cell_behind_within.find(this) !=
 	         seg->base_p->cell_behind_within.end()         );
@@ -1056,7 +1057,7 @@ void Mesh::Fuzzy::add_neg_seg ( Cell::Negative::Segment * seg )
 	assert ( pos_seg->base_p->reverse_p );
 	assert ( pos_seg->tip_p->reverse_p );
 
-	Mesh::Fuzzy::deep_connections_add_rev ( this, pos_seg, seg );  // check !!
+	Mesh::Fuzzy::make_deep_connections_rev ( this, pos_seg, seg );  // check !!
 
 	assert ( pos_seg->base_p->reverse_p->cell_behind_within.find(this) ==
 	         pos_seg->base_p->reverse_p->cell_behind_within.end()         );
@@ -1081,7 +1082,7 @@ void Mesh::Fuzzy::remove_neg_seg ( Cell::Negative::Segment * seg )
 	assert ( pos_seg->base_p->reverse_p );
 	assert ( pos_seg->tip_p->reverse_p );
 
-	Mesh::Fuzzy::deep_connections_remove_rev ( this, pos_seg, seg );  // check !!
+	Mesh::Fuzzy::break_deep_connections_rev ( this, pos_seg, seg );  // check !!
 
 	assert ( pos_seg->base_p->reverse_p->cell_behind_within.find(this) !=
 	         pos_seg->base_p->reverse_p->cell_behind_within.end()         );
@@ -1100,7 +1101,7 @@ void Mesh::Fuzzy::add_pos_hd_cell ( Cell::Positive::HighDim * cll )
 	// assert that 'cll' does not belong yet to 'this' mesh
 	assert ( cll->meshes_same_dim.find(this) == cll->meshes_same_dim.end() );
 	
-  Mesh::Fuzzy::deep_connections_add ( this, cll, cll );  // check !!
+  Mesh::Fuzzy::make_deep_connections ( this, cll, cll );  // check !!
 	
 	Mesh::Core * bdry = cll->boundary_p;  assert ( bdry );
 	assert ( bdry->get_dim_plus_one() == this->get_dim() );
@@ -1120,7 +1121,7 @@ void Mesh::Fuzzy::remove_pos_hd_cell ( Cell::Positive::HighDim * cll )
 	// assert that 'cll' belongs to 'this' mesh
 	assert ( cll->meshes_same_dim.find(this) != cll->meshes_same_dim.end() );
 
-	Mesh::Fuzzy::deep_connections_remove ( this, cll, cll );  // check !!
+	Mesh::Fuzzy::break_deep_connections ( this, cll, cll );  // check !!
 	
 	Mesh::Core * bdry = cll->boundary_p;  assert ( bdry );
 	assert ( bdry->get_dim_plus_one() == this->get_dim() );
@@ -1144,7 +1145,7 @@ void Mesh::Fuzzy::add_neg_hd_cell ( Cell::Negative::HighDim * cll )
 	// assert that 'pos_cll' does not belong yet to 'this' mesh
 	assert ( pos_cll->meshes_same_dim.find(this) == pos_cll->meshes_same_dim.end() );
 
-	Mesh::Fuzzy::deep_connections_add_rev ( this, pos_cll, cll );  // check !!
+	Mesh::Fuzzy::make_deep_connections_rev ( this, pos_cll, cll );  // check !!
 	
 	Mesh::Core * bdry = pos_cll->boundary_p;  assert ( bdry );
 	assert ( bdry->get_dim_plus_one() == this->get_dim() );
@@ -1168,7 +1169,7 @@ void Mesh::Fuzzy::remove_neg_hd_cell ( Cell::Negative::HighDim * cll )
 	// assert that 'cll' belongs to 'this' mesh
 	assert ( pos_cll->meshes_same_dim.find(this) != pos_cll->meshes_same_dim.end() );
 
-	Mesh::Fuzzy::deep_connections_remove_rev ( this, pos_cll, cll );  // check !!
+	Mesh::Fuzzy::break_deep_connections_rev ( this, pos_cll, cll );  // check !!
 
 	Mesh::Core * bdry = pos_cll->boundary_p;  assert ( bdry );
 	assert ( bdry->get_dim_plus_one() == this->get_dim() );
@@ -1182,4 +1183,37 @@ void Mesh::Fuzzy::remove_neg_hd_cell ( Cell::Negative::HighDim * cll )
 
 	
 //-----------------------------------------------------------------------------//
+
+
+std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+Mesh::Core::add_to_cells ( Cell::Core * cll, size_t d )
+// virtual, overriden by Mesh::Fuzzy
+
+{	return static_cast
+		< std::map<Mesh::Core*,Cell::field_to_meshes>::iterator > ( nullptr );  }
+
+
+std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+Mesh::Fuzzy::add_to_cells ( Cell::Core * cll, size_t d )
+// virtual from Cell::Core, overriden here, later overriden again by Mesh::STSI
+
+// add a cell to 'this->cells[d]' list, return iterator into that list
+	
+{	assert ( d == cll->dim() );
+	assert ( d < this->get_dim_plus_one() );
+	std::list <Cell::Core*> & mcd = this->cells[d];
+	mcd.push_front ( cll );
+	return mcd.begin();                               }
+
+
+std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+Mesh::STSI::add_to_cells ( Cell::Core * cll, size_t d )
+// virtual from Cell::Core, overriden here a second time
+
+// add a cell to 'this->cells[d]' list, return iterator into that list
+
+{}
+
+//-----------------------------------------------------------------------------//
+
 

@@ -1,5 +1,4 @@
-
-// mesh.h 2021.03.28
+// mesh.h 2021.03.30
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -645,13 +644,14 @@ class Cell::Core
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see above)
+	// see paragraph 10.1 in the manual
 
-	// only for vertices :
-	// here execution forbidden, overriden by Cell::***tive::Vertex
+	// the two methods below are only relevant for vertices
+	// so we forbid execution for now and then override them in Cell::***tive::Vertex
   virtual void add_to_seg ( Cell::Positive::Segment * seg );
 	virtual void remove_from_seg ( Cell::Positive::Segment * seg );
 
-	// not for vertices :
+	// the two methods below are not relevant for vertices
   virtual void add_to_mesh ( Mesh::Core * msh ) = 0;
 	virtual void remove_from_mesh ( Mesh::Core * msh ) = 0;
 
@@ -722,9 +722,10 @@ class Cell::Positive : public Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
 
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
-	//    overriden by Cell::***tive::Vertex
+	//   later overriden by Cell::Positive::Vertex
 	// void add_to_seg ( Cell::Positive::Segment * seg )
 	// void remove_from_seg ( Cell::Positive::Segment * seg )
 
@@ -772,22 +773,21 @@ class Cell::Negative : public Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
 
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
-	//   overriden by Cell::***tive::Vertex
+	//   later overriden by Cell::Negative::Vertex
 	// void add_to_seg ( Cell::Positive::Segment * seg )
 	// void remove_from_seg ( Cell::Positive::Segment * seg )
 
-	// the four methods below remain pure virtual from Cell::Core
+	// the two methods below remain pure virtual from Cell::Core
 	// void add_to_mesh ( Mesh::Core * msh )
 	// void remove_from_mesh ( Mesh::Core * msh )
-	// void glue_on_my_bdry ( Cell::Core * )
-	// void cut_from_my_bdry ( Cell::Core * )
 
 	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
-	// so we suggest to use those (see class Cell::Core)
+	// so we suggest to use those
 
 #ifndef NDEBUG
 	std::string get_name();
@@ -833,17 +833,17 @@ class Cell::Positive::Vertex : public Cell::Positive
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core but overriden here
 	void add_to_seg ( Cell::Positive::Segment * seg ) override;
 	void remove_from_seg ( Cell::Positive::Segment * seg ) override;
 
-	// the two methods below are virtual from Cell::Core, here execution forbidden
+	// the four methods below are virtual from Cell::Core, here execution forbidden
 	void add_to_mesh ( Mesh::Core * msh );
 	void remove_from_mesh ( Mesh::Core * msh );
-
-	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core, here execution forbidden
-	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core, here execution forbidden
+	void glue_on_my_bdry ( Cell::Core * );
+	void cut_from_my_bdry ( Cell::Core * );
 
 	// glue_common  and  cut_common  defined by Cell::Positive
 	
@@ -859,10 +859,6 @@ class Cell::Negative::Vertex : public Cell::Negative
 {	public :
 
 	inline Vertex ( const tag::ReverseOf &, Cell::Positive::Vertex * direct_ver_p );
-
-	inline Vertex ( const tag::Ghost & )
-	:	Cell::Negative ( tag::ghost )
-	{	}
 
 	Vertex ( const Cell::Negative::Vertex & ) = delete;
 	Vertex ( const Cell::Negative::Vertex && ) = delete;
@@ -885,6 +881,7 @@ class Cell::Negative::Vertex : public Cell::Negative
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core but overriden here
 	void add_to_seg ( Cell::Positive::Segment * seg ) override;
@@ -944,6 +941,7 @@ class Cell::Positive::Segment : public Cell::Positive
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
 	// void add_to_seg ( Cell::Positive::Segment * seg )
@@ -1000,6 +998,7 @@ class Cell::Negative::Segment : public Cell::Negative
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
 	// void add_to_seg ( Cell::Positive::Segment * seg )
@@ -1063,6 +1062,7 @@ class Cell::Positive::HighDim : public Cell::Positive
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
 	// void add_to_seg ( Cell::Positive::Segment * seg )
@@ -1116,6 +1116,7 @@ class Cell::Negative::HighDim : public Cell::Negative
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
 	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
 	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
+	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
 	// void add_to_seg ( Cell::Positive::Segment * seg )
@@ -1184,6 +1185,10 @@ class Mesh::Core
 	virtual remove_pos_hd_cell ( Cell::Positive::HighDim * ) = 0;
 	virtual add_neg_hd_cell ( Cell::Negative::HighDim * ) = 0;
 	virtual remove_neg_hd_cell ( Cell::Negative::HighDim * ) = 0;
+
+	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+		add_to_cells ( Cell::Core *, size_t );
+	// returns garbage; overriden by Mesh::Fuzzy
 	
 	// we are still in class Mesh::Core
 	
@@ -1304,6 +1309,8 @@ class Mesh::ZeroDim : public Mesh::Core
 
 {	public :
 
+	// attribute cell_enclosed inherited from Mesh::Core
+	
 	inline ZeroDim ( )
 	:	Mesh::Core ( tag::of_dimension, 1, tag::minus_one )
 	{ }
@@ -1311,7 +1318,8 @@ class Mesh::ZeroDim : public Mesh::Core
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
 	size_t number_of ( const tag::Vertices & );  // virtual from Mesh::Core
-	size_t number_of ( const tag::Segments & );  // virtual from Mesh::Core, here execution forbidden
+	size_t number_of ( const tag::Segments & );
+	// virtual from Mesh::Core, here execution forbidden
 	size_t number_of ( const tag::CellsOfDim &, size_t d );  // virtual from Mesh::Core
 
 	// first_vertex, last_vertex, first_segment and last_segment
@@ -1335,6 +1343,8 @@ class Mesh::ZeroDim : public Mesh::Core
 	
 	// we are still in class Mesh::ZeroDim
 	
+	// add_to_cells ( Cell::Core *, size_t )  defined by Cell::Core, returns garbage
+
 	// iterators are virtual from Mesh::Core and are defined in iterator.cpp
 
 	CellIterator iterator ( const tag::OverVertices &, const tag::ThisMeshIsPositive & );
@@ -1446,6 +1456,8 @@ class Mesh::Connected::OneDim : public Mesh::Core
 
 {	public :
 
+	// attribute cell_enclosed inherited from Mesh::Core
+
 	size_t nb_of_segs;
 	// useful for quickly answering to 'number_of'
 
@@ -1480,6 +1492,8 @@ class Mesh::Connected::OneDim : public Mesh::Core
 
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
+	// add_to_cells ( Cell::Core *, size_t )  defined by Cell::Core, returns garbage
+
 	inline void order ( );
 	// run over all segments, order them linearly, check that the mesh is connected
 	// if it is a loop, set first_ver = Cell::ghost
@@ -1499,6 +1513,8 @@ class Mesh::Connected::HighDim : public Mesh::Core
 // represents a connected positive mesh of dimension >= 2
 
 {	public :
+
+	// attribute cell_enclosed inherited from Mesh::Core
 
 	Cell start;
 	
@@ -1538,6 +1554,8 @@ class Mesh::Connected::HighDim : public Mesh::Core
 	
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
+	// add_to_cells ( Cell::Core *, size_t )  defined by Cell::Core, returns garbage
+
 	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d );
 	
 #ifndef NDEBUG
@@ -1554,9 +1572,12 @@ class Mesh::MultiplyConnected::OneDim : public Mesh::Core
 
 {	public :
 
+	// attribute cell_enclosed inherited from Mesh::Core
+
 	// keep a list or a vector of starting/ending points
 
 	std::vector < size_t > nb_of_cells;
+	// useful for quickly answering to 'number_of'
 
 	inline OneDim ( )
 	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
@@ -1581,6 +1602,8 @@ class Mesh::MultiplyConnected::OneDim : public Mesh::Core
 	
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
+	// add_to_cells ( Cell::Core *, size_t )  defined by Cell::Core, returns garbage
+
 	inline void order ( );
 	// run over all segments, order them linearly, check that the mesh is connected
 	// if it is a loop, set first_ver = Cell::ghost
@@ -1601,8 +1624,13 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 
 {	public :
 
+	// attribute cell_enclosed inherited from Mesh::Core
+
 	// keep a list or a vector of starting cells
 	
+	std::vector < size_t > nb_of_cells;
+	// useful for quickly answering to 'number_of'
+
 	inline HighDim ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
 	{	}
@@ -1629,6 +1657,8 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 	
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
+	// add_to_cells ( Cell::Core *, size_t )  defined by Cell::Core, returns garbage
+
 	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d );
 	
 #ifndef NDEBUG
@@ -1653,6 +1683,8 @@ class Mesh::Fuzzy : public Mesh::Core
 
 {	public :
 	
+	// attribute cell_enclosed inherited from Mesh::Core
+
 	// the 'cells' attribute holds lists of cells of 'this' mesh, indexed by their dimension
 	// for maximum dimension, the cells are oriented
 	// for lower dimension, the cells are always positive
@@ -1692,6 +1724,11 @@ class Mesh::Fuzzy : public Mesh::Core
 	void remove_pos_hd_cell ( Cell::Positive::HighDim * );
 	void add_neg_hd_cell ( Cell::Negative::HighDim * );
 	void remove_neg_hd_cell ( Cell::Negative::HighDim * );
+
+	// add a cell to 'this->cells[d]' list, return iterator into that list
+	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+		add_to_cells ( Cell::Core * cll, size_t d ) override;
+	// virtual from Cell::Core, here overriden, later overriden again by Mesh::STSI
 
 	// iterators are virtual from Mesh::Core and are defined in iterator.cpp
 
@@ -1798,17 +1835,19 @@ class Mesh::STSI : public Mesh::Fuzzy
 
 {	public :
 	
-	// 'cells' attribute  inherited from Mesh::Fuzzy
+	// attribute cell_enclosed inherited from Mesh::Core
 
-	inline STSI ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
-	:	Mesh::Fuzzy ( tag::of_dimension, dim_p1, tag::minus_one )
-	{	}
+	// 'cells' attribute inherited from Mesh::Fuzzy
 
 	// in 'singular' we keep pair of adjacent cells
 	// the common face of such a pair is a singular face
 	// that is, a face where the mesh touches itself
 	std::vector < std::pair < Cell, Cell > > singular;
 	
+	inline STSI ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
+	:	Mesh::Fuzzy ( tag::of_dimension, dim_p1, tag::minus_one )
+	{	}
+
 	// size_t get_dim_plus_one ( )  defined in Mesh::Fuzzy
 	// size_t number_of ( const tag::Vertices & )  defined in Mesh::Fuzzy
 	// size_t number_of ( const tag::Segments & )  defined in Mesh::Fuzzy
@@ -1835,6 +1874,11 @@ class Mesh::STSI : public Mesh::Fuzzy
 	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
 	  const tag::SurelyExists & se = tag::surely_exists                   ) const override;
 
+	// add a cell to 'this->cells[d]' list, return iterator into that list
+	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
+		add_to_cells ( Cell::Core * cll, size_t d ) override;
+	// virtual from Cell::Core, overriden by Mesh::Fuzzy, here overriden again
+
 	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d );
 	
 #ifndef NDEBUG
@@ -1845,6 +1889,7 @@ class Mesh::STSI : public Mesh::Fuzzy
 }; // end of  class Mesh::STSI
 
 //-----------------------------------------------------------------------------//
+
 
 // negative meshes aren't kept in the computer, they are just abstract concepts
 // to be more precise: there are Mesh objects (wrappers) refering to negative meshes
@@ -2294,7 +2339,8 @@ inline Cell::Core * Mesh::cell__in_front_of
 ( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
   const tag::MayNotExist &                                                       ) const
 // return the cell towards which 'face' points, as seen from neighbour
-{	return this->core->cell__in_front_of ( face_p, tag::seen_from, neighbour, tag::may_not_exist );  }
+{	return this->core->cell__in_front_of
+		( face_p, tag::seen_from, neighbour, tag::may_not_exist );  }
 
 inline Cell::Core * Mesh::cell_in_front_of
 ( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
@@ -2415,8 +2461,8 @@ inline void Cell::add_to ( Mesh & msh )
 
 inline void Cell::remove_from ( Mesh & msh )
 
-// add 'this' cell to the mesh 'msh'
-// if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
+// remove 'this' cell from the mesh 'msh'
+// if 'msh' is the boundary of a cell, 'cut_from_bdry_of' should be used instead
 
 {	assert ( this->dim() == msh.dim() );
 	if ( msh.is_positive() )  this->core->remove_from ( msh.core );
@@ -2571,8 +2617,9 @@ inline Cell::Positive::HighDim::HighDim ( const tag::Quadrangle &,
 
 inline void Cell::Positive::glue_common ( Cell::Core * face )
 	
-{	if ( this->meshes.size() == 0 ) return;
+{	if ( this->meshes.size() == 0 ) return;  // this never happens !!
 	std::map < Mesh::Core*, Cell::field_to_meshes > & tm0 = this->meshes[0];
+	// use meshes_same_dim !!
 	// '0' means the same dimension as the cell
 	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 		it = tm0.begin(), it_e = tm0.end();
@@ -2586,7 +2633,7 @@ inline void Cell::Positive::glue_common ( Cell::Core * face )
 		{	assert ( other_cell == this->reverse_p );
 			Cell::Core * rev_face { face->reverse_p };
 			assert ( rev_face );
-			rev_face->cell_behind_within[msh] = other_cell;   }           }                 }
+			rev_face->cell_behind_within[msh] = other_cell;   }           }           }
 	
 
 inline void Cell::Core::cut_from_bdry_of ( Cell::Core * cll )
@@ -2809,58 +2856,6 @@ inline CellIterator Mesh::iterator
 //-----------------------------------------------------------------------------//
 
 
-inline void Mesh::add_link  // static
-( Cell::Positive * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
-	
-// This function "makes the link" between a cell and a mesh.
-// This "link" asserts that the cell belongs to the mesh.
-// If the dimensions are equal, then there will be only one instance of the cell
-// in the mesh, so either cp==1 and cn==0 or cp==0 and cn==1, depending on the
-// orientations.
-// If 'cll' has lower dimension, it may appear several times in the mesh 'msh',
-// with both orientations. The counter 'cp' asserts how many times 'cll' appears
-// in the mesh with positive orientation,
-// while 'cn' says the same thing for negative orientation.
-
-// this function updates cll->meshes_same_dim and cll->meshes
-// also, calls the virtual method msh->add_to_cells
-// which, for fuzzy and stsi meshes, updates msh->cells
-// for other kinds of meshes, returns garbage
-
-{	assert ( cll );  assert ( o_cll );  assert ( msh );
-	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
-	size_t cll_dim = cll->get_dim(),
-	       msh_dim_p1 = msh->get_dim_plus_one();
-	assert ( msh_dim_p1 > cll_dim );
-	size_t dif_dim = msh_dim_p1 - cll_dim - 1;
-	assert ( cll->meshes.size() > dif_dim );
-//////////////////////////////////////////////////////////////////////////////
-	// inspired in item 24 of the book : Scott Meyers, Effective STL          //
-	typedef std::map<Mesh::Core*,Cell::field_to_meshes> maptype;              //
-	maptype & cmd = cll->meshes[dif_dim];                                     //
-	maptype::iterator lb = cmd.lower_bound(msh);                              //
-	if ( ( lb == cmd.end() ) or ( cmd.key_comp()(msh,lb->first) ) )           //
-		cmd.emplace_hint ( lb, std::piecewise_construct,                        //
-		      std::forward_as_tuple(msh),                                       // 
-	        std::forward_as_tuple(cp,cn,msh->add_to_cells(o_cll,cll_dim) );   //
-	else                                                                      //
-	{ lb->second.counter_pos += cp;                                           //
-	  lb->second.counter_neg += cn;   }                                       //
-////////// code below is conceptually equivalent to the above ////////////////
-//	if (cll->meshes[dif_dim].find(msh)==cll->meshes[dif_dim].end())     //
-//	{ msh->cells[cll->dim].push_front(o_cll);                           //
-//	  Cell::field_to_meshes field;                                      //
-//	  field.counter_pos = cp;                                           //
-//	  field.counter_neg = cn;                                           //
-//	  field.where = msh->cells[cll->dim]->begin();                      //
-//	  cll->meshes[dif_dim][msh] = field;             }                  //
-//	else                                                                //
-//	{ cll->meshes[dif_dim][msh].counter_pos += cp;                      //
-//	  cll->meshes[dif_dim][msh].counter_neg += cn;   }                  //
-//////////////////////////////////////////////////////////////////////////
-
-} // end of Mesh::add_link
-
 
 inline void Mesh::add_link_rev  // static
 ( Cell::Core * cll, Cell::Core * o_cll, Mesh::Core * msh, short int cp, short int cn )
@@ -2950,12 +2945,106 @@ inline void Cell::Positive::Segment::break_deep_connections_rev  // static
 		short int mesh_counter_neg = higher_mesh_tr.counter_neg;
 		action ( cll, cll, higher_mesh_tr.obj, mesh_counter_pos, mesh_counter_neg  );  }
 
-} // end of Cell::Positive::Segment::deep_connections
+} // end of Cell::Positive::Segment::make_deep_connections
 
 
 namespace {  // anonymous
 
+inline void add_link_same_dim  // hidden within anonymous namespace
+( Cell::Core * o_cll, Cell::Positive * cll, Mesh::Core * msh, short int sign )
+
+// This function "makes the link" between a cell and a mesh.
+// This "link" asserts that the cell belongs to the mesh.
+// Here the dimensions are equal, so there will be only one instance of the cell
+// positive if sign==1, negative if sign==-1.
+
+// this function updates cll->meshes_same_dim
+// also, calls the virtual method msh->add_to_cells
+// which, for fuzzy and stsi meshes, updates msh->cells
+// returning an iterator within msh->cells
+// for other kinds of meshes, returns garbage
+
+{	assert ( cll );  assert ( o_cll );  assert ( msh );
+	assert ( cll->is_positive() ); // assert ( msh->is_positive() );
+	assert ( ( sign == 1 ) or ( sign == -1 ) );
+	size_t cll_dim = cll->get_dim(),
+	       msh_dim_p1 = msh->get_dim_plus_one();
+	assert ( msh_dim_p1 == cll_dim + 1 );
+/////////////////////////////////////////////////////////////////////////////
+	// inspired in item 24 of the book : Scott Meyers, Effective STL         //
+	typedef std::map<Mesh::Core*,Cell::field_to_meshes_same_dim> maptype;    //
+	maptype & cmd = cll->meshes_same_dim;                                    //
+	maptype::iterator lb = cmd.lower_bound(msh);                             //
+	assert ( ( lb == cmd.end() ) or ( cmd.key_comp()(msh,lb->first) ) );     //
+	cmd.emplace_hint ( lb, std::piecewise_construct,                         //
+	      std::forward_as_tuple(msh),                                        // 
+	      std::forward_as_tuple(sign,msh->add_to_cells(o_cll,cll_dim)) );    //
+/////////  code below is conceptually equivalent to the above  //////////////////
+//	assert ( cll->meshes_same_dim.find(msh) == cll->meshes_same_dim.end() );   //
+//	msh->cells[cll->dim].push_front(o_cll);                                    //
+//	Cell::field_to_meshes field;                                               //
+//	field.counter_pos = cp;                                                    //
+//	field.counter_neg = cn;                                                    //
+//	field.where = msh->cells[cll->dim]->begin();                               //
+//	cll->meshes_same_dim[msh] = field;                                         //
+/////////////////////////////////////////////////////////////////////////////////
+
+} // end of add_link_same_dim
+
+
+inline void add_link  // hidden within anonymous namespace
+( Cell::Positive * cll, Mesh::Core * msh, short int cp, short int cn )
+
+// This function "makes the link" between a cell and a mesh.
+// This "link" asserts that the cell belongs to the mesh.
+// Here 'cll' has lower dimension, so it may appear several times in the mesh 'msh',
+// with both orientations. The counter 'cp' asserts how many times 'cll' appears
+// in the mesh with positive orientation,
+// while 'cn' says the same thing for negative orientation.
+
+// this function updates cll->meshes_same_dim
+// also, calls the virtual method msh->add_to_cells
+// which, for fuzzy and stsi meshes, updates msh->cells
+// returning an iterator within msh->cells
+// for other kinds of meshes, returns garbage
+
+{	assert ( cll );  assert ( cll->is_positive() );
+  assert ( msh );  // assert ( msh->is_positive() );
+	size_t cll_dim = cll->get_dim(),
+	       msh_dim_p1 = msh->get_dim_plus_one();
+	assert ( msh_dim_p1 > cll_dim );
+	size_t dif_dim = msh_dim_p1 - cll_dim - 1;
+	assert ( cll->meshes.size() > dif_dim );
+///////////////////////////////////////////////////////////////////////////////
+	// inspired in item 24 of the book : Scott Meyers, Effective STL           //
+	typedef std::map<Mesh::Core*,Cell::field_to_meshes> maptype;               //
+	maptype & cmd = cll->meshes[dif_dim];                                      //
+	maptype::iterator lb = cmd.lower_bound(msh);                               //
+	if ( ( lb == cmd.end() ) or ( cmd.key_comp()(msh,lb->first) ) )            //
+		cmd.emplace_hint ( lb, std::piecewise_construct,                         //
+		      std::forward_as_tuple(msh),                                        // 
+		      std::forward_as_tuple(cp,cn,msh->add_to_cells(cll,cll_dim)) );     //
+	else                                                                       //
+	{ lb->second.counter_pos += cp;                                            //
+	  lb->second.counter_neg += cn;   }                                        //											 
+////////// code below is conceptually equivalent to the above /////////////////
+//	if ( cll->meshes[dif_dim].find(msh)==cll->meshes[dif_dim].end() )   //
+//	{ msh->cells[cll->dim].push_front(cll);                             //
+//	  Cell::field_to_meshes field;                                      //
+//	  field.counter_pos = cp;                                           //
+//	  field.counter_neg = cn;                                           //
+//	  field.where = msh->cells[cll->dim]->begin();                      //
+//	  cll->meshes[dif_dim][msh] = field;             }                  //
+//	else                                                                //
+//	{ cll->meshes[dif_dim][msh].counter_pos += cp;                      //
+//	  cll->meshes[dif_dim][msh].counter_neg += cn;   }                  //
+//////////////////////////////////////////////////////////////////////////
+
+} // end of add_link
+
+
 inline void link_cll_to_higher ( Cell::Positive * cll, Cell::Positive* pmce )
+// hidden within anonymous namespace
 // just a block of code for make_deep_connections
 
 {	for ( size_t dif_dim = 0; dif_dim < pmce->meshes.size(); dif_dim++ )
@@ -2969,13 +3058,37 @@ inline void link_cll_to_higher ( Cell::Positive * cll, Cell::Positive* pmce )
 			size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
 			assert ( current_mesh_dim == mce->dim() + dif_dim );
 			Cell::field_to_meshes & mis = map_iter->second;
-			Mesh::add_link ( cll, map_iter.first, mis.counter_pos, mesh_counter_neg  );   } } }
+			Mesh::add_link ( cll, map_iter.first, mis.counter_pos, mis.counter_neg  );   } } }
+
+
+inline void link_face_to_higher ( Cell face, Cell::Positive* pmce )
+// hidden within anonymous namespace
+// just a block of code for make_deep_connections
+
+{	assert ( face.is_positive() );
+	for ( size_t dif_dim = 0; dif_dim < pmce->meshes.size(); dif_dim++ )
+	{	std::map<Mesh::Core*,Cell::field_to_meshes> &
+			cemd = pmce->meshes[dif_dim];
+		std::map<Mesh::Core*,Cell::field_to_meshes>::iterator map_iter;
+		// we now loop over all meshes of given dimension
+		for ( map_iter = cemd.begin(); map_iter != cemd.end(); ++map_iter )
+		{	assert ( map_iter->first->get_dim_plus_one() ==
+							 dif_dim + this->cell_enclosed->get_dim() + 1 );
+			size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
+			assert ( current_mesh_dim == mce->dim() + dif_dim );
+			Cell::field_to_meshes & mis = map_iter->second;
+			Mesh::add_link ( face, map_iter.first, mis.counter_pos, mis.counter_neg  );   } } }
+
+//	Mesh::add_link ( lower_cell_tri.obj, lower_cell_tri.obj, msh
+//	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
+//	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
 
 
 inline void Mesh::make_deep_connections  // static
-( Mesh::Core * msh, Cell::Positive * cll,  Cell::Core * o_cll )
+( Cell::Positive * cll, Mesh::Core * msh )
 
 // make far connections when adding a cell
+// see paragraph 10.1 in the manual
 	
 {	assert ( msh->get_dim_plus_one() > 1 );
 	// the case cll.get_dim() == 0 is dealt with separately,
@@ -2986,7 +3099,7 @@ inline void Mesh::make_deep_connections  // static
 	assert ( cll );  assert ( o_cll );
 	assert ( cll == o_cll );
 
-	link_cll_to_this ( cll, o_cll, this, 1, 0 );
+	add_link_same_dim ( cll, cll, msh, 1 );
 	
 	Mesh cll_bdry = cll->boundary();
 	// for all meshes strictly above msh
@@ -3001,41 +3114,35 @@ inline void Mesh::make_deep_connections  // static
 		{	Cell face = *it;
 			// add link from face to this and
 			// to all meshes above 'this->cell_enclosed' (of all dimensions)
-		  link_face_to_this ( face, this );
+			// temos que determinar cp e cn para face within cll.bdry
+		  link_face_to_msh ( face, msh );
 		  link_face_to_higher ( face, pmce );  }
 		for ( size_t d = 0; d < cll_dim_m1 ; d++ )
-		{	CellIterator it = cll_bdry.iterator
+		{	CellIterator it = cll_bdry.iterator  // as they are : positive
 				( tag::over_cells, tag::of_dim, d, tag::as_they_are );
 			for ( it.reset(); it.in_range(); it++ )
 			{	Cell face = *it;
 				// add link from face to this and
 				// to all meshes above 'this->cell_enclosed' (of all dimensions)
-				link_face_to_this ( face, this );
-			  link_face_to_higher ( face, pmce );   }                  } 
-	else  // no enclosed cell
+				// temos que determinar cp e cn para face within cll.bdry
+				link_face_to_msh ( face, msh );
+			  link_face_to_higher ( face, pmce );   }                      } 
+	else  // no enclosed cell, no 'higer' mesh
 	{	CellIterator it = cll_bdry.iterator
 			( tag::over_cells, tag::of_max_dim, d, tag::force_positive );
-		for ( it.reset(); it.in_range(); it++ )
-		{	Cell face = *it;
-		  link_face_to_this ( face, this );    }
+		for ( it.reset(); it.in_range(); it++ ) link_face_to_msh ( *it, msh );
 		for ( size_t d = 0; d < cll_dim_m1 ; d++ )
-		{	CellIterator it = cll_bdry.iterator
+		{	CellIterator it = cll_bdry.iterator  // as they are : positive
 				( tag::over_cells, tag::of_dim, d, tag::as_they_are );
-			for ( it.reset(); it.in_range(); it++ )
-			{	Cell face = *it;
-			  link_face_to_this ( face, this );    }                  } 
+			// temos que determinar cp e cn para face=*it within cll.bdry
+			for ( it.reset(); it.in_range(); it++ ) link_face_to_msh ( *it, msh );  } 
 
-//	Mesh::add_link ( lower_cell_tri.obj, lower_cell_tri.obj, msh
-//	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
-//	         cell_counter_pos*mesh_counter_neg + cell_counter_neg*mesh_counter_pos  );
-
-
-} // end of Mesh::Fuzzy::make_deep_connections
+} // end of Mesh::make_deep_connections
 
 }  // anonymous namespace
 
 inline void Mesh::Fuzzy::make_deep_connections_rev  // static
-( msh, Cell::Positive * cll,  Cell::Core * o_cll )
+( Cell::Positive * cll,  Cell::Core * o_cll, Mesh::Core * msh )
 
 // make far connections when adding a cell
 	
