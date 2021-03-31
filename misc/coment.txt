@@ -179,11 +179,16 @@ deep_connections trata de Cell::Positive::meshes e de Mesh::Fuzzy::cells
 quem trata de Cell::Positive::***::meshes_same_dim ?  Mesh::add_link_sd
 tratar de glue_on_bdry e cut_from_bdry
 
+um dia hei-de experimentar eliminar completamente Cell::Positive::meshes[0]
+(ja' que e' sempre vazia)
+
+introduzir um iterador especial que devolva os contadores cp e cn ?
+
 em github/manifem :
   master:
 	fuzzy-stsi :  copiar
-	aquando da fusão : passar tudo de fuzzy-stsy para master
+	aquando da fusão : passar tudo de fuzzy-stsi para master
 
-no disco azul :   copiar  master  stsi-fuzzy
+no disco azul :   copiar  master  fuzzy-stsi
                   apagar  current
 
