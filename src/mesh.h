@@ -579,24 +579,24 @@ class Mesh
 	// here is where the low-level linking between cells and meshes happens
 	// ***_deep_connections and ***_deep_connections_rev
 	// are called from Mesh::***::add_*** and remove_***
-	static inline void make_deep_connections
+	inline static void make_deep_connections
 	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & );
-	static inline void break_deep_connections
+	inline static void break_deep_connections
 	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & );
-	static inline void make_deep_connections_rev
+	inline static void make_deep_connections_rev
   ( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
 	  Mesh::Core * msh, const tag::MeshIsNotBdry &         );
-	static inline void break_deep_connections_rev
+	inline static void break_deep_connections_rev
 	( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
 	  Mesh::Core * msh, const tag::MeshIsNotBdry &         );
-	static inline void make_deep_connections
+	inline static void make_deep_connections
 	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & );
-	static inline void break_deep_connections
+	inline static void break_deep_connections
 	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & );
-	static inline void make_deep_connections_rev
+	inline static void make_deep_connections_rev
   ( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
 	  Mesh::Core * msh, const tag::MeshIsBdry &            );
-	static inline void break_deep_connections_rev
+	inline static void break_deep_connections_rev
 	( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
 	  Mesh::Core * msh, const tag::MeshIsBdry &            );
 
@@ -713,7 +713,7 @@ class Cell::Core
 class Cell::Positive : public Cell::Core
 
 // abstract class, introduces attribute  meshes
-// and defines virtual methods  is_positive, get_positive, belongs_to, glue_common, cut_common
+// and defines virtual methods  is_positive, get_positive, belongs_to
 
 // specialized in Cell::Positive::{Vertex,Segment,HighDim}
 
@@ -734,7 +734,7 @@ class Cell::Positive : public Cell::Core
 	// since indices of vectors begin at zero
 	// the keys of 'meshes[i]' will be meshes of dimension 'i + this->dim'
 	// however, for meshes of the same dimension as 'this' cell,
-	// we keep a different record in Cell::Positive::{Vertex,NotVertex}::meshes_same_dim
+	// we keep a different record in Cell::Positive::{Vertex,NotVertex}::segments
 	// so meshes[0] will always be an empty map
 
 	std::vector < std::map < Mesh::Core *, Cell::field_to_meshes > > meshes;
@@ -752,10 +752,6 @@ class Cell::Positive : public Cell::Core
 
 	bool belongs_to ( Mesh::Core *, const tag::Oriented & ) const;  // virtual from Cell::Core
 	bool belongs_to ( Mesh::Core *, const tag::NotOriented & ) const;  // virtual from Cell::Core
-
-	inline void glue_common ( Cell::Core * face );
-	inline void cut_common ( Cell::Core * face );
-	// do not use directly; called from glue_on_my_bdry and cut_from_my_bdry
 
 #ifndef NDEBUG
 	std::string get_name();
@@ -820,11 +816,11 @@ class Cell::Positive::Vertex : public Cell::Positive
 
 	// attribute  meshes  inherited from Cell::Positive
 
-	// in 'meshes_same_dim' we keep record of meshes of dimension zero "above" 'this' vertex,
+	// in 'segments' we keep record of meshes of dimension zero "above" 'this' vertex,
 	// that is, of segments having 'this' extremity
 	// the 'short int' is a sign, 1 or -1
 
-	std::map < Cell::Positive::Segment *, short int > meshes_same_dim;
+	std::map < Cell::Positive::Segment *, short int > segments;
 	
 	inline Vertex ( );
 
@@ -921,6 +917,7 @@ class Cell::Negative::Vertex : public Cell::Negative
 class Cell::Positive::NotVertex : public Cell::Positive
 
 // abstract class, useful only for introducing the attribute  meshes_same_dim
+// and methods glue_common, cut_common
 // specialized in Cell::Positive::{Segment,HighDim}
 
 {	public :
@@ -932,6 +929,10 @@ class Cell::Positive::NotVertex : public Cell::Positive
 
 	std::map < Mesh::Core *, Cell::field_to_meshes_same_dim > meshes_same_dim;
 	
+	inline void glue_common ( Cell::Core * face );
+	inline void cut_common ( Cell::Core * face );
+	// do not use directly; called from glue_on_my_bdry and cut_from_my_bdry
+
 }; // end of  class Cell::Positive::NotVertex
 
 //-----------------------------------------------------------------------------//
@@ -988,6 +989,8 @@ class Cell::Positive::Segment : public Cell::Positive::NotVertex
 	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
 	// so we suggest to use those
+
+	// glue_common  and  cut_common  defined by Cell::Positive::NotVertex
 
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
@@ -1104,7 +1107,7 @@ class Cell::Positive::HighDim : public Cell::Positive::NotVertex
 	// we feel that 'glue_on_bdry_of' and 'cut_from_bdry_of' are more readable
 	// so we suggest to use those (see class Cell::Core)
 
-	// glue_common  and  cut_common  defined by Cell::Positive
+	// glue_common  and  cut_common  defined by Cell::Positive::NotVertex
 	
 #ifndef NDEBUG
 	void print_everything ( ); // virtual from Cell::Core
@@ -1498,12 +1501,11 @@ class Mesh::ZeroDim : public Mesh::Core
 	//   const tag::ReverseOrder &, const tag::ThisMeshIsNegative &         );
 
 	// here is the core linking between cells and meshes
-	// do not use directly
 	// deep_connections_*** is called from add_to and remove_from
-	static inline void make_deep_connections ( seg, Cell::Positive::Vertex * cll );
-	static inline void break_deep_connections ( seg, Cell::Positive::Vertex * cll );
-	static inline void make_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
-	static inline void break_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
+	inline static void make_deep_connections ( seg, Cell::Positive::Vertex * cll );
+	inline static void break_deep_connections ( seg, Cell::Positive::Vertex * cll );
+	inline static void make_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
+	inline static void break_deep_connections_rev ( seg, Cell::Positive::Vertex * cll );
 
 #ifndef NDEBUG
 	std::string get_name();  // virtual from Mesh::Core
@@ -2570,24 +2572,24 @@ inline Cell::Positive::Segment::Segment
 	// Util::assert_diff provides a safe way to substract two 'size_t' numbers
 	base_p { Aa }, tip_p { Bb }
 
-{	// below is a much simplified version of Negative::Vertex::add_to
+{	// below is a much simplified version of Cell::Negative::Vertex::add_to_seg
 	// that's because 'this' segment has just been created, so it has no meshes above
 	// also, the base has already been correctly initialized
 	assert ( Aa->reverse_p );
 	Cell::Positive::Vertex * pos_Aa = Util::assert_cast
 		< Cell::Core*, Cell::Positive::Vertex* > ( Aa->reverse_p );
-	assert ( pos_Aa->meshes_same_dim.find(this) == pos_Aa->meshes_same_dim.end() );
+	assert ( pos_Aa->segments.find(this) == pos_Aa->segments.end() );
 	// pos_Aa->meshes[0][msh] = Cell::field_to_meshes { 0, 1 };
 	// the third component 'where' is irrelevant here
-	pos_Aa->meshes_same_dim.emplace ( std::piecewise_construct,
-	      std::forward_as_tuple(msh), std::forward_as_tuple(-1) );
-	// below is a much simplified version of Positive::Vertex::add_to
+	pos_Aa->segments.emplace ( std::piecewise_construct,
+	      std::forward_as_tuple(this), std::forward_as_tuple(-1) );
+	// below is a much simplified version of Cell::Positive::Vertex::add_to_seg
 	// that's because 'this' segment has just been created, so it has no meshes above
 	// also, the tip has already been correctly initialized
-	assert ( Bb->meshes_same_dim.find(this) == Bb->meshes_same_dim.end() );
+	assert ( Bb->segments.find(this) == Bb->segments.end() );
 	// Bb->meshes[0][msh] = Cell::field_to_meshes { 1, 0 };
 	// the third component 'where' is irrelevant here
-	Bb->meshes_same_dim.emplace ( std::piecewise_construct,
+	Bb->segments.emplace ( std::piecewise_construct,
 	   std::forward_as_tuple(this), std::forward_as_tuple(1) );                         }
 
 
@@ -2690,15 +2692,19 @@ inline Cell::Positive::HighDim::HighDim ( const tag::Quadrangle &,
 	DA->add_to ( this->boundary_p );                }
 
 
-inline void Cell::Positive::glue_common ( Cell::Core * face )
-	
-{	if ( this->meshes.size() == 0 ) return;  // this never happens !!
-	std::map < Mesh::Core*, Cell::field_to_meshes > & tm0 = this->meshes[0];
-	// use meshes_same_dim !!
-	// '0' means the same dimension as the cell
-	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-		it = tm0.begin(), it_e = tm0.end();
-	for ( ; it != it_e; ++it )
+inline void Cell::Core::glue_on_bdry_of ( Cell::Core * cll )
+{	cll->glue_on_my_bdry ( this );   }
+
+
+inline void Cell::Core::cut_from_bdry_of ( Cell::Core * cll )
+{	cll->cut_from_my_bdry ( this );   }
+
+
+inline void Cell::Positive::NotVertex::glue_common ( Cell::Core * face )
+
+{	std::map < Mesh::Core*, Cell::field_to_meshes_same_dim > & tm0 = this->meshes_same_dim;
+	std::map<Mesh::Core*,Cell::field_to_meshes_same_dim>::iterator it;
+	for ( it = tm0.begin(); it != tm0.end(); ++it )
 	{	Mesh::Core * msh = it->first;
 		std::list<Cell::Core*>::iterator wh = it->second.where;
 		Cell::Core * other_cell = *wh;  assert ( other_cell );
@@ -2708,21 +2714,15 @@ inline void Cell::Positive::glue_common ( Cell::Core * face )
 		{	assert ( other_cell == this->reverse_p );
 			Cell::Core * rev_face { face->reverse_p };
 			assert ( rev_face );
-			rev_face->cell_behind_within[msh] = other_cell;   }           }           }
+			rev_face->cell_behind_within[msh] = other_cell;   }     }                            }
 	
 
-inline void Cell::Core::cut_from_bdry_of ( Cell::Core * cll )
-{	cll->cut_from_my_bdry ( this );   }
-
-
-inline void Cell::Positive::cut_common ( Cell::Core * face )
+inline void Cell::Positive::NotVertex::cut_common ( Cell::Core * face )
 	
 {	if ( this->meshes.size() == 0 ) return;
-	std::map < Mesh::Core *, Cell::field_to_meshes > & tm0 = this->meshes[0];
-	// '0' means the same dimension as the cell
-	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-		it = tm0.begin(), it_e = tm0.end();
-	for ( ; it != it_e; ++it )
+	std::map < Mesh::Core *, Cell::field_to_meshes_same_dim > & tm0 = this->meshes_same_dim;
+	std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it;
+	for ( it = tm0.begin(); it != tm0.end(); ++it )
 	{	Mesh::Core * msh = it->first;
 		std::list<Cell::Core*>::iterator wh = it->second.where;
 		Cell::Core * other_cell = *wh;  assert ( other_cell );
@@ -2740,10 +2740,6 @@ inline void Cell::Positive::cut_common ( Cell::Core * face )
 			assert ( rev_face->cell_behind_within[msh] == other_cell );
 			rev_face->cell_behind_within.erase(msh);                     }  }                  }
 	
-
-inline void Cell::Core::glue_on_bdry_of ( Cell::Core * cll )
-{	cll->glue_on_my_bdry ( this );   }
-
 //-----------------------------------------------------------------------------//
 
 
