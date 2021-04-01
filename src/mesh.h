@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.31
+// mesh.h 2021.04.01
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -88,6 +88,8 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct Pretty { };  static const Pretty pretty;
 	struct Adapt { };  static const Adapt adapt;
 	struct OfDegree { };  static const OfDegree of_degree;
+	struct MeshIsBdry { };  static const MeshIsBdry mesh_is_bdry;
+	struct MeshIsNotBdry { };  static const MeshIsNotBdry mesh_is_not_bdry;
 	enum WithTriangles { with_triangles, not_with_triangles };
 	struct Join { };  static const Join join;
 	enum KeyForHook { tangent_vector, normal_vector, node_in_cloud };
@@ -119,19 +121,22 @@ template < typename X, typename Y > inline Y assert_cast ( X x )
 
 }  // namespace maniFEM::Util
 
+
+//-----------------------------------------------------------------------------//
+//-----------------  wrappers Cell and Mesh  ----------------------------------//
 //-----------------------------------------------------------------------------//
 
 
 // a cell of dimension zero is a point, see class Cell::Positive::Vertex and Negative::Vertex
 // a cell of dimension one is a segment, see class Cell::Positive::Segment and Negative::Segment
-// for cells of dimension two or more, see class Cell::Positive and Cell::Negative
+// for cells of dimension two or more, see class Cell::Positive::HighDim and Cell::Negative::HighDim
 // a cell of dimension two may be a triangle, a quadrangle or some other polygon
 // a cell of dimension three may be a tetrahedron, a cube or some other polyhedron
 // cells of dimension four or higher may be constructed,
 // but their usefulness is questionable
 
 // cells may be positively or negatively oriented
-// see class Cell::Core::Positive and class Cell::Core::Negative
+// see class Cell::Positive and class Cell::Negative
 // which is which depends only on the construction process
 // the first one to be created is positive, the other one will be negative,
 // created when we call the 'reverse' method
@@ -572,14 +577,28 @@ class Mesh
 	class ZeroDim;  class Fuzzy;  class STSI;
 	
 	// here is where the low-level linking between cells and meshes happens
-	// do not use directly
-	// deep_connections_*** is called from add_to and remove_from
-	static inline void make_deep_connections ( Cell::Positive::NotVertex * cll, Mesh::Core * msh );
-	static inline void break_deep_connections ( Cell::Positive::NotVertex * cll, Mesh::Core * msh );
+	// ***_deep_connections and ***_deep_connections_rev
+	// are called from Mesh::***::add_*** and remove_***
+	static inline void make_deep_connections
+	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & );
+	static inline void break_deep_connections
+	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & );
 	static inline void make_deep_connections_rev
-  ( Cell::Core * o_cll, Cell::Positive::NotVertex * cll, Mesh::Core * msh );
+  ( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
+	  Mesh::Core * msh, const tag::MeshIsNotBdry &         );
 	static inline void break_deep_connections_rev
-	( Cell::Core * o_cll, Cell::Positive::NotVertex * cll, Mesh::Core * msh );
+	( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
+	  Mesh::Core * msh, const tag::MeshIsNotBdry &         );
+	static inline void make_deep_connections
+	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & );
+	static inline void break_deep_connections
+	( Cell::Positive::NotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & );
+	static inline void make_deep_connections_rev
+  ( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
+	  Mesh::Core * msh, const tag::MeshIsBdry &            );
+	static inline void break_deep_connections_rev
+	( Cell::Core * o_cll, Cell::Positive::NotVertex * cll,
+	  Mesh::Core * msh, const tag::MeshIsBdry &            );
 
 }; // end of  class Mesh
 
@@ -587,13 +606,17 @@ class Mesh
 inline bool operator== ( const Mesh & m1, const Mesh & m2 )
 {	return m1.core == m2.core;  }
 
+
 //-----------------------------------------------------------------------------//
+//----------------      core Cells     ----------------------------------------//
 //-----------------------------------------------------------------------------//
 
 
 class Cell::Core
 
 // abstract class
+// specialized in Cell::Positive::{Vertex,Segment,HighDim} and
+//                Cell::Negative::{Vertex,Segment,HighDim}
 
 {	public :
 
@@ -654,19 +677,16 @@ class Cell::Core
 	// the boundary of 'cll'. Used mainly in remeshing.
 	inline void cut_from_bdry_of ( Cell::Core * cll );
 	
-	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see above)
-	// see paragraph 10.1 in the manual
-
 	// the two methods below are only relevant for vertices
 	// so we forbid execution for now and then override them in Cell::***tive::Vertex
   virtual void add_to_seg ( Cell::Positive::Segment * seg );
 	virtual void remove_from_seg ( Cell::Positive::Segment * seg );
 
-	// the two methods below are not relevant for vertices
+	// the four methods below are not relevant for vertices
   virtual void add_to_mesh ( Mesh::Core * msh ) = 0;
 	virtual void remove_from_mesh ( Mesh::Core * msh ) = 0;
+  virtual void add_to_bdry ( Mesh::Core * msh ) = 0;
+	virtual void remove_from_bdry ( Mesh::Core * msh ) = 0;
 
 	virtual void glue_on_my_bdry ( Cell::Core * ) = 0;
 	virtual void cut_from_my_bdry ( Cell::Core * ) = 0;
@@ -695,6 +715,8 @@ class Cell::Positive : public Cell::Core
 // abstract class, introduces attribute  meshes
 // and defines virtual methods  is_positive, get_positive, belongs_to, glue_common, cut_common
 
+// specialized in Cell::Positive::{Vertex,Segment,HighDim}
+
 {	public :
 
 	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
@@ -712,7 +734,7 @@ class Cell::Positive : public Cell::Core
 	// since indices of vectors begin at zero
 	// the keys of 'meshes[i]' will be meshes of dimension 'i + this->dim'
 	// however, for meshes of the same dimension as 'this' cell,
-	// we keep a different record in Cell::Positive::***::meshes_same_dim
+	// we keep a different record in Cell::Positive::{Vertex,NotVertex}::meshes_same_dim
 	// so meshes[0] will always be an empty map
 
 	std::vector < std::map < Mesh::Core *, Cell::field_to_meshes > > meshes;
@@ -749,6 +771,8 @@ class Cell::Negative : public Cell::Core
 // abstract class, defines virtual methods
 // is_positive, get_positive, reverse, build_reverse, belongs_to,
 // glue_on_my_bdry, cut_from_my_bdry
+
+// specialized in Cell::Negative::{Vertex,Segment,HighDim}
 
 {	public :
 
@@ -822,18 +846,15 @@ class Cell::Positive::Vertex : public Cell::Positive
 
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
-	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead
-	// see paragraph 10.1 in the manual
-
 	// the two methods below are defined by Cell::Core but overriden here
 	void add_to_seg ( Cell::Positive::Segment * seg ) override;
 	void remove_from_seg ( Cell::Positive::Segment * seg ) override;
 
-	// the four methods below are virtual from Cell::Core, here execution forbidden
+	// the six methods below are virtual from Cell::Core, here execution forbidden
 	void add_to_mesh ( Mesh::Core * msh );
 	void remove_from_mesh ( Mesh::Core * msh );
+  void add_to_bdry ( Mesh::Core * msh );
+	void remove_from_bdry ( Mesh::Core * msh );
 	void glue_on_my_bdry ( Cell::Core * );
 	void cut_from_my_bdry ( Cell::Core * );
 
@@ -874,17 +895,17 @@ class Cell::Negative::Vertex : public Cell::Negative
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core but overriden here
 	void add_to_seg ( Cell::Positive::Segment * seg ) override;
 	void remove_from_seg ( Cell::Positive::Segment * seg ) override;
 
-	// the two methods below are virtual from Cell::Core, here execution forbidden
+	// the four methods below are virtual from Cell::Core, here execution forbidden
 	void add_to_mesh ( Mesh::Core * msh );
 	void remove_from_mesh ( Mesh::Core * msh );
+  void add_to_bdry ( Mesh::Core * msh );
+	void remove_from_bdry ( Mesh::Core * msh );
 
 	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
 
@@ -900,6 +921,7 @@ class Cell::Negative::Vertex : public Cell::Negative
 class Cell::Positive::NotVertex : public Cell::Positive
 
 // abstract class, useful only for introducing the attribute  meshes_same_dim
+// specialized in Cell::Positive::{Segment,HighDim}
 
 {	public :
 
@@ -912,7 +934,9 @@ class Cell::Positive::NotVertex : public Cell::Positive
 	
 }; // end of  class Cell::Positive::NotVertex
 
-	
+//-----------------------------------------------------------------------------//
+
+
 class Cell::Positive::Segment : public Cell::Positive::NotVertex
 
 {	public :
@@ -949,8 +973,6 @@ class Cell::Positive::Segment : public Cell::Positive::NotVertex
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead
 	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
@@ -959,6 +981,8 @@ class Cell::Positive::Segment : public Cell::Positive::NotVertex
 
 	void add_to_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
+  void add_to_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
 
 	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
@@ -1001,8 +1025,6 @@ class Cell::Negative::Segment : public Cell::Negative
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
@@ -1011,6 +1033,8 @@ class Cell::Negative::Segment : public Cell::Negative
 
 	void add_to_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
+  void add_to_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
 
 	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
 
@@ -1064,8 +1088,6 @@ class Cell::Positive::HighDim : public Cell::Positive::NotVertex
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
@@ -1074,6 +1096,8 @@ class Cell::Positive::HighDim : public Cell::Positive::NotVertex
 
 	void add_to_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
+  void add_to_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
 
 	void glue_on_my_bdry ( Cell::Core * ); // virtual from Cell::Core
 	void cut_from_my_bdry ( Cell::Core * ); // virtual from Cell::Core
@@ -1121,8 +1145,6 @@ class Cell::Negative::HighDim : public Cell::Negative
 	// glue_on_bdry_of  and  cut_from_bdry_of  defined by Cell::Core
 
 	// methods 'add_to' and 'remove_from' add/remove 'this' cell to/from the mesh 'msh'
-	// if 'msh' is the boundary of some cell, methods 'glue_on_bdry_of'
-	// and 'cut_from_bdry_of' should be used instead (see class Cell::Core)
 	// see paragraph 10.1 in the manual
 
 	// the two methods below are defined by Cell::Core, execution forbidden
@@ -1131,6 +1153,8 @@ class Cell::Negative::HighDim : public Cell::Negative
 
 	void add_to_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
 	void remove_from_mesh ( Mesh::Core * msh ); // virtual from Cell::Core
+  void add_to_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
+	void remove_from_bdry ( Mesh::Core * msh ); // virtual from Cell::Core
 
 	// glue_on_my_bdry  and  cut_from_my_bdry  defined by Cell:Negative
 
@@ -1140,7 +1164,9 @@ class Cell::Negative::HighDim : public Cell::Negative
 
 }; // end of  class Cell::Negative::HighDim
 
+
 //-----------------------------------------------------------------------------//
+//------------------       core Meshes     ------------------------------------//
 //-----------------------------------------------------------------------------//
 
 
@@ -1148,6 +1174,9 @@ class Mesh::Core
 
 // represents a positive mesh
 // negative meshes have no core (wrappers for negative meshes are built on-the-fly)
+
+// abstract class, specialized in Mesh::ZeroDim, Mesh::Connected::{OneDim,HighDim},
+// Mesh::MultiplyConnected::{OneDim,HighDim}, Mesh::Fuzzy, Mesh::STSI
 
 {	public :
 
@@ -1184,18 +1213,30 @@ class Mesh::Core
 	( const Cell::Core * face_p, const tag::SeenFrom &, const Cell::Core neighbour,
 	  const tag::SurelyExists & se = tag::surely_exists                             ) const;
 
-	virtual add_pos_seg ( Cell::Positive::Segment * ) = 0;
-	virtual remove_pos_seg ( Cell::Positive::Segment * ) = 0;
-	virtual add_neg_seg ( Cell::Negative::Segment * ) = 0;
-	virtual remove_neg_seg ( Cell::Negative::Segment * ) = 0;
-	virtual add_pos_hd_cell ( Cell::Positive::HighDim * ) = 0;
-	virtual remove_pos_hd_cell ( Cell::Positive::HighDim * ) = 0;
-	virtual add_neg_hd_cell ( Cell::Negative::HighDim * ) = 0;
-	virtual remove_neg_hd_cell ( Cell::Negative::HighDim * ) = 0;
+	virtual add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & ) = 0;
+	virtual remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & ) = 0;
+	virtual add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & ) = 0;
+	virtual remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & ) = 0;
+	virtual add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & ) = 0;
+	virtual remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & ) = 0;
+	virtual add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & ) = 0;
+	virtual remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & ) = 0;
+	virtual add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & ) = 0;
+	virtual remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & ) = 0;
+	virtual add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & ) = 0;
+	virtual remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & ) = 0;
+	virtual add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & ) = 0;
+	virtual remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & ) = 0;
+	virtual add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & ) = 0;
+	virtual remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & ) = 0;
 
 	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 		add_to_cells ( Cell::Core *, size_t );
-	// returns garbage; overriden by Mesh::Fuzzy
+	// returns garbage; overriden by Mesh::Fuzzy and later by Mesh::STSI
+
+	virtual void remove_from_cells
+	( Cell::Core *, size_t, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator );
+	// does nothing; overriden by Mesh::Fuzzy and later by Mesh::STSI
 	
 	// we are still in class Mesh::Core
 	
@@ -1338,15 +1379,23 @@ class Mesh::ZeroDim : public Mesh::Core
 
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
-	// the eight methods below are virtual from Mesh::Core, here execution forbidden
-	void add_pos_seg ( Cell::Positive::Segment * );
-	void remove_pos_seg ( Cell::Positive::Segment * );
-	void add_neg_seg ( Cell::Negative::Segment * );
-	void remove_neg_seg ( Cell::Negative::Segment * );
-	void add_pos_hd_cell ( Cell::Positive::HighDim * );
-	void remove_pos_hd_cell ( Cell::Positive::HighDim * );
-	void add_neg_hd_cell ( Cell::Negative::HighDim * );
-	void remove_neg_hd_cell ( Cell::Negative::HighDim * );
+	// the sixteen methods below are virtual from Mesh::Core, here execution forbidden
+	void add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & );
+	void remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & );
+	void add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & );
+	void remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & );
+	void add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & );
+	void remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & );
+	void add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & );
+	void remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & );
+	void add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & );
+	void remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & );
+	void add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & );
+	void remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & );
+	void add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & );
+	void remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & );
+	void add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & );
+	void remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & );
 	
 	// we are still in class Mesh::ZeroDim
 	
@@ -1531,10 +1580,11 @@ class Mesh::Connected::HighDim : public Mesh::Core
 
 	// attribute cell_enclosed inherited from Mesh::Core
 
+	std::vector < size_t > nb_of_cells;
+	// useful for quickly answering to 'number_of'
+
 	Cell start;
 	
-	std::vector < size_t > nb_of_cells;
-
 	inline HighDim ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
 	{	}
@@ -1589,10 +1639,10 @@ class Mesh::MultiplyConnected::OneDim : public Mesh::Core
 
 	// attribute cell_enclosed inherited from Mesh::Core
 
-	// keep a list or a vector of starting/ending points
-
 	std::vector < size_t > nb_of_cells;
 	// useful for quickly answering to 'number_of'
+
+	// keep a list or a vector of starting/ending points
 
 	inline OneDim ( )
 	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
@@ -1641,11 +1691,11 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 
 	// attribute cell_enclosed inherited from Mesh::Core
 
-	// keep a list or a vector of starting cells
-	
 	std::vector < size_t > nb_of_cells;
 	// useful for quickly answering to 'number_of'
 
+	// keep a list or a vector of starting cells
+	
 	inline HighDim ( const tag::OfDimension &, size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
 	{	}
@@ -1687,14 +1737,11 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 class Mesh::Fuzzy : public Mesh::Core
 
 // represents a positive mesh, disordered (includes 1D meshes)
-// use this class for fast code
 
 // roughly speaking, a mesh is a collection of cells of the same dimension
 // however, for efficiency purposes, we keep lists of cells of lower
 // dimension as well; that's the purpose of the 'cells' vector :
 // to keep lists of cells indexed by their dimension
-// this implies quite some amount of redundant information,
-// but this redundancy makes the iterators of this class fast
 
 {	public :
 	
@@ -1729,22 +1776,34 @@ class Mesh::Fuzzy : public Mesh::Core
 	
 	// cell_in_front_of  and  cell_behind  defined by Mesh::Core, execution forbidden
 
-	// the eight methods below are virtual from Mesh::Core
+	// the sixteen methods below are virtual from Mesh::Core
 	// called from Cell::****tive::***::add_to_mesh and Cell::****tive::***::remove_from_mesh
-	void add_pos_seg ( Cell::Positive::Segment * );
-	void remove_pos_seg ( Cell::Positive::Segment * );
-	void add_neg_seg ( Cell::Negative::Segment * );
-	void remove_neg_seg ( Cell::Negative::Segment * );
-	void add_pos_hd_cell ( Cell::Positive::HighDim * );
-	void remove_pos_hd_cell ( Cell::Positive::HighDim * );
-	void add_neg_hd_cell ( Cell::Negative::HighDim * );
-	void remove_neg_hd_cell ( Cell::Negative::HighDim * );
+	void add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & );
+	void remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsNotBdry & );
+	void add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & );
+	void remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsNotBdry & );
+	void add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & );
+	void remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsNotBdry & );
+	void add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & );
+	void remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsNotBdry & );
+	void add_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & );
+	void remove_pos_seg ( Cell::Positive::Segment *, const tag::MeshIsBdry & );
+	void add_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & );
+	void remove_neg_seg ( Cell::Negative::Segment *, const tag::MeshIsBdry & );
+	void add_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & );
+	void remove_pos_hd_cell ( Cell::Positive::HighDim *, const tag::MeshIsBdry & );
+	void add_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & );
+	void remove_neg_hd_cell ( Cell::Negative::HighDim *, const tag::MeshIsBdry & );
 
 	// add a cell to 'this->cells[d]' list, return iterator into that list
 	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 		add_to_cells ( Cell::Core * cll, size_t d ) override;
+	
+	// remove a cell from 'this->cells[d]' list using the provided iterator
+	virtual void remove_from_cells
+	( Cell::Core *, size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator );
 	// virtual from Cell::Core, here overriden, later overriden again by Mesh::STSI
-
+	
 	// iterators are virtual from Mesh::Core and are defined in iterator.cpp
 
 	CellIterator iterator
@@ -1886,6 +1945,13 @@ class Mesh::STSI : public Mesh::Fuzzy
 		add_to_cells ( Cell::Core * cll, size_t d ) override;
 	// virtual from Cell::Core, overriden by Mesh::Fuzzy, here overriden again
 
+	// remove a cell from 'this->cells[d]' list using the provided iterator
+	virtual void remove_from_cells
+	( Cell::Core *, size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator );
+	// virtual from Cell::Core, overriden by Mesh::Fuzzy, here overriden again
+
+	// iterators are virtual from Mesh::Core and are defined in iterator.cpp
+
 	inline CellIterator iterator ( const tag::OverCellsOfDim &, size_t d );
 	
 #ifndef NDEBUG
@@ -1895,6 +1961,7 @@ class Mesh::STSI : public Mesh::Fuzzy
 	
 }; // end of  class Mesh::STSI
 
+//-----------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------//
 
 
@@ -1923,7 +1990,7 @@ class Mesh::Sign::Positive : public Mesh::Sign
 	bool is_positive ( );  // virtual from Mesh::Sign
 };
 
-
+//-----------------------------------------------------------------------------//
 //-----------------------------------------------------------------------------//
 
 
@@ -2454,7 +2521,7 @@ inline void Cell::cut_from_bdry_of ( Cell & cll )
 
 inline void Cell::add_to ( Mesh & msh )
 
-// add 'this' cell to the mesh 'msh'
+// add 'this' cell to the mesh 'msh' by calling the virtual method add_to_mesh
 // if 'msh' is the boundary of a cell, use instead 'glue_on_bdry_of'
 
 {	assert ( this->dim() == msh.dim() );
@@ -2468,14 +2535,15 @@ inline void Cell::add_to ( Mesh & msh )
 
 inline void Cell::remove_from ( Mesh & msh )
 
-// remove 'this' cell from the mesh 'msh'
+// remove 'this' cell from the mesh 'msh' by calling the virtual method remove_from_mesh
 // if 'msh' is the boundary of a cell, 'cut_from_bdry_of' should be used instead
 
 {	assert ( this->dim() == msh.dim() );
-	if ( msh.is_positive() )  this->core->remove_from ( msh.core );
+	assert ( this->dim() > 0 );
+	if ( msh.is_positive() )  this->core->remove_from_mesh ( msh.core );
 	else
 	{	assert ( this->core->reverse_p );
-		this->core->reverse_p->remove_from ( msh.core );  }             }
+		this->core->reverse_p->remove_from_mesh ( msh.core );  }             }
 // for negative Meshes, the core points towards the reverse Mesh::Core
 
 
