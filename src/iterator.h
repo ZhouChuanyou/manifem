@@ -1,5 +1,5 @@
 
-// iterator.h 2021.03.28
+// iterator.h 2021.04.02
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -430,6 +430,83 @@ class CellIterator::Adaptor::ForcePositive : public CellIterator::Core
 
 }  // end of class CellIterator::Adaptor::ForcePositive
 
+//-------------------------------------------------------------------------------------------
+
+
+inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
+                    const tag::CellsSurelyExist &                                      )
+// builds a negative mesh from a positive one, assuming that reverse cells exist
+// used in Cell::boundary and in Mesh::Mesh below
+
+: Mesh ( tag::whose_core_is, c, tag::is_negative, tag::cells_may_not_exist )
+
+#ifndef NDEBUG
+{	assert ( c );
+	// check that all cells have reverse
+	CellIterator it = this->iterator  // as they are : oriented
+		( tag::over_cells_of_max_dim, tag::as_they_are );
+	for ( it.reset() ; it.in_range(); it++ )
+	{	Cell::Core * cll_p = (*it).core;
+		assert ( cll_p );  assert ( cll_p->reverse_p );
+		assert ( cll == cll_p->reverse_p->reverse_p );   }           }
+#else
+{	}
+#endif
+
+
+inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
+                    const tag::BuildCellsIfNec & b                                     )
+// builds a negative mesh from a positive one, creating reverse cells if necessary
+// used in Mesh::Positive::reverse
+	
+:	Mesh ( tag::whose_core_is, c, tag::is_negative, tag::cells_may_not_exist )
+
+{	CellIterator it = this->iterator  // as they are : oriented
+		( tag::over_cells_of_max_dim, tag::as_they_are );
+	for ( it.reset() ; it.in_range(); it++ )
+	{	Cell::Core * cll_p = (*it).core;
+		assert ( cll_p );
+		Cell::Core * cll_rev_p = cll_p->reverse ( tag::build_if_not_exists );
+		assert ( cll_rev_p );  assert ( cll_rev_p == cll_p->reverse_p );             }     }
+
+//-------------------------------------------------------------------------------------------
+
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverVertices, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+{	return iterator ( tag::over_vertices, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_positive );  }
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverVertices, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsNegative & )
+{	return iterator ( tag::over_vertices, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_negative );  }
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverSegments, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+{	return iterator ( tag::over_segments, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_positive );  }
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverSegments, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsNegative & )
+{	return iterator ( tag::over_segments, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_negative );  }
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsPositive &               )
+{	return iterator ( tag::over_cells_of_dim, d, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_positive );  }
+
+inline CellIterator Cell::Core::iterator
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+	const tag::ReverseOrder &, const tag::ThisMeshIsNegative &               )
+{	return iterator ( tag::over_cells_of_dim, d, tag::reverse_order,
+										tag::force_positive, tag::this_mesh_is_negative );  }
 
 }  // namespace maniFEM
 
