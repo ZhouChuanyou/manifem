@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.04.02
+// mesh.cpp 2021.04.03
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -957,13 +957,12 @@ inline void link_face_to_msh  // hidden in anonymous namespace
 		map_iter = cemd.find(cell_bdry);
 	assert ( map_iter != cemd.end() );
 	Cell::field_to_meshes & mis = map_iter->second;
-	Mesh::add_link ( face_p, msh, cp*mis.counter_pos + cn*mis.counter_neg,
-                                cn*mis.counter_pos +  cp*mis.counter_neg );           }
+	add_link ( face_p, msh, cp*mis.counter_pos + cn*mis.counter_neg,
+                          cn*mis.counter_pos + cp*mis.counter_neg );                }
 	
 
-inline void link_face_to_higher
+inline void link_face_to_higher  // hidden in anonymous namespace
 ( Cell::Core * face, Cell::Positive * pmce, short int cp, short int cn )
-// hidden in anonymous namespace
 // just a block of code for make_deep_connections
 
 {	assert ( face );
@@ -982,11 +981,10 @@ inline void link_face_to_higher
 		size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
 		assert ( current_mesh_dim == mce->dim() + dif_dim );
 		Cell::field_to_meshes & mis = map_iter->second;
-		if ( mis.sign == 1 )
-			Mesh::add_link ( face_p, map_iter.first, cp, cn );
+		if ( mis.sign == 1 ) add_link ( face_p, map_iter.first, cp, cn );
 		else
 		{	assert ( mis.sign == -1 );
-			Mesh::add_link ( face_p, map_iter.first, cn, cp );  }            }
+			add_link ( face_p, map_iter.first, cn, cp );  }                  }
 	for ( size_t dif_dim = 1; dif_dim < pmce->meshes.size(); dif_dim++ )
 	{	std::map<Mesh::Core*,Cell::field_to_meshes> & cemd = pmce->meshes[dif_dim];
 		std::map<Mesh::Core*,Cell::field_to_meshes>::iterator map_iter;
@@ -997,9 +995,9 @@ inline void link_face_to_higher
 			size_t current_mesh_dim = map_iter->first->get_dim_plus_one() - 1;
 			assert ( current_mesh_dim == mce->dim() + dif_dim );
 			Cell::field_to_meshes & mis = map_iter->second;
-			Mesh::add_link ( face_p, map_iter.first,
-		                   cp*mis.counter_pos + cn*mis.counter_neg,
-		                   cn*mis.counter_pos + cp*mis.counter_neg );        }        }          }
+			add_link ( face_p, map_iter.first,
+		             cp*mis.counter_pos + cn*mis.counter_neg,
+		             cn*mis.counter_pos + cp*mis.counter_neg );              }        }          }
 
 //	Mesh::add_link ( lower_cell_tri.obj, lower_cell_tri.obj, msh
 //	         cell_counter_pos*mesh_counter_pos + cell_counter_neg*mesh_counter_neg,
@@ -1054,9 +1052,7 @@ inline void make_deep_connections_0d  // hidden in anonymous namespace
 
 {	assert ( ver );  assert ( seg );
 	add_link_zero_dim ( ver, seg );
-	link_face_to_higher ( ver, seg, 1, 0 );
-
-} // end of make_deep_connections_0d
+	link_face_to_higher ( ver, seg, 1, 0 );  }
 	
 
 inline void make_deep_connections_0d_rev  // hidden in anonymous namespace
@@ -1066,9 +1062,7 @@ inline void make_deep_connections_0d_rev  // hidden in anonymous namespace
 
 {	assert ( ver );  assert ( seg );
 	add_link_zero_dim_rev ( ver, seg );
-	link_face_to_higher ( ver, seg, 0, 1 );
-
-} // end of make_deep_connections_0d_rev
+	link_face_to_higher ( ver, seg, 0, 1 );  }
 	
 
 inline void make_deep_connections  // hidden in anonymous namespace
@@ -1078,8 +1072,7 @@ inline void make_deep_connections  // hidden in anonymous namespace
 // see paragraph 10.1 in the manual
 	
 {	assert ( msh->get_dim_plus_one() > 1 );
-	// the case cll.get_dim() == 0 is dealt with separately,
-	// see Mesh::ZeroDim::make_deep_connections
+	// make_deep_connections_0d deals with the case cll.get_dim() == 0
 	size_t cll_dim = cll->get_dim();
 	size_t cll_dim_m1 = Util::assert_diff ( cll_dim, 1 );
 	assert ( msh->get_dim_plus_one() == cll_dim + 1 );
@@ -1119,8 +1112,7 @@ inline void make_deep_connections  // hidden in anonymous namespace
 	
 {	assert ( cll );  assert ( msh );
 	assert ( msh->get_dim_plus_one() > 1 );
-	// the case cll.get_dim() == 0 is dealt with separately,
-	// see Mesh::ZeroDim::make_deep_connections
+	// make_deep_connections_0d deals with the case cll.get_dim() == 0
 	size_t cll_dim = cll->get_dim();
 	size_t cll_dim_m1 = Util::assert_diff ( cll_dim, 1 );
 	assert ( msh->get_dim_plus_one() == cll_dim + 1 );
@@ -1171,8 +1163,7 @@ inline void make_deep_connections_rev  // hidden in anonymous namespace
 {	assert ( cll != o_cll );
 	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( msh->get_dim_plus_one() > 1 );
-	// the case cll.get_dim() == 0 is dealt with separately,
-	// see Mesh::ZeroDim::make_deep_connections_rev
+	// make_deep_connections_0d deals with the case cll.get_dim() == 0
 	size_t cll_dim = cll->get_dim();
 	size_t cll_dim_m1 = Util::assert_diff ( cll_dim, 1 );
 	assert ( msh->get_dim_plus_one() == cll_dim + 1 );
@@ -1215,8 +1206,7 @@ inline void make_deep_connections_rev  // hidden in anonymous namespace
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll != o_cll );
 	assert ( msh->get_dim_plus_one() > 1 );
-	// the case cll.get_dim() == 0 is dealt with separately,
-	// see Mesh::ZeroDim::make_deep_connections_rev
+	// make_deep_connections_0d deals with the case cll.get_dim() == 0
 	size_t cll_dim = cll->get_dim();
 	size_t cll_dim_m1 = Util::assert_diff ( cll_dim, 1 );
 	assert ( msh->get_dim_plus_one() == cll_dim + 1 );
@@ -1953,7 +1943,7 @@ std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 Mesh::Core::add_to_cells ( Cell::Core * cll, size_t d )
 // virtual, here returns garbage, overriden by Mesh::Fuzzy and later by Mesh::STSI
 
-// called from  add_link_same_dim  and  add_link (both hidden in anonymous namespace below)
+// called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
 	
 {	return static_cast
 		< std::map<Mesh::Core*,Cell::field_to_meshes>::iterator > ( nullptr );  }
@@ -1963,7 +1953,7 @@ std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 Mesh::Fuzzy::add_to_cells ( Cell::Core * cll, size_t d )
 // virtual from Cell::Core, overriden here, later overriden again by Mesh::STSI
 
-// called from  add_link_same_dim  and  add_link (both hidden in anonymous namespace below)
+// called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
 
 // add a cell to 'this->cells[d]' list, return iterator into that list
 		
@@ -1978,7 +1968,7 @@ std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 Mesh::STSI::add_to_cells ( Cell::Core * cll, size_t d )
 // virtual from Cell::Core, overriden here a second time
 
-// called from  add_link_same_dim  and  add_link (both hidden in anonymous namespace below)
+// called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
 
 // add a cell to 'this->cells[d]' list, return iterator into that list
 	
@@ -2335,7 +2325,7 @@ void Mesh::Fuzzy::add_pos_hd_cell ( Cell::PositiveHighDim * cll, const tag::Mesh
 	// assert that 'cll' does not belong yet to 'this' mesh
 	assert ( cll->meshes_same_dim.find(this) == cll->meshes_same_dim.end() );
 	
- make_deep_connections ( cll, this, tag::mesh_is_not_bdry );
+	make_deep_connections ( cll, this, tag::mesh_is_not_bdry );
 	
 	Mesh::Core * bdry = cll->boundary_p;  assert ( bdry );
 	assert ( bdry->get_dim_plus_one() == this->get_dim() );

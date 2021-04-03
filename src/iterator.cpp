@@ -1,5 +1,5 @@
 
-// iterator.cpp 2021.03.28
+// iterator.cpp 2021.04.03
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -96,8 +96,7 @@ CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 {	assert ( this->cell_enclosed );
 	Cell::Positive::Segment * seg = assert_cast
 		< Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
-	return CellIterator ( tag::over_two_vertices_of_neg_seg, seg,
-                        tag::reverse_order, tag::force_positive );            }
+	return CellIterator ( tag::over_two_vertices_of_pos_seg, seg, tag::force_positive );    }
 
 CellIterator Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverSegments &, const tag::ThisMeshIsPositive & )
@@ -445,7 +444,7 @@ CellIterator Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 
 
 void CellIterator::Over::TwoVerticesOfSeg::reset ( ) // virtual from CellIterator::Core
-{	this->try = 0;  }
+{	this->passage = 0;  }
 
 void CellIterator::Over::TwoVerticesOfSeg::reset ( Cell::Core * cll )
 // virtual from CellIterator::Core
@@ -456,31 +455,30 @@ void CellIterator::Over::TwoVerticesOfSeg::reset ( Cell::Core * cll )
 
 void CellIterator::Over::TwoVerticesOfSeg::advance ( )
 // virtual from CellIterator::Core
-{
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+{	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }
+		exit ( 1 );                                                  }  }
 #ENDIF
-	this->try++;  }
+{	this->passage++;  }
 
 bool CellIterator::Over::TwoVerticesOfSeg::in_range ( )
 // virtual from CellIterator::Core
-{	return this->try < 2;   }
+{	return this->passage < 2;   }
 
 Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder::deref ( )
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first base (negative) then tip (positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try == 0 )
+	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		return this->seg_p->base_p;     }  // negative vertex
 	else
@@ -492,13 +490,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::deref ( )
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first tip (positive) then base (negative)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try )
+	if ( this->passage )
 	{	assert ( this->seg_p->base_p );
 		return this->seg_p->base_p;     }    // negative vertex
 	else
@@ -510,13 +508,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder::ForcePositive
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first base then tip (both positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try == 0 )
+	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }     // positive vertex
@@ -529,13 +527,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::ForcePositiv
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first tip then base (both positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try )
+	if ( this->passage )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }      // positive vertex
@@ -548,13 +546,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder::deref ( )
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first base (negative) then tip (positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try )
+	if ( this->passage )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }      // positive vertex
@@ -568,13 +566,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::deref ( )
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first tip (positive) then base (negative)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try == 0 )
+	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }      // positive vertex
@@ -588,13 +586,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder::ForcePositive
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first base then tip (both positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try )
+	if ( this->passage )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }        // positive vertex
@@ -607,13 +605,13 @@ Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::ForcePositiv
 // virtual from CellIterator::Core
 {	// we iterate over the two vertices, first tip then base (both positive)
 #IFNDEF NDEBUG
-	if ( this->try >= 2 )
+	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
 #ENDIF
-	if ( this->try == 0 )
+	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }      // positive vertex
