@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.04.03
+// mesh.cpp 2021.04.05
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -181,7 +181,7 @@ size_t Mesh::ZeroDim::number_of ( const tag::Segments & )
 	std::cout << "zero-dimensional meshes have have no segments" << std::endl;
 	exit ( 1 );                                                                                     }
 	
-size_t Mesh::ZeroDim::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::ZeroDim::number_of ( const tag::CellsOfDim &, const size_t d )
 // virtual from Mesh::Core
 {	assert ( d == 0 );  return 2;  }
 	
@@ -195,7 +195,7 @@ size_t Mesh::Connected::OneDim::number_of ( const tag::Segments & )
 // virtual from Mesh::Core
 {	return this->nb_of_segments;  }
 	
-size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, const size_t d )
 // virtual from Mesh::Core
 {	if ( d == 1 ) return this->nb_of_segments;
 	assert ( d == 0 );
@@ -203,7 +203,7 @@ size_t Mesh::Connected::OneDim::number_of ( const tag::CellsOfDim &, size_t d )
 		return this->nb_of_segments;
 	return this->nb_of_segments + 1;             }
 	
-size_t Mesh::Connected::HighDim::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::Connected::HighDim::number_of ( const tag::CellsOfDim &, const size_t d )
 // virtual from Mesh::Core
 {	assert ( d < this->get_dim_plus_one() );
 	assert ( this->nb_of_cells.size() > d );
@@ -219,7 +219,7 @@ size_t Mesh::Connected::HighDim::number_of ( const tag::Segments & )
 {	assert ( this->nb_of_cells.size() > 1 );
 	return this->nb_of_cells[1];             }
 	
-size_t Mesh::Fuzzy::number_of ( const tag::CellsOfDim &, size_t d )
+size_t Mesh::Fuzzy::number_of ( const tag::CellsOfDim &, const size_t d )
 // virtual from Mesh::Core
 {	assert ( d < this->get_dim_plus_one() );
 	assert ( this->nb_of_cells.size() > d );
@@ -1940,7 +1940,7 @@ void Cell::NegativeHighDim::remove_from_bdry ( Mesh::Core * msh )
 
 
 std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-Mesh::Core::add_to_cells ( Cell::Core * cll, size_t d )
+Mesh::Core::add_to_cells ( Cell::Core * cll, const size_t d )
 // virtual, here returns garbage, overriden by Mesh::Fuzzy and later by Mesh::STSI
 
 // called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
@@ -1950,7 +1950,7 @@ Mesh::Core::add_to_cells ( Cell::Core * cll, size_t d )
 
 
 std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-Mesh::Fuzzy::add_to_cells ( Cell::Core * cll, size_t d )
+Mesh::Fuzzy::add_to_cells ( Cell::Core * cll, const size_t d )
 // virtual from Cell::Core, overriden here, later overriden again by Mesh::STSI
 
 // called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
@@ -1965,7 +1965,7 @@ Mesh::Fuzzy::add_to_cells ( Cell::Core * cll, size_t d )
 
 
 std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
-Mesh::STSI::add_to_cells ( Cell::Core * cll, size_t d )
+Mesh::STSI::add_to_cells ( Cell::Core * cll, const size_t d )
 // virtual from Cell::Core, overriden here a second time
 
 // called from add_link_same_dim and add_link (both hidden in anonymous namespace below)
@@ -1976,14 +1976,14 @@ Mesh::STSI::add_to_cells ( Cell::Core * cll, size_t d )
 
 
 void Mesh::Core::remove_from_cells
-( Cell::Core *, size_t, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator )
+( Cell::Core *, const size_t, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator )
 // virtual, here does nothing, overriden by Mesh::Fuzzy and later by Mesh::STSI	
 // called from remove_link_same_dim and remove_link (both hidden in anonymous namespace below)
 {	}
 
 
 void Mesh::Fuzzy::remove_from_cells
-( Cell::Core * cll, size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it )
+( Cell::Core * cll, const size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it )
 // virtual from Cell::Core, overriden here, later overriden again by Mesh::STSI
 
 // called from remove_link_same_dim and remove_link (both hidden in anonymous namespace below)
@@ -1997,7 +1997,7 @@ void Mesh::Fuzzy::remove_from_cells
 
 
 void Mesh::STSI::remove_from_cells
-( Cell::Core * cll, size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it )
+( Cell::Core * cll, const size_t d, std::map<Mesh::Core*,Cell::field_to_meshes>::iterator it )
 // virtual from Cell::Core, overriden here a second time
 
 // remove a cell from 'this->cells[d]' list using the provided iterator
