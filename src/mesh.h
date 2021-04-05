@@ -999,9 +999,9 @@ class Mesh
 
 	template < typename X, typename Y > inline static Y assert_cast ( X x )
 #ifndef NDEBUG
-	{	Y y = dynamic_cast < Y > (x);  assert (x);  }
+	{	Y y = dynamic_cast < Y > (x);  assert (y);  return y;  }
 #else
-	{	Y y = static_cast < Y > (x);  }
+	{	Y y = static_cast < Y > (x);  return y;  }
 #endif
 
 	static bool return_true ( );
@@ -2668,14 +2668,14 @@ inline Mesh::Mesh ( const tag::Quadrangle &, const Cell & SW, const Cell & SE,
 inline Mesh::Mesh ( const tag::Join &, const Mesh & m1, const Mesh & m2 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l (2);
+{	std::vector < Mesh > l;
 	l.push_back ( m1 );  l.push_back ( m2 );
   this->join_list ( l );                   }
 
 inline Mesh::Mesh ( const tag::Join &, const Mesh & m1, const Mesh & m2, const Mesh & m3 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l (2);
+{	std::vector < Mesh > l;
 	l.push_back ( m1 );  l.push_back ( m2 );  l.push_back ( m3 );
   this->join_list ( l );                                         }
 
@@ -2683,7 +2683,7 @@ inline Mesh::Mesh
 ( const tag::Join &, const Mesh & m1, const Mesh & m2, const Mesh & m3, const Mesh & m4 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l (2);
+{	std::vector < Mesh > l;
 	l.push_back ( m1 );  l.push_back ( m2 );
 	l.push_back ( m3 );  l.push_back ( m4 );
   this->join_list ( l );                   }
@@ -2692,7 +2692,7 @@ inline Mesh::Mesh ( const tag::Join &, const Mesh & m1, const Mesh & m2, const M
                                        const Mesh & m4, const Mesh & m5 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l (2);
+{	std::vector < Mesh > l;  l.reserve ( 5 );
 	l.push_back ( m1 );  l.push_back ( m2 );  l.push_back ( m3 );
 	l.push_back ( m4 );  l.push_back ( m5 );
   this->join_list ( l );                                         }

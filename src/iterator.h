@@ -260,8 +260,8 @@ class CellIterator::Over::CellsOfFuzzyMesh : public CellIterator::Core
 	std::list<Cell::Core*> * list_p;
   std::list<Cell::Core*>::iterator iter;
 
-	inline CellsOfFuzzyMesh ( Mesh::Fuzzy * msh, const size_t dim )
-	:	CellIterator::Core (), list_p { & ( msh->cells[dim] ) }
+	inline CellsOfFuzzyMesh ( Mesh::Fuzzy * msh, const tag::CellsOfDim &, const size_t d )
+	:	CellIterator::Core (), list_p { & ( msh->cells[d] ) }
 	{	}  // no need to initialize 'iter', 'reset' will do that
 	
 	void reset ( );  // virtual from CellIterator::Core
@@ -271,7 +271,8 @@ class CellIterator::Over::CellsOfFuzzyMesh : public CellIterator::Core
 	void advance ( );  // virtual from CellIterator::Core
 	bool in_range ( );  // virtual from CellIterator::Core
 
-	class AsTheyAre;  class ForcePositive;  class ReverseEachCell;
+	class AsTheyAre;  class ForcePositive;
+	struct ReverseEachCell  {  class AssumeCellsExist;  };
 	
 };  // end of class CellIterator::Over::CellsOfFuzzyMesh
 
@@ -284,8 +285,8 @@ class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
 	std::list<Cell::Core*> * list_p;
   std::list<Cell::Core*>::iterator iter;
 
-	inline AsTheyAre ( Mesh::Fuzzy * msh, const size_t dim )
-	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
+	inline AsTheyAre ( Mesh::Fuzzy * msh, const tag::CellsOfDim &, const size_t d )
+		:	CellIterator::Over::CellsOfFuzzyMesh ( msh, tag::cells_of_dim, d )
 	{	}  // no need to initialize 'iter', 'reset' will do that
 	
 	// void reset ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
@@ -296,29 +297,6 @@ class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
 	// bool in_range ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
 
 };  // end of class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
-
-
-class CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell
-: public CellIterator::Over::CellsOfFuzzyMesh
-
-{	public :
-
-	std::list<Cell::Core*> * list_p;
-  std::list<Cell::Core*>::iterator iter;
-
-	inline ReverseEachCell ( Mesh::Fuzzy * msh, const size_t dim )
-	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
-	{	}  // no need to initialize 'iter', 'reset' will do that
-	
-	// void reset ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
-	// void reset ( Cell::Core * cll )
-	// virtual, defined by CellIterator::Over::CellsOfFuzzyMesh, execution forbidden
-	Cell::Core * deref ( );  // virtual from CellIterator::Core
-	// we trust each cell has already a reverse
-	// void advance ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
-	// bool in_range ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
-
-};  // end of class CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell
 
 
 class CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
@@ -329,8 +307,8 @@ class CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
 	std::list<Cell::Core*> * list_p;
   std::list<Cell::Core*>::iterator iter;
 
-	inline ForcePositive ( Mesh::Fuzzy * msh, const size_t dim )
-	:	CellIterator::Over::CellsOfFuzzyMesh ( msh, dim )
+	inline ForcePositive ( Mesh::Fuzzy * msh, const tag::CellsOfDim &, const size_t d )
+		:	CellIterator::Over::CellsOfFuzzyMesh ( msh, tag::cells_of_dim, d )
 	{	}  // no need to initialize 'iter', 'reset' will do that
 	
 	// void reset ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
@@ -340,7 +318,31 @@ class CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
 	// void advance ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
 	// bool in_range ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
 
-};  // end of class CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+
+
+class CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+: public CellIterator::Over::CellsOfFuzzyMesh
+
+{	public :
+
+	std::list<Cell::Core*> * list_p;
+  std::list<Cell::Core*>::iterator iter;
+
+	inline AssumeCellsExist ( Mesh::Fuzzy * msh, const tag::CellsOfDim &, const size_t d )
+		:	CellIterator::Over::CellsOfFuzzyMesh ( msh, tag::cells_of_dim, d )
+	{	}  // no need to initialize 'iter', 'reset' will do that
+	
+	// void reset ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
+	// void reset ( Cell::Core * cll )
+	// virtual, defined by CellIterator::Over::CellsOfFuzzyMesh, execution forbidden
+	Cell::Core * deref ( );  // virtual from CellIterator::Core
+	// we trust each cell has already a reverse
+	// void advance ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
+	// bool in_range ( )  virtual, defined by CellIterator::Over::CellsOfFuzzyMesh
+
+};  // end of class CellIterator::Over::CellsOfFuzzyMesh
+    //                ::ReverseEachCell::AssumeCellsExist
 
 //--------------------------------------------------------------------------------
 

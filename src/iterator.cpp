@@ -28,8 +28,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -38,8 +38,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -48,8 +48,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -58,8 +58,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -67,8 +67,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -77,8 +77,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -87,8 +87,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -97,8 +97,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -108,8 +108,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
 
@@ -120,8 +120,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
 
@@ -132,8 +132,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
@@ -144,8 +144,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
@@ -252,8 +252,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 	
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -263,8 +263,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -274,8 +274,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );      }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -285,8 +285,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );      }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -296,8 +296,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -307,8 +307,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -318,8 +318,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -329,8 +329,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -341,8 +341,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
 
@@ -354,8 +354,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
 
@@ -367,8 +367,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
@@ -380,8 +380,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
@@ -390,8 +390,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -400,8 +400,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -410,8 +410,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -420,8 +420,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -429,8 +429,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -439,8 +439,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -449,8 +449,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -459,8 +459,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -470,8 +470,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
 
@@ -482,8 +482,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
 
@@ -494,8 +494,8 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
@@ -506,81 +506,249 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::Positive::Segment * seg =
-		assert_cast < Cell::Positive *, Cell::Positive::Segment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg =
+		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
 	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
 
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverVertices &, const tag::ThisMeshIsPositive & )
-{	return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-                        tag::cells_of_dim, 0, tag::as_they_are         );   }
+( const tag::OverVertices &, const tag::AsTheyAre &, const tag::ThisMeshIsPositive & )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 0 );  }
+// perhaps provide a different constructor for calling directly msh->cells[0]
+// or msh->cells.front(), it should be slightly faster when compiled with optimization
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverVertices &, const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+( const tag::OverVertices &, const tag::AsTheyAre &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::AsTheyAre &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::AsTheyAre &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 0 );  }
+// perhaps provide a different constructor for calling directly msh->cells[0]
+// or msh->cells.front(), it should be slightly faster when compiled with optimization
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
-// fuzzy meshes have dimension at least one
-// thus, vertices are positive anyway
-{	return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-                        tag::cells_of_dim, 0, tag::as_they_are         );   }
+// fuzzy meshes have dimension at least one; thus, vertices are positive anyway
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 0 );  }
+// perhaps provide a different constructor for calling directly msh->cells[0]
+// or msh->cells.front(), it should be slightly faster when compiled with optimization
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverVertices &, const tag::ReverseOrder &,
-  const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
+( const tag::OverVertices &, const tag::ForcePositive &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::ForcePositive &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverSegments &, const tag::ThisMeshIsPositive & )
-{	assert ( this->get_dim_plus_one() > 1  );
-	// fuzzy meshes have dimension at least one
-	return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-												tag::cells_of_dim, 1, tag::as_they_are          );  }
+( const tag::OverVertices &, const tag::ForcePositive &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+// fuzzy meshes have dimension at least one; thus, vertices are positive anyway
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 0 );  }
+// perhaps provide a different constructor for calling directly msh->cells[0]
+// or msh->cells.front(), it should be slightly faster when compiled with optimization
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverSegments &, const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+( const tag::OverVertices &, const tag::ReverseEachCell &,
+  const tag::DoNotBother &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require reversed vertices for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                                   }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive &                         )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "This makes no sense for two different reasons." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive &                         )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "This makes no sense for two different reasons." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverVertices &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive &                   )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require reversed vertices for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                                   }
+
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::AsTheyAre &, const tag::ThisMeshIsPositive & )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 1 );  }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::AsTheyAre &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::AsTheyAre &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::AsTheyAre &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 1 );  }
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 ( const tag::OverSegments &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
-{	assert ( this->get_dim_plus_one() > 1 );
-	// fuzzy meshes have dimension at least one
-	if ( this->get_dim_plus_one() == 2 )  // one-dimensional fuzzy mesh
-		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-													tag::cells_of_dim, 1, tag::force_positive       );
-	else  // high-dimensional fuzzy mesh
-		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-													tag::cells_of_dim, 1, tag::as_they_are          );  }
+{	if ( this->get_dim_plus_one() == 2 )
+		return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive ( this, tag::cells_of_dim, 1 );
+	// else : dim >= 2, segments are positive anyway
+	assert ( this->get_dim_plus_one() > 2 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 1 );       }
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverSegments &, const tag::ReverseOrder &,
-  const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
+( const tag::OverSegments &, const tag::ForcePositive &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::ForcePositive &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, const size_t d, const tag::ThisMeshIsPositive & )
-{	assert ( this->get_dim_plus_one() > d );
-	return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-												tag::cells_of_dim, 1, tag::as_they_are          );  }
-	
+( const tag::OverSegments &, const tag::ForcePositive &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	if ( this->get_dim_plus_one() == 2 )
+		return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+			( this, tag::cells_of_dim, 1 );
+	// else : dim >= 2, segments are positive anyway
+	assert ( this->get_dim_plus_one() > 2 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, 1 );  }
+
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
-  const tag::ThisMeshIsPositive &                                   )
+( const tag::OverSegments &, const tag::ReverseEachCell &,
+  const tag::DoNotBother &, const tag::ThisMeshIsPositive & )
+{	assert ( this->get_dim_plus_one() == 2 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, 1 );                                                  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive &                         )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive &                         )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverSegments &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive &                   )
+{	assert ( this->get_dim_plus_one() == 2 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, 1 );                                                  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d,
+  const tag::AsTheyAre &, const tag::ThisMeshIsPositive & )
+{	assert ( this->get_dim_plus_one() > d );
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, d );  }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	assert ( this->get_dim_plus_one() > d );
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, d );  }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d,
+  const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
+{	assert ( this->get_dim_plus_one() > d );
+	if ( this->get_dim_plus_one() == d+1 )
+		return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+			( this, tag::cells_of_dim, d );
+	// else : cell dim < mesh dim, cells are positive anyway
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, d );  }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive &              )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive &              )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
@@ -588,24 +756,148 @@ CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
-  const tag::ThisMeshIsPositive &                                          )
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive &          )
 {	assert ( this->get_dim_plus_one() > d );
-	if ( this->get_dim_plus_one() == d+1 )  // cells of maximum dimension
-		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-													tag::cells_of_dim, d, tag::force_positive       );
-	else  // cells of lower dimension
-		return CellIterator ( tag::over_cells_of, this, tag::fuzzy_pos_mesh,
-													tag::cells_of_dim, d, tag::as_they_are          );  }
+	if ( this->get_dim_plus_one() == d+1 )
+		return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+			( this, tag::cells_of_dim, d );
+	// else : cell dim < mesh dim, cells are positive anyway
+	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre ( this, tag::cells_of_dim, d );  }
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
-( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseOrder &,
-  const tag::ForcePositive &, const tag::ThisMeshIsPositive &             )
+( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseEachCell &,
+  const tag::DoNotBother &, const tag::ThisMeshIsPositive &                    )
+{	assert ( this->get_dim_plus_one() == d+1 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, d );                                                  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d,
+  const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d,
+  const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 						<< __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
 	exit ( 1 );                                                                        }
 
--------------------------------------------------------------------------------------------
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfDim &, const size_t d,
+  const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	assert ( this->get_dim_plus_one() == d+1 );
+	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, d );                                                  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &, const tag::ThisMeshIsPositive & )
+{ return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
+{ return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+	
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive & )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive & )
+{ return new CellIterator::Over::CellsOfFuzzyMesh::ForcePositive
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &,
+  const tag::DoNotBother &, const tag::ThisMeshIsPositive &       )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::RequireOrder &, const tag::ThisMeshIsPositive &                             )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to require order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrder &, const tag::ThisMeshIsPositive &                             )
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+						<< __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "It makes no sense to reverse order for a fuzzy mesh." << std::endl;
+	exit ( 1 );                                                                        }
+
+CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
+( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &, const tag::DoNotBother &,
+  const tag::ReverseOrderIfAny &, const tag::ThisMeshIsPositive &                        )
+{	return new CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist
+		( this, tag::cells_of_dim, Mesh::assert_diff ( this->get_dim_plus_one(), 1 ) );  }
+// perhaps provide a different constructor for calling directly msh->cells.back(),
+// it should be slightly faster when compiled with optimization
+
+
+//-----------------------------------------------------------------------------------------
 
 
 void CellIterator::Over::TwoVerticesOfSeg::reset ( ) // virtual from CellIterator::Core
@@ -620,65 +912,80 @@ void CellIterator::Over::TwoVerticesOfSeg::reset ( Cell::Core * cll )
 
 void CellIterator::Over::TwoVerticesOfSeg::advance ( )
 // virtual from CellIterator::Core
-#IFNDEF NDEBUG
+#ifndef NDEBUG
 {	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }  }
-#ENDIF
+		exit ( 1 );                                                  }  
+	this->passage++;                                                 }
+#else
 {	this->passage++;  }
+#endif
 
 bool CellIterator::Over::TwoVerticesOfSeg::in_range ( )
 // virtual from CellIterator::Core
 {	return this->passage < 2;   }
 
-Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder::deref ( )
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre::deref ( )
 // virtual from CellIterator::Core
-{	// iterate over the two vertices, first base (negative) then tip (positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
+// iterate over the two vertices, first base (negative) then tip (positive)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
-#ENDIF
 	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		return this->seg_p->base_p;     }  // negative vertex
 	else
 	{	assert ( this->seg_p->tip_p );
-		return this->seg_p->tip_p;      }  // positive vertex
-}
-
-Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::deref ( )
-// virtual from CellIterator::Core
-{	// iterate over the two vertices, first tip (positive) then base (negative)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
-	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
-							<< __extension__ __PRETTY_FUNCTION__ << ": ";
-		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }
-#ENDIF
-	if ( this->passage )
+		return this->seg_p->tip_p;      } }  // positive vertex
+#else
+{	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
-		return this->seg_p->base_p;     }    // negative vertex
+		return this->seg_p->base_p;     }  // negative vertex
 	else
 	{	assert ( this->seg_p->tip_p );
-		return this->seg_p->tip_p;      }  } // positive vertex
+		return this->seg_p->tip_p;      } }  // positive vertex
+#endif
 
 
-Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder::ForcePositive::deref ( )
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre::deref ( )
 // virtual from CellIterator::Core
-{	// iterate over the two vertices, first base then tip (both positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
+// iterate over the two vertices, first tip (positive) then base (negative)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
-#ENDIF
+	if ( this->passage == 0 )
+	{	assert ( this->seg_p->tip_p );
+		return this->seg_p->tip_p;      }    // positive vertex
+	else
+	{	assert ( this->seg_p->base_p );
+		return this->seg_p->base_p;     }  } // negative vertex
+#else
+{	if ( this->passage == 0 )
+	{	assert ( this->seg_p->tip_p );
+		return this->seg_p->tip_p;      }    // positive vertex
+	else
+	{	assert ( this->seg_p->base_p );
+		return this->seg_p->base_p;     }  } // negative vertex
+#endif
+
+
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive::deref ( )
+// virtual from CellIterator::Core
+// iterate over the two vertices, first base then tip (both positive)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
+	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+							<< __extension__ __PRETTY_FUNCTION__ << ": ";
+		std::cout << "This iterator is out of range." << std::endl;
+		exit ( 1 );                                                  }
 	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
@@ -686,38 +993,55 @@ Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::NormalOrder::ForcePositive
 	else
 	{	assert ( this->seg_p->tip_p );
 		return this->seg_p->tip_p;      }             }  // positive vertex
-
-
-Cell::Core * CellIterator::Over::TwoVerticesOfPosSeg::ReverseOrder::ForcePositive::deref ( )
-// virtual from CellIterator::Core
-{	// iterate over the two vertices, first tip then base (both positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
-	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
-							<< __extension__ __PRETTY_FUNCTION__ << ": ";
-		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }
-#ENDIF
-	if ( this->passage )
+#else
+{	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
-		return this->seg_p->base_p->reverse_p;     }      // positive vertex
+		return this->seg_p->base_p->reverse_p;     }     // positive vertex
 	else
 	{	assert ( this->seg_p->tip_p );
-		return this->seg_p->tip_p;      }              }  // positive vertex
+		return this->seg_p->tip_p;      }             }  // positive vertex
+#endif
 
 
-Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder::deref ( )
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive::deref ( )
 // virtual from CellIterator::Core
-{	// iterate over the two vertices, first base (negative) then tip (positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
+// iterate over the two vertices, first tip then base (both positive)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
-#ENDIF
-	if ( this->passage )
+	if ( this->passage == 0 )
+	{	assert ( this->seg_p->tip_p );
+		return this->seg_p->tip_p;      }                // positive vertex
+	else
+	{	assert ( this->seg_p->base_p );
+		assert ( this->seg_p->base_p->reverse_p );
+		return this->seg_p->base_p->reverse_p;     }  }  // positive vertex
+#else
+{	if ( this->passage == 0 )
+	{	assert ( this->seg_p->tip_p );
+		return this->seg_p->tip_p;      }                // positive vertex
+	else
+	{	assert ( this->seg_p->base_p );
+		assert ( this->seg_p->base_p->reverse_p );
+		return this->seg_p->base_p->reverse_p;     }  }  // positive vertex
+#endif
+
+
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg
+               ::NormalOrder::ReverseEachCell::AssumeCellsExist::deref ( )
+// virtual from CellIterator::Core
+// iterate over the two vertices, first base (negative) then tip (positive)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
+	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+							<< __extension__ __PRETTY_FUNCTION__ << ": ";
+		std::cout << "This iterator is out of range." << std::endl;
+		exit ( 1 );                                                  }
+	if ( this->passage == 0 )
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
 		return this->seg_p->base_p->reverse_p;     }      // positive vertex
@@ -725,64 +1049,46 @@ Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder::deref ( )
 	{	assert ( this->seg_p->tip_p );
 		assert ( this->seg_p->tip_p->reverse_p );
 		return this->seg_p->tip_p->reverse_p;      }   }  // negative vertex
+#else
+{	if ( this->passage == 0 )
+	{	assert ( this->seg_p->base_p );
+		assert ( this->seg_p->base_p->reverse_p );
+		return this->seg_p->base_p->reverse_p;     }      // positive vertex
+	else
+	{	assert ( this->seg_p->tip_p );
+		assert ( this->seg_p->tip_p->reverse_p );
+		return this->seg_p->tip_p->reverse_p;      }   }  // negative vertex
+#endif
 	
 
-Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::deref ( )
+Cell::Core * CellIterator::Over::TwoVerticesOfSeg
+               ::ReverseOrder::ReverseEachCell::AssumeCellsExist::deref ( )
 // virtual from CellIterator::Core
-{	// iterate over the two vertices, first tip (positive) then base (negative)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
+// iterate over the two vertices, first tip (positive) then base (negative)
+#ifndef NDEBUG
+{	if ( this->passage >= 2 )
 	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 							<< __extension__ __PRETTY_FUNCTION__ << ": ";
 		std::cout << "This iterator is out of range." << std::endl;
 		exit ( 1 );                                                  }
-#ENDIF
 	if ( this->passage == 0 )
-	{	assert ( this->seg_p->base_p );
-		assert ( this->seg_p->base_p->reverse_p );
-		return this->seg_p->base_p->reverse_p;     }      // positive vertex
-	else
 	{	assert ( this->seg_p->tip_p );
 		assert ( this->seg_p->tip_p->reverse_p );
-		return this->seg_p->tip_p->reverse_p;      }   }  // negative vertex
-
-
-Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::NormalOrder::ForcePositive::deref ( )
-// virtual from CellIterator::Core
-{	// iterate over the two vertices, first base then tip (both positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
-	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
-							<< __extension__ __PRETTY_FUNCTION__ << ": ";
-		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }
-#ENDIF
-	if ( this->passage )
+		return this->seg_p->tip_p->reverse_p;      }     // negative vertex
+	else
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
-		return this->seg_p->base_p->reverse_p;     }        // positive vertex
-	else
+		return this->seg_p->base_p->reverse_p;     }  }  // positive vertex
+#else
+{	if ( this->passage == 0 )
 	{	assert ( this->seg_p->tip_p );
-		return this->seg_p->tip_p;      }                }  // positive vertex
-
-
-Cell::Core * CellIterator::Over::TwoVerticesOfNegSeg::ReverseOrder::ForcePositive::deref ( )
-// virtual from CellIterator::Core
-{	// iterate over the two vertices, first tip then base (both positive)
-#IFNDEF NDEBUG
-	if ( this->passage >= 2 )
-	{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
-							<< __extension__ __PRETTY_FUNCTION__ << ": ";
-		std::cout << "This iterator is out of range." << std::endl;
-		exit ( 1 );                                                  }
-#ENDIF
-	if ( this->passage == 0 )
+		assert ( this->seg_p->tip_p->reverse_p );
+		return this->seg_p->tip_p->reverse_p;      }     // negative vertex
+	else
 	{	assert ( this->seg_p->base_p );
 		assert ( this->seg_p->base_p->reverse_p );
-		return this->seg_p->base_p->reverse_p;     }      // positive vertex
-	else
-	{	assert ( this->seg_p->tip_p );
-		return this->seg_p->tip_p;      }              }  // positive vertex
+		return this->seg_p->base_p->reverse_p;     }  }  // positive vertex
+#endif
 
 
 void CellIterator::Over::CellsOfFuzzyMesh::reset ( ) // virtual from CellIterator::Core
@@ -807,7 +1113,7 @@ Cell::Core * CellIterator::Over::CellsOfFuzzyMesh::AsTheyAre::deref ( )
 // virtual from CellIterator::Core
 {	return * ( this->iter );  }
 
-Cell::Core * CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::deref ( )
+Cell::Core * CellIterator::Over::CellsOfFuzzyMesh::ReverseEachCell::AssumeCellsExist::deref ( )
 // virtual from CellIterator::Core
 {	Cell::Core * cll_p = ( * this->iter )->reverse_p;
 	assert ( cll_p );  return cll_p;                   }
