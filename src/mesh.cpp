@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.04.05
+// mesh.cpp 2021.04.06
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -45,31 +45,6 @@ std::vector < size_t > Cell::size_t_heap_size_neg ( Mesh::maximum_dimension_plus
 std::vector < size_t > Cell::short_int_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0 );
 std::vector < size_t > Cell::short_int_heap_size_neg ( Mesh::maximum_dimension_plus_one, 0 );
 
-	
-Cell::Core * const Cell::ghost { new Cell::NegativeVertex ( tag::ghost ) };
-// static data member, see paragraph 9.14 in the manual
-
-//-----------------------------------------------------------------------------//
-
-
-Mesh::Mesh ( const tag::DeepCopy &, const Mesh & msh )
-:	core { nullptr }, meth { & Mesh::Positive::methods_pos }
-{	size_t d = msh.dim();
-	if ( d > 1 )
-		this->core = new Mesh::Positive ( tag::of_dimension, d+1, tag::minus_one );
-	else
-	{	assert ( d == 1 );
-		this->core = new Mesh::OneDim::Positive ( );  }
-	std::list < Cell::Core* > & l = msh.core->cells[d];
-	std::list<Cell::Core*>::iterator it = l.begin();
-	for ( ; it != l.end(); it++ )
-	{	Cell::Core * cll_p = *it;
-		Cell cll ( tag::whose_core_is, cll_p );
-		cll.add_to ( *this );   }                                                    }
-
-//	CellIterator it = msh.iter_over ( tag::cells_of_dim, d );
-//	for ( it.reset(); it.in_range(); it++ )
-//	{	Cell cll = *it;
 	
 //-----------------------------------------------------------------------------//
 
@@ -2487,7 +2462,20 @@ void Mesh::Fuzzy::remove_neg_hd_cell ( Cell::NegativeHighDim * cll, const tag::M
 
 }  // anonymous namespace
 
+//-----------------------------------------------------------------------------//
+
+
+Mesh::Core * Mesh::ZeroDim::build_deep_copy ( )
+// virtual from Mesh::Core, here execution forbidden
+{	std::cout << __FILE__ << ":" <<__LINE__ << ": "
+	          << __extension__ __PRETTY_FUNCTION__ << ": ";
+	std::cout << "No deep copy for zero-dim meshes" << std::endl;
+	exit ( 1 );                                                     }
 	
+Mesh::Core * Mesh::Fuzzy::build_deep_copy ( )
+// virtual from Mesh::Core, here execution forbidden
+{}  // ? !!
+
 //-----------------------------------------------------------------------------//
 
 

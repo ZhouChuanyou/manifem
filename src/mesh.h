@@ -1,5 +1,5 @@
 
-// mesh.h 2021.04.05
+// mesh.h 2021.04.06
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -63,8 +63,7 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct MightBeOne { };  static const MightBeOne might_be_one;
 	struct Oriented { };  static const Oriented oriented;
 	struct NotOriented { };  static const NotOriented not_oriented;
-	struct DeepCopy { };  static const DeepCopy deep_copy;
-	                      static const DeepCopy deep_copy_of;
+	struct DeepCopyOf { };  static const DeepCopyOf deep_copy_of;
 	struct BuildCellsIfNec { };  static const BuildCellsIfNec build_cells_if_necessary;
 	struct Progressive { };  static const Progressive progressive;
 	struct StartAt { };  static const StartAt start_at;
@@ -364,16 +363,13 @@ class Mesh
 	static size_t maximum_dimension_plus_one;
 
 	// constructors :
-	
-	inline Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t dim,
-                const tag::IsPositive & ispos = tag::is_positive          );
 
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core *,
                 const tag::IsPositive & ispos = tag::is_positive );
 	
 	// build a negative mesh from a positive one, do not care about non-existing cells :
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
-	              const tag::DoNotBother &                                      );
+	              const tag::DoNotBother &                                           );
 	
 	// build a negative mesh from a positive one, assuming all cells have reverse :
 	// defined in iterator.h
@@ -385,7 +381,11 @@ class Mesh
 	inline Mesh ( const tag::WhoseCoreIs &, Mesh::Core *, const tag::IsNegative &,
                 const tag::BuildCellsIfNec &                                     );
 
-	Mesh ( const tag::DeepCopy &, const Mesh & );
+	inline Mesh ( const tag::DeepCopyOf &, const Mesh & msh );
+	inline Mesh ( const tag::DeepCopyOf &, const Mesh & msh, const tag::Fuzzy & );
+
+	inline Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t dim,
+                const tag::IsPositive & ispos = tag::is_positive                );
 
 	// we are still in class Mesh
 	
@@ -503,6 +503,8 @@ class Mesh
 	                          const Mesh & BC, const Mesh & CA         );
 	void pretty_constructor ( const tag::Quadrangle &, const Mesh & south, const Mesh & east,
 	             const Mesh & north, const Mesh & west, const tag::WithTriangles & wt        );
+
+	inline void copy_all_cells_to ( Mesh & msh ) const;
 
 	inline bool is_positive () const  {  return is_pos();  }
 	inline size_t dim () const;
@@ -1611,8 +1613,6 @@ class Mesh::Core
 	// if the cell has no other meshes above, dispose of it
 	// delete this (now empty) mesh
 	
-	//private :
-
 	// the four methods below are only relevant for STSI meshes
 	// so we forbid execution for now and then override them in Mesh::STSI
 	virtual Cell::Core * cell_in_front_of
@@ -1645,6 +1645,8 @@ class Mesh::Core
 	virtual void add_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & ) = 0;
 	virtual void remove_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & ) = 0;
 
+	virtual Mesh::Core * build_deep_copy ( ) = 0;
+	
 	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
 		add_to_cells ( Cell::Core *, const size_t );
 	// returns garbage; overriden by Mesh::Fuzzy and later by Mesh::STSI
@@ -1881,6 +1883,8 @@ class Mesh::ZeroDim : public Mesh::Core
 	void add_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & );
 	void remove_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & );
 	
+	Mesh::Core * build_deep_copy ( );  // virtual from Mesh::Core, here execution forbidden
+
 	// we are still in class Mesh::ZeroDim
 	
 	// add_to_cells ( Cell::Core *, const size_t )  defined by Cell::Core, returns garbage
@@ -2297,7 +2301,7 @@ class Mesh::Fuzzy : public Mesh::Core
 	inline Fuzzy ( const tag::OfDimension &, const size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one ), cells ( dim_p1 )
 	{	}
-
+		
 	inline Fuzzy ( const tag::Segment &,  // builds a chain of n segment cells
 	               const Cell & A, const Cell & B, const tag::DividedIn &, const size_t n )
 	:	Fuzzy ( tag::of_dimension, 2, tag::minus_one )
@@ -2359,6 +2363,8 @@ class Mesh::Fuzzy : public Mesh::Core
 	void remove_pos_hd_cell ( Cell::PositiveHighDim *, const tag::MeshIsBdry & );
 	void add_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & );
 	void remove_neg_hd_cell ( Cell::NegativeHighDim *, const tag::MeshIsBdry & );
+
+	Mesh::Core * build_deep_copy ( );  // virtual from Mesh::Core
 
 	// add a cell to 'this->cells[d]' list, return iterator into that list
 	virtual std::map<Mesh::Core*,Cell::field_to_meshes>::iterator
@@ -2613,17 +2619,15 @@ class Mesh::STSI : public Mesh::Fuzzy
 //-----------------------------------------------------------------------------//
 
 
-inline Mesh::Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t d,
-                    const tag::IsPositive & ispos                           )
-// by default, ispos = tag::is_positive, so may be called with only three arguments
-:	core { new Mesh::Fuzzy ( tag::of_dimension, d+1, tag::minus_one ) },
-	is_pos { & Mesh::return_true }
-{	assert ( d >= 1 );  }
+inline void Mesh::copy_all_cells_to ( Mesh & msh ) const
+{	CellIterator it = this->iterator ( tag::over_cells_of_max_dim );
+	for ( it.reset(); it.in_range(); it++ )
+	{	Cell cll = *it;  cll.add_to ( msh );  }                         }
 	
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsPositive & ispos )
 // by default, ispos = tag::is_positive, so may be called with only two arguments
-// used in Mesh::Negative::reverse and in Cell::boundary
+// used in Mesh::Negative::reverse and in Cell::boundary  ? !!
 : core { c }, is_pos { & Mesh::return_true }
 {	assert ( c );  }
 
@@ -2634,6 +2638,27 @@ inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegat
 // without worrying whether reverse cells exist or not
 : core { c }, is_pos { & Mesh::return_false }
 {	}
+
+
+inline Mesh::Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t d,
+                    const tag::IsPositive & ispos                           )
+// by default, ispos = tag::is_positive, so may be called with only three arguments
+:	core { nullptr }, is_pos { & Mesh::return_true }
+{	assert ( d >= 1 );
+	this->core = new Mesh::Fuzzy ( tag::of_dimension, d+1, tag::minus_one );  }
+	
+
+inline Mesh::Mesh ( const tag::DeepCopyOf &, const Mesh & msh )
+:	core { msh.core->build_deep_copy() }, is_pos { & Mesh::return_true }
+{	}
+
+
+inline Mesh::Mesh ( const tag::DeepCopyOf &, const Mesh & msh, const tag::Fuzzy & )
+:	core { nullptr }, is_pos { & Mesh::return_true }
+{	size_t dp1 = msh.core->get_dim_plus_one();
+	assert ( dp1 > 1 );
+	this->core = new Mesh::Fuzzy ( tag::of_dim, dp1, tag::minus_one );
+	msh.copy_all_cells_to ( *this );                                   }
 
 
 inline Mesh::Mesh ( const tag::Segment &, const Cell & A, const Cell & B,
@@ -2668,14 +2693,14 @@ inline Mesh::Mesh ( const tag::Quadrangle &, const Cell & SW, const Cell & SE,
 inline Mesh::Mesh ( const tag::Join &, const Mesh & m1, const Mesh & m2 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l;
+{	std::vector < Mesh > l;  l.reserve ( 2 );
 	l.push_back ( m1 );  l.push_back ( m2 );
   this->join_list ( l );                   }
 
 inline Mesh::Mesh ( const tag::Join &, const Mesh & m1, const Mesh & m2, const Mesh & m3 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l;
+{	std::vector < Mesh > l;  l.reserve ( 3 );
 	l.push_back ( m1 );  l.push_back ( m2 );  l.push_back ( m3 );
   this->join_list ( l );                                         }
 
@@ -2683,7 +2708,7 @@ inline Mesh::Mesh
 ( const tag::Join &, const Mesh & m1, const Mesh & m2, const Mesh & m3, const Mesh & m4 )
 :	Mesh ( tag::whose_core_is, new Mesh::Fuzzy
          ( tag::of_dim, m1.core->get_dim_plus_one(), tag::minus_one ) )
-{	std::vector < Mesh > l;
+{	std::vector < Mesh > l;  l.reserve ( 4 );
 	l.push_back ( m1 );  l.push_back ( m2 );
 	l.push_back ( m3 );  l.push_back ( m4 );
   this->join_list ( l );                   }
