@@ -35,7 +35,7 @@ size_t Mesh::maximum_dimension_plus_one { 4 };  // static data member
 // '2' would be for just polygonal lines
 // '1' doesn't make much sense - just points ?
 
-// see method Mesh::set_max_dim and paragraph 9.5 in the manual
+// see method Mesh::set_max_dim and paragraph 10.5 in the manual
 
 // static data members :
 std::vector < size_t > Cell::double_heap_size_pos ( Mesh::maximum_dimension_plus_one, 0. );
@@ -1044,7 +1044,7 @@ inline void make_deep_connections  // hidden in anonymous namespace
 ( Cell::PositiveNotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & )
 
 // make far connections when adding a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( msh->get_dim_plus_one() > 1 );
 	// make_deep_connections_0d deals with the case cll.get_dim() == 0
@@ -1083,7 +1083,7 @@ inline void make_deep_connections  // hidden in anonymous namespace
 ( Cell::PositiveNotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & )
 
 // make far connections when adding a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( msh );
 	assert ( msh->get_dim_plus_one() > 1 );
@@ -1133,7 +1133,7 @@ inline void make_deep_connections_rev  // hidden in anonymous namespace
   Mesh::Core * msh, const tag::MeshIsNotBdry &          )
 
 // make far connections when adding a negative cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll != o_cll );
 	assert ( cll );  assert ( o_cll );  assert ( msh );
@@ -1176,7 +1176,7 @@ inline void make_deep_connections_rev  // hidden in anonymous namespace
   Mesh::Core * msh, const tag::MeshIsBdry &             )
 
 // make far connections when adding a negative cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll != o_cll );
@@ -1404,7 +1404,7 @@ inline void break_deep_connections  // hidden in anonymous namespace
 ( Cell::PositiveNotVertex * cll, Mesh::Core * msh, const tag::MeshIsNotBdry & )
 
 // break far connections when removing a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( msh );
 	assert ( msh->get_dim_plus_one() > 1 );
@@ -1444,7 +1444,7 @@ inline void break_deep_connections  // hidden in anonymous namespace
 ( Cell::PositiveNotVertex * cll, Mesh::Core * msh, const tag::MeshIsBdry & )
 
 // break far connections when removing a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( msh );
 	assert ( msh->get_dim_plus_one() > 1 );
@@ -1495,7 +1495,7 @@ inline void break_deep_connections_rev  // hidden in anonymous namespace
   Mesh::Core * msh, const tag::MeshIsNotBdry &          )
 
 // break far connections when removing a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll != o_cll );
@@ -1539,7 +1539,7 @@ inline void break_deep_connections_rev  // hidden in anonymous namespace
   Mesh::Core * msh, const tag::MeshIsBdry &            )
 
 // break far connections when removing a positive cell
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 	
 {	assert ( cll );  assert ( o_cll );  assert ( msh );
 	assert ( cll != o_cll );
@@ -1982,7 +1982,7 @@ void Mesh::STSI::remove_from_cells
 //-----------------------------------------------------------------------------//
 
 
-// see paragraph 10.1 in the manual
+// see paragraph 11.1 in the manual
 
 void Mesh::ZeroDim::add_pos_seg ( Cell::PositiveSegment *, const tag::MeshIsNotBdry & )
 // virtual from Mesh::Core, here execution forbidden
