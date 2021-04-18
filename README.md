@@ -25,7 +25,7 @@ A component of maniFEM, [MetricTree](https://github.com/cristian-barbarosie/Metr
 ManiFEM is being developed by [Cristian Barbarosie](cristian.barbarosie@gmail.com), Sérgio Lopes and Anca-Maria Toader;
 see its [homepage](http://manifem.rd.ciencias.ulisboa.pt).
 
-To learn maniFEM, you should read the [manual](http://manifem.rd.ciencias.ulisboa.pt/manual-manifem-1-ed.pdf).
+To learn maniFEM, you should read the [manual](http://manifem.rd.ciencias.ulisboa.pt/manual-manifem-1ed.pdf).
 
 To use maniFEM, you should copy all files under [src](src) to some directory in your computer.
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
