@@ -1,5 +1,6 @@
 
 // example presented in paragraph 1.5 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a mesh which mixes triangles and rectangles
 
 #include "maniFEM.h"

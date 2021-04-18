@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.8 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a disk in RR2 (alternating between manifolds)
 
 #include "maniFEM.h"

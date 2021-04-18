@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.18 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // union between a sphere and a cylinder
 
 #include "maniFEM.h"

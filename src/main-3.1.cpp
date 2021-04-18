@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.1 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a circle from four curved segments then fills the disk with triangles
 
 #include "maniFEM.h"

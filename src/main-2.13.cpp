@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.13 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a spiral mesh (parametric)
 
 #include "maniFEM.h"

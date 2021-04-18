@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.3 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // an arc of hiperbola on an implicit manifold
 
 #include "maniFEM.h"

@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.19 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a sphere with a cylinder-shaped tunnel
 
 #include "maniFEM.h"

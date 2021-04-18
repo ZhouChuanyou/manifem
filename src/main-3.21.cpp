@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.21 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a singular point at the tangency point between two manifolds
 // the code shown in the manual does not work (yet)
 // we fake the result by building by hand the triangles around the singular point

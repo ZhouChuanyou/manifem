@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.4 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a circle by joining four segments on an implicit manifold
 
 #include "maniFEM.h"

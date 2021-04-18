@@ -505,6 +505,13 @@ class Mesh
 		( Cell::Core *, Cell::Core *, Mesh::Core *, short int, short int );
 	// methods action_* are passed to 'deep_connections' from  Cell::add_to and Cell::remove_from
 
+	template < typename X, typename Y > inline static Y assert_cast ( X x )
+#ifndef NDEBUG
+	{	Y y = dynamic_cast < Y > (x);  assert (y);  return y;  }
+#else
+	{	Y y = static_cast < Y > (x);  return y;  }
+#endif
+
 	class Positive;  class Negative;
 	struct OneDim  {  class Positive;  };
 	

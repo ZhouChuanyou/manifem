@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.11 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a circle in 3d (implicit manifold with two equations)
 
 #include "maniFEM.h"

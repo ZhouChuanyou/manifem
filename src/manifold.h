@@ -1,5 +1,5 @@
 
-// manifold.h 2021.02.11
+// manifold.h 2021.04.17
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -39,6 +39,7 @@ namespace tag {
 	struct lagrange { };  static const lagrange Lagrange;
 	struct Implicit { };  static const Implicit implicit;
 	struct Parametric { };  static const Parametric parametric;
+	struct DoNotSetAsWorking { };  static const DoNotSetAsWorking do_not_set_as_working;
 }
 
 
@@ -62,7 +63,10 @@ class Manifold
 
 	inline Manifold ( const tag::NonExistent & ) : core ( nullptr ) { }
 
-	inline Manifold ( const tag::euclid &, const tag::OfDimension &, size_t dim );
+	inline Manifold ( const tag::euclid &, const tag::OfDimension &, const size_t dim );
+
+	inline Manifold ( const tag::euclid &, const tag::OfDimension &, const size_t dim,
+                    const tag::DoNotSetAsWorking &                                   );
 
 	inline Manifold ( const tag::Implicit &, const Manifold &, const Function & );
 
@@ -390,18 +394,18 @@ class Manifold::Euclid : public Manifold::Core
 		std::vector < double > & coefs, std::vector < Cell > & points ) const;
 	
   Function build_coord_func ( const tag::lagrange &, const tag::OfDegree &, size_t d ) ;
-  // virtual from Function::Core
+  // virtual from Manifold::Core
 	
-  Function get_coord_func ( ) const;  // virtual from Function::Core
+  Function get_coord_func ( ) const;  // virtual from Manifold::Core
 	
-	void set_coords ( const Function co );  // virtual from Function::Core
+	void set_coords ( const Function co );  // virtual from Manifold::Core
 
 	void project ( Cell::Positive::Vertex * ) const;
 	// virtual from Manifold::Core, here execution forbidden
 
 	class SqDist;
 	// a callable object returning the square of the distance between two points
-	// used for MetricTree, see paragraph 9.15 in the manual
+	// used for MetricTree, see paragraph 10.15 in the manual
 
 };  // end of class Manifold::Euclid
 
@@ -410,7 +414,7 @@ class Manifold::Euclid : public Manifold::Core
 class Manifold::Euclid::SqDist
 
 // a callable object returning the square of the distance between two points
-// used for MetricTree, see paragraph 9.15 in the manual
+// used for MetricTree, see paragraph 10.15 in the manual
 
 {	public :
 
@@ -431,9 +435,17 @@ class Manifold::Euclid::SqDist
 //    	Manifold RR2 ( tag::Euclid, 2);
 //      Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 
-inline Manifold::Manifold ( const tag::euclid &, const tag::OfDimension &, size_t d )
+inline Manifold::Manifold
+( const tag::euclid &, const tag::OfDimension &, const size_t d )
 :	Manifold ( tag::whose_core_is, new Manifold::Euclid ( d ) )
 {	assert ( d > 0 );  }
+
+inline Manifold::Manifold
+( const tag::euclid &, const tag::OfDimension &, const size_t d,
+  const tag::DoNotSetAsWorking & )
+:	core { new Manifold::Euclid ( d ) }
+{	assert ( this->core );
+	assert ( d > 0 );       }
 
 
 class Manifold::Implicit : public Manifold::Core
@@ -473,7 +485,7 @@ class Manifold::Implicit : public Manifold::Core
 	
 	Function get_coord_func ( ) const;  // virtual from Manifold::Core
 
-	void set_coords ( const Function co );  // virtual from Function::Core
+	void set_coords ( const Function co );  // virtual from Manifold::Core
 
 	// void project ( Cell::Positive::Vertex * ) const  stays pure virtual from Manifold::Core
 
@@ -662,7 +674,7 @@ class Manifold::Parametric : public Manifold::Core
 	
 	Function get_coord_func ( ) const;  // virtual from Manifold::Core
 
-	void set_coords ( const Function co );  // virtual from Function::Core
+	void set_coords ( const Function co );  // virtual from Manifold::Core
 
 	void project ( Cell::Positive::Vertex * ) const;
 	// virtual from Manifold::Core

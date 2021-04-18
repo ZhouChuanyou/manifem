@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.5 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a hemisphere by joining four curved triangles
 
 #include "maniFEM.h"

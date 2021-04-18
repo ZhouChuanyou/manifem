@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.5 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a spiral in RR2
 
 #include "maniFEM.h"

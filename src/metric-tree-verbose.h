@@ -4,24 +4,24 @@
 // this verbose version draws a PS file
 // for normal use, #include "metric-tree.h"
 
-//    This is MetricTree, a tiny C++ library for hierarchical organization
-//    of a cloud of points in a metric space.
+//   This is MetricTree, a tiny C++ library for hierarchical organization
+//   of a cloud of points in a metric space.
 
-//    MetricTree is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   MetricTree is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    MetricTree is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   MetricTree is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/MetricTree
+//   Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/MetricTree
 
 
 // a cloud, i.e. a set of points in a metric space, organized as a tree
@@ -57,7 +57,7 @@
 
 // we prefer to work with squared distance (thus avoiding computing square roots)
 
-// see paragraph 9.15 in the manual of maniFEM
+// see paragraph 10.15 in the manual of maniFEM
 
 
 #include <iostream>

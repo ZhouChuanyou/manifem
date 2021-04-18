@@ -1,5 +1,5 @@
 
-// manifold.cpp 2021.02.11
+// manifold.cpp 2021.04.10
 
 //   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
 //   https://github.com/cristian-barbarosie/manifem
@@ -162,8 +162,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 	assert ( coord_vector );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i =
-			Function::core_to_scalar ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
 			     t * coord_i->get_value_on_cell(B) );             }                               }
@@ -206,8 +206,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 	assert ( coord_vector );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i =
-			Function::core_to_scalar ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
 			     t * coord_i->get_value_on_cell(B) +
@@ -257,8 +257,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 	assert ( coord_vector );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i =
-			Function::core_to_scalar ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
 			     t * coord_i->get_value_on_cell(B) +
@@ -305,8 +305,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 	assert ( coord_vector );
 	size_t n = coord.nb_of_components(), m = points.size();  // m== coefs.size()
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i =
-			Function::core_to_scalar ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
 		double v = 0.;
 		for ( size_t j = 0; j < m; j++ )
 			v += coefs[j] * coord_i->get_value_on_cell ( points[j] );
@@ -463,8 +463,10 @@ void Manifold::Parametric::project ( Cell::Positive::Vertex * P_c ) const
 
 {	std::map< Function::Core *, Function::Core * >::const_iterator it;
 	for ( it = this->equations.begin(); it != this->equations.end(); it++ )
-	{ Function::Scalar * coord_scalar = Function::core_to_scalar ( it->first );
-		Function::Scalar * expr_scalar = Function::core_to_scalar ( it->second );
+	{	Function::Scalar * coord_scalar = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( it->first );
+		Function::Scalar * expr_scalar = Mesh::assert_cast
+			< Function::Core*, Function::Scalar* > ( it->second );
 		coord_scalar->set_value_on_cell ( P_c, expr_scalar->get_value_on_cell(P_c) );  }  }
 
 

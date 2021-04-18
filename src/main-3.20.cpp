@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.20 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a sharp cone
 // the code shown in the manual does not work (yet)
 // we fake the result by building by hand the triangles around the vertex

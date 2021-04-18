@@ -1,5 +1,6 @@
 
 // exercise in paragraph 2.7 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a "bumpy" hemisphere meshed with triangles
 
 #include "maniFEM.h"

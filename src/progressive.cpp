@@ -1,5 +1,5 @@
 
-// progressive.cpp 2021.03.10
+// progressive.cpp 2021.04.06
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -850,7 +850,7 @@ inline Cell build_normals ( const Cell & start )
 // from a cell 'start', propagate normals along progress_interface
 // (will only cover the connected component containing 'start')
 // return the first segment which already has a normal
-// see paragraph 10.6 in the manual
+// see paragraph 11.6 in the manual
 // 'normal' should have norm approximately equal to desired_length
 
 {	assert ( start.belongs_to ( progress_interface, tag::oriented ) );
@@ -945,7 +945,7 @@ inline Cell glue_two_segs_S
 (	Cell & A, Cell & B, Cell & AB, Cell & C, Cell & D, Cell & CD,
 	MetricTree<Cell,Manifold::Euclid::SqDist> & cloud             )
 
-// see paragraph 10.8 in the manual
+// see paragraph 11.8 in the manual
 
 // progress_interface.cell_in_front_of(B) may have tip C
 // that is, BC may belong already to 'progress_progress_interface'
@@ -975,7 +975,7 @@ inline Cell glue_two_segs_Z
 (	Cell & A, Cell & B, Cell & AB, Cell & C, Cell & D, Cell & CD,
 	MetricTree<Cell,Manifold::Euclid::SqDist> & cloud      )
 
-// see paragraph 10.8 in the manual
+// see paragraph 11.8 in the manual
 
 // progress_interface.cell_behind(A) may have base D
 // that is, DA may belong already to 'progress_interface'
@@ -1124,7 +1124,7 @@ inline bool check_touching
 // close enough to 'ver', previously computed in 'relocate'
 // we can destroy it here, it won't be used anymore
 	
-// see paragraph 10.8 in the manual
+// see paragraph 11.8 in the manual
 
 {	if ( not ver.exists() )  return false;  // no touch
 	if ( not ver.belongs_to ( progress_interface, tag::not_oriented ) )  return false;
@@ -1453,7 +1453,7 @@ void progressive_construct
 	// second argument : distance for rank zero nodes, which is a mere hint
 	// about how to initialize the tree (the tree can change a lot later)
 	// third argument : ratio between distances of successive ranks
-	// see paragraphs 9.15 and 9.16 in the manual
+	// see paragraphs 10.15 and 10.16 in the manual
 
 	{ // just a block of code for hiding variables
 	// 'progress_interface' is a one-dimensional mesh, not necessarily connected
@@ -1520,7 +1520,7 @@ angles_60 :
 		if ( positive_orientation ( A, point_60, prev_seg, next_seg ) )
 		if ( ( progress_cos_sq_60 ( A, point_60, B, prev_seg, next_seg) > 0.02 )
 		  or ( d2 < sq_desired_len_at_point )                                      )
-		// triangle waiting to be filled; see paragraph 10.7 in the manual
+		// triangle waiting to be filled; see paragraph 11.7 in the manual
 		{	Cell seg_next_to_B = progress_interface.cell_in_front_of(B);
 			Cell ver_next_to_B = seg_next_to_B.tip();
 			set_of_nearby_vertices.erase ( point_60 );
@@ -1583,7 +1583,7 @@ check_touching :
 		Cell next_seg = progress_interface.cell_in_front_of ( point_120, tag::surely_exists );
 		Cell  B = next_seg.tip();
 		if ( progress_cos_sq_120 ( A, point_120, B, prev_seg, next_seg) < 0.55 )  // 0.67
-		// angle around 120 deg, we want to form two triangles; see paragraph 10.7 in the manual
+		// angle around 120 deg, we want to form two triangles; see paragraph 11.7 in the manual
 		{	// we don't build a new vertex yet, we want to check for a quadrangle first
 			Cell seg_prev_to_A = progress_interface.cell_behind ( A );
 			Cell seg_next_to_B = progress_interface.cell_in_front_of ( B );

@@ -1,5 +1,5 @@
 
-// finite-elem.h 2021.02.27
+// finite-elem.h 2021.04.10
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -39,7 +39,9 @@ namespace tag {
 	struct On { };  static const On on;
 	struct gauss { };  static const gauss Gauss;
 	struct WithMaster { };  static const WithMaster with_master;
-	enum gauss_quadrature { tri_3, tri_3_Oden, tri_4, tri_4_Oden, tri_6, quad_4, quad_9 };
+	enum gauss_quadrature { seg_2, seg_3, seg_4, seg_5, seg_6,
+                          tri_3, tri_3_Oden, tri_4, tri_4_Oden, tri_6,
+                          quad_4, quad_9 };
 	struct FromFiniteElementWithMaster { };
 	static const FromFiniteElementWithMaster from_finite_element_with_master;
 	struct ThroughDockedFiniteElement { };
@@ -105,7 +107,7 @@ class Integrator::Core
 
 	// operator()
 	
-	virtual double action ( const Function & f, const FiniteElement & fe ) = 0;
+	virtual double action ( Function f, const FiniteElement & fe ) = 0;
 	
 };  // end of  class Integrator::Core
 
@@ -140,7 +142,7 @@ class Integrator::Gauss : public Integrator::Core
 
 	// operator()
 	
-	double action ( const Function & f, const FiniteElement & fe );
+	double action ( Function f, const FiniteElement & fe );
 	// virtual from Integrator::Core
 	
 };  // end of  class Integrator::Gauss
@@ -163,6 +165,8 @@ class FiniteElement
 
 	// constructor
 
+	inline FiniteElement ( const tag::WithMaster &, const tag::Segment &,
+                         const tag::lagrange &, const tag::OfDegree &, size_t deg );
 	inline FiniteElement ( const tag::WithMaster &, const tag::Triangle &,
                          const tag::lagrange &, const tag::OfDegree &, size_t deg );
 	inline FiniteElement ( const tag::WithMaster &, const tag::Quadrangle &,
@@ -246,7 +250,8 @@ class FiniteElement::WithMaster : public FiniteElement::Core
 	// constructor
 
 	inline WithMaster ( Manifold m )
-	: FiniteElement::Core (), master_manif (m), transf ( 0. ), docked_on ( tag::non_existent )  { }
+	: FiniteElement::Core (), master_manif (m), transf ( 0. ), docked_on ( tag::non_existent )
+	{ }
 
 	// get basis functions associated to vertices, to segments, etc
 	inline Function basis_function ( Cell::Core * cll );
@@ -254,7 +259,7 @@ class FiniteElement::WithMaster : public FiniteElement::Core
 
 	void dock_on ( const Cell & cll ) = 0;  // virtual from FiniteElement::Core
 
-	class Triangle;  class Quadrangle;
+	class Segment;  class Triangle;  class Quadrangle;
 	
 };  // end of  class FiniteElement::withMaster
 
@@ -297,6 +302,23 @@ inline double FiniteElement::integrate ( const Function & f )
 
 //-----------------------------------------------------------------------------------------//
 
+class FiniteElement::WithMaster::Segment : public FiniteElement::WithMaster
+
+// triangular finite elements which use a master element
+
+{	public :
+
+	// constructor
+
+	inline Segment ( Manifold m ) : FiniteElement::WithMaster ( m )  { }
+	
+	void dock_on ( const Cell & cll );
+	// virtual from FiniteElement::Core
+
+};  // end of  class FiniteElement::WithMaster::Segment
+
+//-----------------------------------------------------------------------------------------//
+
 class FiniteElement::WithMaster::Triangle : public FiniteElement::WithMaster
 
 // triangular finite elements which use a master element
@@ -308,7 +330,7 @@ class FiniteElement::WithMaster::Triangle : public FiniteElement::WithMaster
 	inline Triangle ( Manifold m ) : FiniteElement::WithMaster ( m )  { }
 	
 	void dock_on ( const Cell & cll );
-	// virtual from FiniteElement::Core, through FiniteElement::WithMaster
+	// virtual from FiniteElement::Core
 
 };  // end of  class FiniteElement::withMaster::Triangle
 
@@ -325,11 +347,30 @@ class FiniteElement::WithMaster::Quadrangle : public FiniteElement::WithMaster
 	inline Quadrangle ( Manifold m ) : FiniteElement::WithMaster ( m )  { }
 	
 	void dock_on ( const Cell & cll );
-	// virtual from FiniteElement::Core, through FiniteElement::WithMaster
+	// virtual from FiniteElement::Core
 
 };  // end of  class FiniteElement::withMaster::Quadrangle
 
 //-----------------------------------------------------------------------------------------//
+
+
+inline FiniteElement::FiniteElement
+(	const tag::WithMaster &, const tag::Segment &,
+	const tag::lagrange &, const tag::OfDegree &, size_t deg )
+:	core { nullptr }
+
+{	assert ( deg == 1 );
+
+	// we keep the working manifold and restore it at the end
+	Manifold work_manif = Manifold::working;
+	
+	Manifold RR_master ( tag::Euclid, tag::of_dim, 1 );
+	Function t = RR_master.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+	// we should take advantage of the memory space already reserved for x and y
+
+	this->core = new FiniteElement::WithMaster::Segment ( RR_master );
+	
+	work_manif.set_as_working_manifold();                                                   }
 
 
 inline FiniteElement::FiniteElement
@@ -345,7 +386,7 @@ inline FiniteElement::FiniteElement
 	Manifold RR2_master ( tag::Euclid, tag::of_dim, 2 );
 	Function xi_eta = RR2_master.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	// we should take advantage of the memory space already reserved for x and y
-	Function xi = xi_eta[0], eta = xi_eta[1];
+	// Function xi = xi_eta[0], eta = xi_eta[1];
 
 	this->core = new FiniteElement::WithMaster::Triangle ( RR2_master );
 	
@@ -365,7 +406,7 @@ inline FiniteElement::FiniteElement
 	Manifold RR2_master ( tag::Euclid, tag::of_dim, 2 );
 	Function xi_eta = RR2_master.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	// we should take advantage of the memory space already reserved for x and y
-	Function xi = xi_eta[0], eta = xi_eta[1];
+	// Function xi = xi_eta[0], eta = xi_eta[1];
 
 	this->core = new FiniteElement::WithMaster::Quadrangle ( RR2_master );
 	

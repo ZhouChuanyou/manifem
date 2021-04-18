@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.10 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a physalis-like surface
 
 #include "maniFEM.h"

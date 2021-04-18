@@ -1,23 +1,23 @@
 
-// global.cpp 2020.02.09
+// global.cpp 2021.04.06
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
+//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
+//   https://github.com/cristian-barbarosie/manifem
 
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//   ManiFEM is free software: you can redistribute it and/or modify it
+//   under the terms of the GNU Lesser General Public License as published
+//   by the Free Software Foundation, either version 3 of the License
+//   or (at your option) any later version.
 
-//    ManiFEM is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//   ManiFEM is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//   See the GNU Lesser General Public License for more details.
 
-//    You should have received a copy of the GNU Lesser General Public License
-//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//   You should have received a copy of the GNU Lesser General Public License
+//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <fstream>
 #include "maniFEM.h"
@@ -28,7 +28,7 @@ using namespace maniFEM;
 void Mesh::pretty_constructor
 ( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n )
 	
-// see paragraph 9.2 in the manual
+// see paragraph 11.2 in the manual
 	
 {	// we use the current manifold
 	Manifold space = Manifold::working;
@@ -91,7 +91,7 @@ Mesh::OneDim::Positive::Positive
 void Mesh::pretty_constructor
 ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA )
 
-// see paragraph 9.4 in the manual
+// see paragraph 11.4 in the manual
 	
 {	// we use the current manifold
 	Manifold space = Manifold::working;
@@ -211,7 +211,7 @@ void Mesh::pretty_constructor ( const tag::Quadrangle &, const Mesh & south,
 // 'wt' defaults to 'tag::not_with_triangles',
 // which means 'cut_rectangles_in_half' defaults to 'false'
 
-// see paragraph 9.3 in the manual
+// see paragraph 11.3 in the manual
 	
 {	bool cut_rectangles_in_half = ( wt == tag::with_triangles );
 

@@ -1,5 +1,6 @@
 
 // example presented in paragraph 1.4 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a trapezoidal mesh made of triangles
 
 #include "maniFEM.h"

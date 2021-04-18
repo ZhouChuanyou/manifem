@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.7 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a complicated surface, a kind of convolution between two tori
 
 #include "maniFEM.h"

@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.24 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a disk with an eccentric hole, anisotropic mesh
 // the code shown in the manual does not work (yet)
 // we fake the desired result by meshing a surface in 3D

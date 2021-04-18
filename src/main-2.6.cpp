@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.6 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a "bumpy" hemisphere by joining twelve rectangles
 
 #include "maniFEM.h"

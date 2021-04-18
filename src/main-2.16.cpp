@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.16 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds an imperfect donut (parametric, starts with high dimension)
 
 #include "maniFEM.h"

@@ -1,5 +1,6 @@
 
 // example presented in paragraph 2.1 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds an L-shaped mesh by joining two segments and then two rectangles
 
 #include "maniFEM.h"

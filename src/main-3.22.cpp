@@ -1,5 +1,6 @@
 
 // example presented in paragraph 3.22 of the manual
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // a disk with an eccentric hole, non-uniform meshing
 
 #include "maniFEM.h"
