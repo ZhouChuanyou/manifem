@@ -55,7 +55,7 @@
 // we prefer to work with squared distance (thus avoiding computing square roots)
 
 // see paragraph 10.15 in the manual of maniFEM
-// https://webpages.ciencias.ulisboa.pt/~cabarbarosie/manifem/manual-manifem.pdf
+// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 
 #include <iostream>
 #include <fstream>
