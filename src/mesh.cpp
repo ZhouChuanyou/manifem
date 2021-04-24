@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.04.06
+// mesh.cpp 2021.04.24
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -52,7 +52,7 @@ std::vector < size_t > Cell::short_int_heap_size_neg ( Mesh::maximum_dimension_p
 bool Cell::Positive::is_positive ( ) const  // virtual from Cell::Core
 {	return true;  }
 
-bool Cell::Core::Negative::is_positive ( ) const  // virtual from Cell::Core
+bool Cell::Negative::is_positive ( ) const  // virtual from Cell::Core
 {	return false;  }
 
 bool Mesh::return_true ( ) // static
@@ -64,7 +64,7 @@ bool Mesh::return_false ( ) // static
 Cell::Positive * Cell::Positive::get_positive ( )  // virtual from Cell::Core
 {	return this;  }
 
-Cell::Positive * Cell::Core::Negative::get_positive ( )  // virtual from Cell::Core
+Cell::Positive * Cell::Negative::get_positive ( )  // virtual from Cell::Core
 {	assert ( this->reverse_p );
 	assert ( this->reverse_p->is_positive() );
 	return (Cell::Positive*) this->reverse_p;     }
@@ -471,12 +471,14 @@ bool Cell::Negative::belongs_to ( Mesh::Core * msh, const tag::NotOriented & ) c
 //-----------------------------------------------------------------------------//
 
 
-Cell::Core * Cell::Core::tip ()  // virtual
+Cell::Core * tag::Util::CellCore::tip ()  // virtual
+// Cell::Core * Cell::Core::tip ()
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "Only segments have extremities." << std::endl;
 	exit ( 1 );                                                                                   }
 
-Cell::Core * Cell::Core::base ()  // virtual
+Cell::Core * tag::Util::CellCore::base ()  // virtual
+// Cell::Core * Cell::Core::base ()
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": " << __extension__ __PRETTY_FUNCTION__ << ": ";
 	std::cout << "Only segments have extremities." << std::endl;
 	exit ( 1 );                                                                                   }
@@ -709,7 +711,7 @@ void Cell::Negative::cut_from_my_bdry ( Cell::Core * cll )
 //-----------------------------------------------------------------------------//
 
 
-namespace {  // anonymous namespace, mimiks static linkage
+namespace {  // anonymous namespace, mimics static linkage
 
 // here is where the low-level linking between cells and meshes happens
 // ***_deep_connections and ***_deep_connections_rev
@@ -1588,7 +1590,8 @@ inline void break_deep_connections_rev  // hidden in anonymous namespace
 } // end of break_deep_connections_rev with tag::mesh_is_bdry
 	
 
-void Cell::Core::add_to_seg ( Cell::PositiveSegment * seg )
+void tag::Util::CellCore::add_to_seg ( Cell::PositiveSegment * seg )
+// void Cell::Core::add_to_seg ( Cell::PositiveSegment * seg )
 // virtual, overriden by Cell::***tive::Vertex
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
             << __extension__ __PRETTY_FUNCTION__ << ": ";
@@ -1596,7 +1599,8 @@ void Cell::Core::add_to_seg ( Cell::PositiveSegment * seg )
 	exit ( 1 );                                                                   }
 
 
-void Cell::Core::remove_from_seg ( Cell::PositiveSegment * seg )
+void tag::Util::CellCore::remove_from_seg ( Cell::PositiveSegment * seg )
+// void Cell::Core::remove_from_seg ( Cell::PositiveSegment * seg )
 // virtual, overriden by Cell::***tive::Vertex
 {	std::cout << __FILE__ << ":" <<__LINE__ << ": "
 	          << __extension__ __PRETTY_FUNCTION__ << ": ";

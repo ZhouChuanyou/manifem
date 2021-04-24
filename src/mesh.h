@@ -1,5 +1,5 @@
 
-// mesh.h 2021.04.06
+// mesh.h 2021.04.24
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -113,12 +113,149 @@ namespace tag {  // see paragraph 9.2 in the manual
 	struct DesiredLength { };  static const DesiredLength desired_length;
 	struct IntrinsicOrientation { };  static const IntrinsicOrientation intrinsic_orientation;
 	struct InherentOrientation { };  static const InherentOrientation inherent_orientation;
-	struct RandomOrientation { };  static const RandomOrientation random_orientation;             }
+	struct RandomOrientation { };  static const RandomOrientation random_orientation;
+	struct Util
+	{ template < class T > class Wrapper;
+		class Core;
+		class CellCore;  class MeshCore;
+	};
+	struct MayBeNull { };  static const MayBeNull may_be_null;
+	struct FreshlyCreated { };  static const FreshlyCreated freshly_created;
+	struct PreviouslyExisting { };  static const PreviouslyExisting previously_existing;
+	struct OldCore { };  static const OldCore old_core;
+	struct SurelyNotNull { };  static const SurelyNotNull surely_not_null;
+	struct NoNeedToDisposeOf { };  static const NoNeedToDisposeOf no_need_to_dispose_of;
+	struct Empty { };  static const Empty empty;
 
+}  // end of namespace tag
+
+//-----------------------------------------------------------------------------//
+
+
+// wrappers act like shared pointers towards cores
+// you may want to forbid copying for your cores
+
+template < class T >
+	class tag::Util::Wrapper 
+
+{	public :
+
+	T * core;
+
+	inline Wrapper ( const tag::Empty & ) : core { nullptr }  { }
+
+	inline Wrapper ( T* c, const tag::FreshlyCreated & ) : core { c }
+	// c just constructed with nb_of_wrappers == 1, no need to increment
+	{	assert ( c );  }
+	
+	inline Wrapper ( T* c, const tag::PreviouslyExisting & ) : core { c }
+	{	assert ( c );
+		c->nb_of_wrappers++;  }
+	
+	inline ~Wrapper ( )
+	{	dispose_core ( tag::may_be_null );  }
+
+	inline Wrapper operator= ( const Wrapper & w )
+	{	dispose_core ( tag::may_be_null );
+		set_core ( w.core, tag::may_be_null );  }
+	
+	inline void dispose_core ( const tag::MayBeNull & )
+	{	if ( this->core )
+			if ( this->core->dispose() )
+				delete this->core;          }
+	
+	inline void dispose_core ( const tag::SurelyExists & )
+	{	assert ( this->core );
+		if ( this->core->dispose() )
+			delete this->core;          }
+	
+	inline void set_core ( T* c, const tag::FreshlyCreated & )
+	// c just constructed with nb_of_wrappers == 1, no need to increment
+	{	dispose_core ( tag::may_be_null );
+		// old core may be null
+		assert ( c );
+		core = c;                               }
+	
+	inline void set_core ( T* c, const tag::PreviouslyExisting & )
+	{	dispose_core ( tag::may_be_null );
+		// old core may be null
+		assert ( c );
+		core = c;
+		c->nb_of_wrappers++;  }
+	
+	inline void set_core ( T* c, const tag::MayBeNull & )
+	{	dispose_core ( tag::may_be_null );
+		// old core may be null
+		core = c;
+		if ( c ) c->nb_of_wrappers++;  }
+	
+	inline void set_core
+	( T* c, const tag::FreshlyCreated &,
+	  const tag::OldCore &, const tag::SurelyNotNull & )
+	// c just constructed with nb_of_wrappers == 1, no need to increment
+	{	dispose_core ( tag::surely_not_null );
+		assert ( c );
+		core = c;                               }
+	
+	inline void set_core
+	( T* c, const tag::PreviouslyExisting &,
+	  const tag::OldCore &, const tag::SurelyNotNull & )
+	{	dispose_core ( tag::surely_not_null );
+		assert ( this->core );
+		core = c;
+		c->nb_of_wrappers++;  }
+	
+	inline void set_core
+	( T* c, const tag::FreshlyCreated &,
+	  const tag::NoNeedToDisposeOf &, const tag::OldCore & )
+	// c just constructed with nb_of_wrappers == 1, no need to increment
+	{	core = c; }
+	
+	inline void set_core
+	( T* c, const tag::PreviouslyExisting &,
+	  const tag::NoNeedToDisposeOf &, const tag::OldCore & )
+	{	core = c;
+		c->nb_of_wrappers++;  }
+	
+};
+
+
+// class tag::Util::Core is intended to be used by constructing
+// your own Core class which inherits from tag::Util::Core
+// you will probably implement polymorphic cores
+// if you only declare pointers to your own core classes, you can keep the destructor inline
+// however, if you want to do things like
+//   tag::Util::Core * c = pointer_to_your_own_type_of_core;
+//   ... some code ...
+//   delete c;
+// then you must declare the destructor virtual
+// see e.g. item 7 in the book of Scott Meyers, Effective C++
+
+class tag::Util::Core
+
+{	public :
+
+	// we assume that the only way to build a new core is through a wrapper
+	// thus, we initialize with one instead of zero
+	unsigned int nb_of_wrappers { 1 };
+
+	inline Core ( ) { };
+
+	inline ~Core ( ) { };
+
+	inline bool dispose ( )
+	{	assert ( nb_of_wrappers > 0 );
+		nb_of_wrappers--;
+		return nb_of_wrappers == 0;    }
+
+};
+
+//-----------------------------------------------------------------------------//
 
 class Cell;  class Mesh;
 class Manifold;  class Function;
 
+//-----------------------------------------------------------------------------//
 
 class CellIterator
 
@@ -190,23 +327,30 @@ class CellIterator
 
 // see paragraphs 1.2, 8.1, 8.7 and 9.3 in the manual
 
-class Cell
+// I would very much prefer the name 'Cell::Core' instead of 'tag::Util::CellCore'
+// but it was not possible ...
 
-// a thin wrapper around a Cell::Core, with most methods delegated to 'core'
+class Cell : public tag::Util::Wrapper < tag::Util::CellCore >
+
+// a thin wrapper around a tag::Util::CellCore, with most methods delegated to 'core'
 
 {	public :
 
-	class Core;
-	
-	Cell::Core * core;
+	typedef tag::Util::CellCore Core;
+
+	// Cell::Core * core  inherited from tag::Util::Wrapper < Cell::Core >
 
 	inline Cell ( const tag::NonExistent & )
-	:	core { nullptr }
+	:	tag::Util::Wrapper < Cell::Core > ( tag::empty )
 	{ }
 
-	inline Cell ( const tag::WhoseCoreIs &, Cell::Core * c )
-	:	core { c }
-	{	assert ( c );  }
+	inline Cell ( const tag::WhoseCoreIs &, Cell::Core * c, const tag::FreshlyCreated & )
+	:	tag::Util::Wrapper < Cell::Core > ( c, tag::freshly_created )
+	{	assert ( c ); }
+
+	inline Cell ( const tag::WhoseCoreIs &, Cell::Core * c, const tag::PreviouslyExisting & )
+	:	tag::Util::Wrapper < Cell::Core > ( c, tag::previously_existing )
+	{	assert ( c ); }
 
 	inline Cell ( const tag::WhoseBoundaryIs &, Mesh & );
 	inline Cell ( const tag::ReverseOf &, const Cell & direct_cell,
@@ -230,6 +374,8 @@ class Cell
                 const tag::WithinMesh &, const Mesh &, const tag::MayNotExist & );
 	// use : Cell tri ( tag::in_front_of_face, f, tag::within_mesh, msh );
 
+	// redefine operator= !!
+	
 	// we are still in class Cell
 	
 	// methods delegated to 'core'
@@ -343,15 +489,19 @@ inline bool operator< ( const Cell & c1, const Cell & c2 )
 
 // see paragraphs 1.2, 8.1, 8.7 and 9.3 in the manual
 
-class Mesh
+// I would very much prefer the name 'Mesh::Core' instead of 'tag::Util::MeshCore'
+// but it was not possible ...
+
+class Mesh : public tag::Util::Wrapper < tag::Util::MeshCore >
 
 // a thin wrapper around a Mesh::Core, with most methods delegated to 'core'
 
 {	public :
 	
-	class Core;
+	typedef tag::Util::MeshCore Core;
 
-	Mesh::Core * core;  // there are no cores for negative meshes
+	// Mesh::Core * core  inherited from tag::Util::Wrapper < Mesh::Core >
+	// there are no cores for negative meshes
 	// instead, we keep here a pointer to the direct (positive) core
 	// thus, for meshes, 'core' points always to a positive Mesh::Core
 
@@ -386,6 +536,9 @@ class Mesh
 
 	inline Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t dim,
                 const tag::IsPositive & ispos = tag::is_positive                );
+
+	inline Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t dim,
+                const tag::MinusOne &, const tag::IsPositive & ispos = tag::is_positive );
 
 	// we are still in class Mesh
 	
@@ -1021,14 +1174,19 @@ inline bool operator== ( const Mesh & m1, const Mesh & m2 )
 //-----------------------------------------------------------------------------//
 
 
-class Cell::Core
+// I would very much prefer the name 'class Cell::Core' instead of 'tag::Util::CellCore'
+// but it was not possible ...
+
+class tag::Util::CellCore : public tag::Util::Core
 
 // abstract class
 // specialized in Cell::Positive::{Vertex,Segment,HighDim} and
 //                Cell::Negative::{Vertex,Segment,HighDim}
 
 {	public :
-
+	
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+	
 	Cell::Core * reverse_p { nullptr };
 
 	// we keep numeric values here :
@@ -1041,15 +1199,16 @@ class Cell::Core
 	// if 'this' is a face of another cell and that other cell belongs to some mesh msh,
 	// cell_behind_within[msh] keeps that cell
 	// see methods Mesh::cell_behind and Mesh::cell_in_front_of
-	std::map < Mesh::Core*, Cell::Core* > cell_behind_within;
+	std::map < Mesh::Core*, Cell > cell_behind_within;
+	// we use the Cell wrapper as pointer
 
-	inline Core ( const tag::IsPositive &, const tag::OfDimension &, const size_t d )
+	inline CellCore ( const tag::IsPositive &, const tag::OfDimension &, const size_t d )
 	:	double_heap ( Cell::double_heap_size_pos [d] ),
 		size_t_heap ( Cell::size_t_heap_size_pos [d] ),
 		short_int_heap ( Cell::short_int_heap_size_pos [d] )
 	{ }
 
-	inline Core ( const tag::IsNegative& ,
+	inline CellCore ( const tag::IsNegative& ,
 		const tag::ReverseOf &, Cell::Core * rev, const tag::OfDimension &, const size_t d )
 	:	reverse_p { rev },
 		double_heap ( Cell::double_heap_size_neg [d] ),
@@ -1057,16 +1216,18 @@ class Cell::Core
 		short_int_heap ( Cell::short_int_heap_size_neg [d] )
 	{	assert ( rev );  }
 
-	virtual ~Core ( ) { };
+	virtual ~CellCore ( ) { };
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	virtual bool is_positive ( ) const = 0;
 	virtual Cell::Positive * get_positive ( ) = 0;
 	virtual size_t get_dim ( ) const = 0;
 	virtual Cell::Core * reverse ( const tag::BuildIfNotExists & ) = 0;
 	virtual Cell::Core * build_reverse ( ) = 0;
 
-	virtual Cell::Core * tip ();
-	virtual Cell::Core * base ();
+	virtual Cell tip ();
+	virtual Cell base ();
 	// execution forbidden
 	// overridden by Cell::PositiveSegment and Cell::NegativeSegment
 
@@ -1128,7 +1289,9 @@ class Cell::Positive : public Cell::Core
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
 	// the 'meshes' attribute keeps information about all meshes
@@ -1155,6 +1318,8 @@ class Cell::Positive : public Cell::Core
 		meshes ( sz )
 	{	}
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	bool is_positive ( ) const;  // virtual from Cell::Core
 	Cell::Positive * get_positive ( );  // virtual from Cell::Core
 
@@ -1179,6 +1344,11 @@ class Cell::Negative : public Cell::Core
 // specialized in Cell::Negative::{Vertex,Segment,HighDim}
 
 {	public :
+
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// and cell_behind_within inherited from Cell::Core
 
 	inline Negative ( const tag::OfDimension &, const size_t d,
 														const tag::ReverseOf &, Cell::Positive * rev )
@@ -1213,10 +1383,12 @@ class Cell::PositiveVertex : public Cell::Positive
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
-	// attribute  meshes  inherited from Cell::Positive
+	// meshes  inherited from Cell::Positive
 
 	// in 'segments' we keep record of meshes of dimension zero "above" 'this' vertex,
 	// that is, of segments having 'this' extremity
@@ -1231,6 +1403,8 @@ class Cell::PositiveVertex : public Cell::Positive
 	Cell::PositiveVertex & operator= ( const Cell::PositiveVertex & ) = delete;
 	Cell::PositiveVertex & operator= ( const Cell::PositiveVertex && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// is_positive  and  get_positive  defined by Cell::Positive
 	size_t get_dim ( ) const; // virtual from Cell::Core
 
@@ -1267,7 +1441,9 @@ class Cell::NegativeVertex : public Cell::Negative
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
 	inline NegativeVertex ( const tag::ReverseOf &, Cell::PositiveVertex * direct_ver_p );
@@ -1277,6 +1453,8 @@ class Cell::NegativeVertex : public Cell::Negative
 	Cell::NegativeVertex & operator= ( const Cell::NegativeVertex & ) = delete;
 	Cell::NegativeVertex & operator= ( const Cell::NegativeVertex && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// is_positive  and  get_positive  defined by Cell::Negative
 	size_t get_dim ( ) const; // virtual from Cell::Core
 	
@@ -1322,6 +1500,13 @@ class Cell::PositiveNotVertex : public Cell::Positive
 
 {	public :
 
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// and cell_behind_within inherited from Cell::Core
+
+	// meshes  inherited from Cell::Positive
+
 	// in 'meshes_same_dim' we keep record of meshes "above" 'this' cell,
 	//   of the same dimension
 	// in Cell::field_to_meshes_same_dim, the 'short int sign' is a sign, 1 or -1
@@ -1333,6 +1518,8 @@ class Cell::PositiveNotVertex : public Cell::Positive
                              const tag::SizeMeshes &, const size_t sz  )
 	: Cell::Positive ( tag::of_dim, d, tag::size_meshes, sz )
 	{	}
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	inline void glue_common ( Cell::Core * face );
 	inline void cut_common ( Cell::Core * face );
@@ -1347,14 +1534,17 @@ class Cell::PositiveSegment : public Cell::PositiveNotVertex
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
-	// attribute  meshes  inherited from Cell::Positive
-	// attribute  meshes_same_dim  inherited from Cell::PositiveNotVertex
+	// meshes  inherited from Cell::Positive
+	// meshes_same_dim  inherited from Cell::PositiveNotVertex
 
-	Cell::NegativeVertex * base_p { nullptr };
-	Cell::PositiveVertex * tip_p { nullptr };
+	// here we use Cell wrappers as pointers
+	// because a segment should keep its extremities alive
+	Cell base_attr, tip_attr;
 
 	inline PositiveSegment ( Cell::NegativeVertex * a, Cell::PositiveVertex * b );
 
@@ -1369,8 +1559,8 @@ class Cell::PositiveSegment : public Cell::PositiveNotVertex
 	// reverse  defined by Cell::Positive
 	Cell::Core * build_reverse ( );  // virtual from  Cell::Positive
 
-	Cell::Core * tip () override; // virtual, overrides definition by Cell::Core
-	Cell::Core * base () override; // virtual, overrides definition by Cell::Core
+	Cell tip () override; // virtual, overrides definition by Cell::Core
+	Cell base () override; // virtual, overrides definition by Cell::Core
 
 	Mesh boundary ( );  // virtual from Cell::Core
 
@@ -1408,11 +1598,15 @@ class Cell::NegativeSegment : public Cell::Negative
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
 	inline NegativeSegment ( const tag::ReverseOf &, Cell::PositiveSegment * direct_seg_p );
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	NegativeSegment ( const Cell::NegativeSegment & ) = delete;
 	NegativeSegment ( const Cell::NegativeSegment && ) = delete;
 	Cell::NegativeSegment & operator= ( const Cell::NegativeSegment & ) = delete;
@@ -1423,8 +1617,8 @@ class Cell::NegativeSegment : public Cell::Negative
 	
 	// reverse  defined by Cell::Negative
 	// build_reverse  defined by Cell::Negative, execution forbidden
-	Cell::Core * tip () override;  // virtual, overrides definition by Cell::Core
-	Cell::Core * base () override;  // virtual, overrides definition by Cell::Core
+	Cell tip () override;  // virtual, overrides definition by Cell::Core
+	Cell base () override;  // virtual, overrides definition by Cell::Core
 
 	Mesh boundary ( );  // virtual from Cell::Core
 
@@ -1461,13 +1655,17 @@ class Cell::PositiveHighDim : public Cell::PositiveNotVertex
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
-	// attribute  meshes  inherited from Cell::Positive
-	// attribute  meshes_same_dim  inherited from Cell::PositiveNotVertex
+	// meshes  inherited from Cell::Positive
+	// meshes_same_dim  inherited from Cell::PositiveNotVertex
 
-	Mesh::Core * boundary_p;
+	// we use Mesh wrapper as pointer
+	// because a Cell should keep its boundary alive
+	Mesh boundary_p;
 
 	inline PositiveHighDim ( const tag::OfDimension &, const size_t d,
 	                         const tag::WhoseBoundaryIs &, Mesh::Core * msh );
@@ -1482,6 +1680,8 @@ class Cell::PositiveHighDim : public Cell::PositiveNotVertex
 	Cell::PositiveHighDim & operator= ( const Cell::PositiveHighDim & ) = delete;
 	Cell::PositiveHighDim & operator= ( const Cell::PositiveHighDim && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// is_positive  and  get_positive  defined by Cell::Positive
 	size_t get_dim ( ) const; // virtual
 
@@ -1527,12 +1727,13 @@ class Cell::NegativeHighDim : public Cell::Negative
 
 {	public :
 
-	// attributes reverse_p, double_heap, size_t_heap, short_int_heap, hook
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// reverse_p, double_heap, size_t_heap, short_int_heap, hook
 	// and cell_behind_within inherited from Cell::Core
 
 	inline NegativeHighDim ( const tag::OfDimension &, const size_t d,
 	                         const tag::ReverseOf &, Cell::PositiveHighDim * direct_cell_p );
-	// defined in iterator.h
 	
 	inline NegativeHighDim ( const tag::ReverseOf &, Cell::PositiveHighDim * direct_cell_p );
 
@@ -1541,6 +1742,8 @@ class Cell::NegativeHighDim : public Cell::Negative
 	Cell::NegativeHighDim & operator= ( const Cell::NegativeHighDim & ) = delete;
 	Cell::NegativeHighDim & operator= ( const Cell::NegativeHighDim && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// is_positive  and  get_positive  defined by Cell::Negative
 	size_t get_dim ( ) const; // virtual from Cell::Core
 
@@ -1580,7 +1783,10 @@ class Cell::NegativeHighDim : public Cell::Negative
 //-----------------------------------------------------------------------------//
 
 
-class Mesh::Core
+// I would very much prefer the name 'Mesh::Core' instead of 'tag::Util::MeshCore'
+// but it was not possible ...
+
+class tag::Util::MeshCore : public tag::Util::Core
 
 // represents a positive mesh
 // negative meshes have no core (wrappers for negative meshes are built on-the-fly)
@@ -1590,9 +1796,16 @@ class Mesh::Core
 
 {	public :
 
-	Cell::Positive * cell_enclosed { nullptr };
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
 
-	inline Core ( const tag::OfDimension &, const size_t d , const tag::MinusOne & )  {	}
+	// we use an ordinary pointer, not a wrapper
+	// because we do not want a cell to be kept alive by its boundary
+	Cell::Positive * cell_enclosed { nullptr };
+	// when 'this' is the boundary of a cell
+
+	inline MeshCore ( const tag::OfDimension &, const size_t d , const tag::MinusOne & )  {	}
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	virtual size_t get_dim_plus_one ( ) = 0;
 
@@ -1842,12 +2055,16 @@ class Mesh::ZeroDim : public Mesh::Core
 
 {	public :
 
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// cell_enclosed inherited from Mesh::Core
 	
 	inline ZeroDim ( )
 	:	Mesh::Core ( tag::of_dimension, 1, tag::minus_one )
 	{ }
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
 	size_t number_of ( const tag::Vertices & );  // virtual from Mesh::Core
@@ -2067,22 +2284,25 @@ class Mesh::Connected::OneDim : public Mesh::Core
 
 {	public :
 
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// cell_enclosed inherited from Mesh::Core
 
 	size_t nb_of_segs;
 	// useful for quickly answering to 'number_of'
 
-	Cell::NegativeVertex * first_ver;
-	Cell::PositiveVertex * last_ver;
+	// here we use Cell wrappers as pointers
+	Cell first_ver, last_ver;
 	// if last_ver == first_ver->reverse, the mesh is a closed loop
 	
-	inline OneDim ( )
-	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one )
-	{ }
+	// inline OneDim ( )
+	//	:	Mesh::Core ( tag::of_dimension, 2, tag::minus_one ) { }
 
 	OneDim ( const tag::Segment &, Cell::NegativeVertex * A, Cell::PositiveVertex * B,
 	            const tag::DividedIn &, const size_t n );
 	// defined in global.cpp
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
@@ -2146,6 +2366,8 @@ class Mesh::Connected::HighDim : public Mesh::Core
 		const Cell & SW, const Cell & SE, const Cell & NE, const Cell & NW,
 		const size_t m, const size_t n, const tag::WithTriangles & wt = tag::not_with_triangles );
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
 	size_t number_of ( const tag::Vertices & );  // virtual from Mesh::Core
@@ -2180,7 +2402,9 @@ class Mesh::MultiplyConnected::OneDim : public Mesh::Core
 
 {	public :
 
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// cell_enclosed inherited from Mesh::Core
 
 	std::vector < size_t > nb_of_cells;
 	// useful for quickly answering to 'number_of'
@@ -2194,6 +2418,8 @@ class Mesh::MultiplyConnected::OneDim : public Mesh::Core
   OneDim ( const tag::Segment &, Cell::NegativeVertex * A,
 		Cell::PositiveVertex * B, const tag::DividedIn &, const size_t n );
 	// defined in global.cpp
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
@@ -2233,7 +2459,9 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 
 {	public :
 
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// cell_enclosed inherited from Mesh::Core
 
 	std::vector < size_t > nb_of_cells;
 	// useful for quickly answering to 'number_of'
@@ -2244,6 +2472,8 @@ class Mesh::MultiplyConnected::HighDim : public Mesh::Core
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one )
 	{	}
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
 	size_t number_of ( const tag::Vertices & );  // virtual from Mesh::Core
@@ -2290,17 +2520,21 @@ class Mesh::Fuzzy : public Mesh::Core
 
 {	public :
 	
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
+
+	// cell_enclosed inherited from Mesh::Core
 
 	// the 'cells' attribute holds lists of cells of 'this' mesh, indexed by their dimension
 	// for maximum dimension, the cells are oriented
 	// for lower dimension, the cells are always positive
 
-	std::vector < std::list < Cell::Core* > > cells;
+	// here we use Cell wrappers as pointers
+	// because a mesh should keep its cells alive
+	std::vector < std::list < Cell > > cells;
 
 	inline Fuzzy ( const tag::OfDimension &, const size_t dim_p1, const tag::MinusOne & )
 	:	Mesh::Core ( tag::of_dimension, dim_p1, tag::minus_one ), cells ( dim_p1 )
-	{	}
+	{	assert ( dim_p1 > 1 );  }
 		
 	inline Fuzzy ( const tag::Segment &,  // builds a chain of n segment cells
 	               const Cell & A, const Cell & B, const tag::DividedIn &, const size_t n )
@@ -2324,6 +2558,8 @@ class Mesh::Fuzzy : public Mesh::Core
 	               const Cell & SW, const Cell & SE, const Cell & NE, const Cell & NW,
 	               const size_t m, const size_t n,
 	               const tag::WithTriangles & wt = tag::not_with_triangles              );
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	size_t get_dim_plus_one ( );  // virtual from Mesh::Core
 
@@ -2548,9 +2784,11 @@ class Mesh::STSI : public Mesh::Fuzzy
 
 {	public :
 	
-	// attribute cell_enclosed inherited from Mesh::Core
+	// unsigned int nb_of_wrappers  inherited from tag::Util::Core
 
-	// 'cells' attribute inherited from Mesh::Fuzzy
+	// cell_enclosed  inherited from Mesh::Core
+
+	// 'cells' inherited from Mesh::Fuzzy
 
 	// in 'singular' we keep pair of adjacent cells
 	// the common face of such a pair is a singular face
@@ -2561,6 +2799,8 @@ class Mesh::STSI : public Mesh::Fuzzy
 	:	Mesh::Fuzzy ( tag::of_dimension, dim_p1, tag::minus_one )
 	{	}
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t get_dim_plus_one ( )  defined in Mesh::Fuzzy
 	// size_t number_of ( const tag::Vertices & )  defined in Mesh::Fuzzy
 	// size_t number_of ( const tag::Segments & )  defined in Mesh::Fuzzy
@@ -2628,37 +2868,51 @@ inline void Mesh::copy_all_cells_to ( Mesh & msh ) const
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsPositive & ispos )
 // by default, ispos = tag::is_positive, so may be called with only two arguments
 // used in Mesh::Negative::reverse and in Cell::boundary  ? !!
-: core { c }, is_pos { & Mesh::return_true }
-{	assert ( c );  }
+: tag::Util::Wrapper < Mesh::Core > ( c, tag::previously_existing ),
+	is_pos { & Mesh::return_true }
+{	}
 
 
 inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
                     const tag::DoNotBother &                                           )
 // builds a negative mesh from a positive one,
 // without worrying whether reverse cells exist or not
-: core { c }, is_pos { & Mesh::return_false }
+: tag::Util::Wrapper < Mesh::Core > ( c, tag::previously_existing ),
+	is_pos { & Mesh::return_false }
 {	}
 
 
 inline Mesh::Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t d,
                     const tag::IsPositive & ispos                           )
 // by default, ispos = tag::is_positive, so may be called with only three arguments
-:	core { nullptr }, is_pos { & Mesh::return_true }
-{	assert ( d >= 1 );
-	this->core = new Mesh::Fuzzy ( tag::of_dimension, d+1, tag::minus_one );  }
+:	tag::Util::Wrapper < Mesh::Core >
+	( new Mesh::Fuzzy ( tag::of_dimension, d+1, tag::minus_one ),
+	  tag::freshly_created                                        ),
+	is_pos { & Mesh::return_true }
+{	}
+
+
+inline Mesh::Mesh ( const tag::Fuzzy &, const tag::OfDimension &, const size_t d,
+                    const tag::MinusOne &, const tag::IsPositive & ispos          )
+// by default, ispos = tag::is_positive, so may be called with only four arguments
+:	tag::Util::Wrapper < Mesh::Core >
+	( new Mesh::Fuzzy ( tag::of_dimension, d, tag::minus_one ),
+	  tag::freshly_created                                      ),
+	is_pos { & Mesh::return_true }
+{	}
 	
 
 inline Mesh::Mesh ( const tag::DeepCopyOf &, const Mesh & msh )
+:	tag::Util::Wrapper < Mesh::Core >
+	( msh.core->build_deep_copy(), tag::freshly_created ),
+	is_pos { & Mesh::return_true }
 :	core { msh.core->build_deep_copy() }, is_pos { & Mesh::return_true }
 {	}
 
 
 inline Mesh::Mesh ( const tag::DeepCopyOf &, const Mesh & msh, const tag::Fuzzy & )
-:	core { nullptr }, is_pos { & Mesh::return_true }
-{	size_t dp1 = msh.core->get_dim_plus_one();
-	assert ( dp1 > 1 );
-	this->core = new Mesh::Fuzzy ( tag::of_dim, dp1, tag::minus_one );
-	msh.copy_all_cells_to ( *this );                                   }
+:	Mesh ( tag::of_dim, msh.core->get_dim_plus_one(), tag::minus_one, tag::is_positive )
+{	msh.copy_all_cells_to ( *this );  }
 
 
 inline Mesh::Mesh ( const tag::Segment &, const Cell & A, const Cell & B,
