@@ -1,5 +1,5 @@
 
-// mesh.h 2021.03.10
+// mesh.h 2021.03.22
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -100,6 +100,8 @@ class Manifold;  class Function;
 
 //-----------------------------------------------------------------------------//
 
+
+//-----------------------------------------------------------------------------//
 
 // a cell of dimension zero is a point, see class Cell::Positive::Vertex and Negative::Vertex
 // a cell of dimension one is a segment, see class Cell::Positive::Segment and Negative::Segment
@@ -522,6 +524,26 @@ inline bool operator== ( const Mesh & m1, const Mesh & m2 )
 {	return m1.core == m2.core;  }
 
 //-----------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------//
+
+
+class Core
+
+{	public :
+	
+	unsigned int nb_of_wrappers { 0 };
+
+	inline CoreWithWrapper ( ) { };
+
+	inline ~CoreWithWrapper ( ) { };
+
+	inline bool dispose ( )
+	{	assert ( nb_of_wrappers > 0 );
+		nb_of_wrappers--;
+		return nb_of_wrappers == 0;    }
+
+};
+
 //-----------------------------------------------------------------------------//
 
 

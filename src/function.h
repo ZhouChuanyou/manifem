@@ -1,5 +1,5 @@
 
-// function.h 2021.04.18
+// function.h 2021.04.22
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -52,9 +52,17 @@ namespace tag
 	
 
 class Manifold;
-	
 
-class Function
+class Wrapper 
+
+{	public :
+
+	inline ~Wrapper ( )
+	{	
+};
+
+
+	class Function : public Wrapper
 
 // just a a thin wrapper around Function::Core
 // I guess this is what they call "delegation" ...
@@ -138,7 +146,7 @@ class Function
 
 //-----------------------------------------------------------------------------------------//
 
-class Function::Core
+class Function::Core : public CoreWithWrapper
 
 // just a base for classes like Constant, Sum, Product and many others
 // we use dynamic_cast
@@ -147,8 +155,6 @@ class Function::Core
 
 	// Manifold * manifold;
 
-	unsigned int nb_of_wrappers { 0 };
-
 	inline Core ( ) { Function::total_cores++; };
 	
 	virtual ~Core ( );
@@ -156,11 +162,8 @@ class Function::Core
 	inline Core ( const Function::Core & ) = delete;
 	inline Core ( Function::Core && ) = delete;
 	
-	inline bool dispose ( )
-	{	assert ( nb_of_wrappers > 0 );
-		nb_of_wrappers--;
-		return ( nb_of_wrappers == 0 );  }
-
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	virtual size_t nb_of_components ( ) const = 0;
 
 	virtual Function component ( size_t i ) = 0;
@@ -227,6 +230,8 @@ class Function::Scalar : public Function::Core
 	inline Scalar ( const Function::Scalar & ) = delete;
 	inline Scalar ( Function::Scalar && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	size_t nb_of_components ( ) const;  // virtual from Function::Core, here returns 1
 
 	Function component ( size_t i ); // virtual from Function::Core
@@ -260,6 +265,8 @@ class Function::ArithmeticExpression : public Function::Scalar
 
 	inline ArithmeticExpression ( const Function::ArithmeticExpression & ) = delete;
 	inline ArithmeticExpression ( Function::ArithmeticExpression && ) = delete;
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
@@ -296,6 +303,8 @@ class Function::Constant : public Function::ArithmeticExpression
 	inline Function::Constant operator= ( const Function::Constant & ) = delete;
 	inline Function::Constant operator= ( Function::Constant && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -339,6 +348,8 @@ class Function::Sum : public Function::ArithmeticExpression
 	inline Function::Sum operator= ( const Function::Sum & ) = delete;
 	inline Function::Sum operator= ( Function::Sum && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -376,6 +387,8 @@ class Function::Product : public Function::ArithmeticExpression
 	inline Function::Product operator= ( const Function::Product & ) = delete;
 	inline Function::Product operator= ( Function::Product && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -416,6 +429,8 @@ class Function::Power : public Function::ArithmeticExpression
 	inline Function::Power operator= ( const Function::Power & ) = delete;
 	inline Function::Power operator= ( Function::Power && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -453,6 +468,8 @@ class Function::Sqrt : public Function::ArithmeticExpression
 	
 	inline Function::Sqrt operator= ( const Function::Sqrt & ) = delete;
 	inline Function::Sqrt operator= ( Function::Sqrt && ) = delete;
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
@@ -497,6 +514,8 @@ class Function::Sin : public Function::ArithmeticExpression
 	inline Function::Sin operator= ( const Function::Sin & ) = delete;
 	inline Function::Sin operator= ( Function::Sin && ) = delete;
 	
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -540,6 +559,8 @@ class Function::Cos : public Function::ArithmeticExpression
 	inline Function::Cos operator= ( const Function::Cos & ) = delete;
 	inline Function::Cos operator= ( Function::Cos && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -641,6 +662,8 @@ class Function::Step : public Function::ArithmeticExpression
 	inline Function::Step operator= ( const Function::Step & ) = delete;
 	inline Function::Step operator= ( Function::Step && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -673,6 +696,8 @@ class Function::Vector : public Function::Core
 
 	inline Vector ( const Function::Vector & ) = delete;
 	inline Vector ( Function::Vector && ) = delete;
+	
+	// inline bool dispose ( )  defined by CoreWithWrapper
 	
 	// size_t nb_of_components ( )  stays pure virtual from Function::Core
 	
@@ -714,6 +739,8 @@ class Function::Aggregate : public Function::Vector
 	inline Function::Aggregate operator= ( const Function::Aggregate & ) = delete;
 	inline Function::Aggregate operator= ( Function::Aggregate && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// 'nb_of_components' and 'component' are virtual from Function::Core, through Function::Vector
 	// overridden by Function::CoupledWithField::Vector
 	size_t nb_of_components ( ) const;
@@ -837,6 +864,8 @@ class Function::Diffeomorphism::OneDim
 	inline Function::Diffeomorphism::OneDim operator=
 		( Function::Diffeomorphism::OneDim && ) = delete;
 	
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 
@@ -925,6 +954,8 @@ class Function::Immersion
 	inline Function::Immersion operator= ( const Function::Immersion & ) = delete;
 	inline Function::Immersion operator= ( Function::Immersion && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	size_t nb_of_components ( ) const;  // virtual from Function::Core, through Function::Vector
 
 	Function component ( size_t i );  // virtual from Function::Core, through Function::Vector
@@ -1003,6 +1034,8 @@ class Function::Diffeomorphism::HighDim
 	inline Function::Diffeomorphism::HighDim operator=
 		( Function::Diffeomorphism::HighDim && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( ) const   and
 	// Function component ( size_t i )    defined in Function::Immersion, execution forbidden
 	
@@ -1075,6 +1108,8 @@ class Function::Composition : public Function::Scalar
 	inline Function::Composition operator= ( const Function::Composition & ) = delete;
 	inline Function::Composition operator= ( Function::Composition && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 
@@ -1146,6 +1181,8 @@ class Function::CoupledWithField::Scalar
 	inline Function::CoupledWithField::Scalar operator=
 		( Function::CoupledWithField::Scalar && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	// Function component ( size_t i ) defined by Function::Scalar, returns self
 	// size_t nb_of_components ( )  defined by Function::Scalar, returns 1
 
@@ -1195,6 +1232,8 @@ class Function::CoupledWithField::Vector
 	inline Function::CoupledWithField::Vector operator=
 		( Function::CoupledWithField::Vector && ) = delete;
 
+	// inline bool dispose ( )  defined by CoreWithWrapper
+	
 	virtual size_t nb_of_components ( ) const override;
 	// virtual from Function::Core through Function::Vector, Function::Aggregate
 	
