@@ -1,5 +1,5 @@
 
-// iterator.h 2021.04.05
+// iterator.h 2021.04.25
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -371,66 +371,6 @@ class CellIterator::Adaptor::ForcePositive : public CellIterator::Core
 //-------------------------------------------------------------------------------------------
 
 		
-inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
-                    const tag::CellsSurelyExist &                                      )
-// builds a negative mesh from a positive one, assuming that reverse cells exist
-// used in Cell::boundary and in Mesh::Mesh below
-
-: Mesh ( tag::whose_core_is, c, tag::is_negative, tag::do_not_bother )
-
-#ifndef NDEBUG
-{	assert ( c );
-	// check that all cells have reverse
-	CellIterator it = this->iterator  // as they are : oriented
-		( tag::over_cells_of_max_dim, tag::as_they_are );
-	for ( it.reset() ; it.in_range(); it++ )
-	{	Cell::Core * cll_p = (*it).core;
-		assert ( cll_p );  assert ( cll_p->reverse_p );
-		assert ( cll_p == cll_p->reverse_p->reverse_p );   }           }
-#else
-{	}
-#endif
-
-
-inline Mesh::Mesh ( const tag::WhoseCoreIs &, Mesh::Core * c, const tag::IsNegative &,
-                    const tag::BuildCellsIfNec & b                                     )
-// builds a negative mesh from a positive one, creating reverse cells if necessary
-// used in Mesh::Positive::reverse
-	
-:	Mesh ( tag::whose_core_is, c, tag::is_negative, tag::do_not_bother )
-
-{	CellIterator it = this->iterator  // as they are : oriented
-		( tag::over_cells_of_max_dim, tag::as_they_are );
-	for ( it.reset() ; it.in_range(); it++ )
-	{	Cell::Core * cll_p = (*it).core;
-		assert ( cll_p );
-		Cell::Core * cll_rev_p = cll_p->reverse ( tag::build_if_not_exists );
-		assert ( cll_rev_p );  assert ( cll_rev_p == cll_p->reverse_p );       }     }
-
-
-inline Cell::NegativeHighDim::NegativeHighDim
-( const tag::OfDimension &, const size_t d, const tag::ReverseOf &,
-  Cell::PositiveHighDim * direct_cell_p                       )
-	
-: Cell::Negative ( tag::of_dim, d, tag::reverse_of, direct_cell_p )
-
-// we must make sure that all faces of 'direct_cell_p' have a reverse
-
-{	assert ( direct_cell_p );
-	assert ( direct_cell_p->get_dim() == d );
-	assert ( direct_cell_p->boundary_p );
-	CellIterator it ( tag::whose_core_is, direct_cell_p->boundary_p->iterator
-		( tag::over_cells_of_max_dim, tag::as_they_are, tag::this_mesh_is_positive )  );
-	for ( it.reset(); it.in_range(); it++ )
-	{	Cell::Core * cll_p = (*it).core;
-		assert ( cll_p );
-		Cell::Core * cll_rev_p = cll_p->reverse ( tag::build_if_not_exists );
-		assert ( cll_rev_p == cll_p->reverse_p );  assert ( cll_rev_p );       }    }
-
-
-//-------------------------------------------------------------------------------------------
-
-
 inline CellIterator Mesh::iterator ( const tag::OverVertices & ) const
 {	return this->iterator ( tag::over_vertices, tag::as_they_are );  }
 
