@@ -2,7 +2,7 @@
 ManiFEM is a C++ library for solving partial differential equations through the finite element method.
 The name comes from "finite elements on manifolds". 
 
-You are looking at the unstable branch fuzzy-stsi. The code may not work. For stable version of maniFEM, use the master branch.
+You are looking at the unstable branch `fuzzy-stsi`. The code may not work. For a stable version of maniFEM, use the `master` branch.
 
 This work is supported by National Funding from FCT - Fundação para a Ciência e a Tecnologia (Portugal), 
 through Faculdade de Ciências da Universidade de Lisboa and 
