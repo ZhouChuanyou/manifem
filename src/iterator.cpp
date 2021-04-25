@@ -1,5 +1,5 @@
 
-// iterator.cpp 2021.04.05
+// iterator.cpp 2021.04.25
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -28,9 +28,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+	  < Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::AsTheyAre &,
@@ -38,9 +38,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::AsTheyAre &,
@@ -48,9 +48,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::AsTheyAre &,
@@ -58,18 +58,18 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+	  < Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ForcePositive &,
@@ -77,9 +77,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ForcePositive &,
@@ -87,9 +87,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ForcePositive &,
@@ -97,9 +97,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ReverseEachCell &,
@@ -108,10 +108,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ReverseEachCell &,
@@ -120,10 +120,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ReverseEachCell &,
@@ -132,10 +132,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverVertices &, const tag::ReverseEachCell &,
@@ -144,10 +144,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );  }
 
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
@@ -252,9 +252,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 	
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
@@ -263,9 +263,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
@@ -274,9 +274,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );      }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::AsTheyAre &,
@@ -285,9 +285,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );      }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d,
@@ -296,9 +296,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
@@ -307,9 +307,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
@@ -318,9 +318,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );   }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ForcePositive &,
@@ -329,9 +329,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );   }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseEachCell &,
@@ -341,10 +341,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseEachCell &,
@@ -354,10 +354,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseEachCell &,
@@ -367,10 +367,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfDim &, const size_t d, const tag::ReverseEachCell &,
@@ -380,19 +380,19 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // do not bother whether reverse cells exist or not
 {	assert ( d == 0 );
 	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &, const tag::ThisMeshIsPositive & )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
@@ -400,9 +400,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base (negative) then tip (positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );       }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
@@ -410,9 +410,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::AsTheyAre &,
@@ -420,18 +420,18 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip (positive) then base (negative)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );     }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::AsTheyAre ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &, const tag::ThisMeshIsPositive & )
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first base then tip (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
@@ -439,9 +439,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::NormalOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
@@ -449,9 +449,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ForcePositive &,
@@ -459,9 +459,9 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // a positive zero-dimensional mesh is the boundary of a positive segment	
 // iterate over the two vertices, first tip then base (both positive)
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
-	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );    }
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
+	return new CellIterator::Over::TwoVerticesOfSeg::ReverseOrder::ForcePositive ( seg );  }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &,
@@ -470,10 +470,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                 }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &,
@@ -482,10 +482,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first base (positive) then tip (negative)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );                  }
+	             ::NormalOrder::ReverseEachCell::AssumeCellsExist ( seg );    }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &,
@@ -494,10 +494,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );   }
 
 CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 ( const tag::OverCellsOfMaxDim &, const tag::ReverseEachCell &,
@@ -506,10 +506,10 @@ CellIterator::Core * Mesh::ZeroDim::iterator  // virtual from Mesh::Core
 // iterate over the two vertices, first tip (negative) then base (positive)
 // do not bother whether reverse cells exist or not
 {	assert ( this->cell_enclosed );
-	Cell::PositiveSegment * seg =
-		assert_cast < Cell::Positive *, Cell::PositiveSegment * > ( this->cell_enclosed );
+	Cell::PositiveSegment * seg = tag::Util::assert_cast
+		< Cell::Positive*, Cell::PositiveSegment* > ( this->cell_enclosed );
 	return new CellIterator::Over::TwoVerticesOfSeg
-	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );                }
+	             ::ReverseOrder::ReverseEachCell::AssumeCellsExist ( seg );   }
 
 
 CellIterator::Core * Mesh::Fuzzy::iterator  // virtual from Mesh::Core
