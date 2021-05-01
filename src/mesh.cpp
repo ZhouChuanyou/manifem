@@ -1,5 +1,5 @@
 
-// mesh.cpp 2021.04.25
+// mesh.cpp 2021.05.01
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -48,6 +48,31 @@ std::vector < size_t > Cell::short_int_heap_size_neg ( Mesh::maximum_dimension_p
 	
 //-----------------------------------------------------------------------------//
 
+bool tag::Util::Core::default_dispose ( tag::Util::Core::DelegateDispose * that )
+// static method
+{	tag::Util::Core * that_one = tag::Util::assert_cast
+		< tag::Util::Core::DelegateDispose*, tag::Util::Core* > ( that );
+	return that_one->dispose();                                         }
+
+bool tag::Util::Core::dispose_cell_with_reverse     // static method
+( tag::Util::Core::DelegateDispose * that )    
+// a cell may still have one wrapper kept by its reverse
+{	tag::Util::Core * that_one = tag::Util::assert_cast
+		< tag::Util::Core::DelegateDispose*, tag::Util::Core* > ( that );
+	bool res = that_one->dispose();
+	assert ( not res );
+	if ( that->nb_of_wrappers == 1 )
+	{	Cell::Positive * that_cell = tag::Util::assert_cast
+			< tag::Util::Core::DelegateDispose*, Cell::Positive* > ( that );
+		if ( that_cell->reverse_attr.exists() )
+			if  ( that_cell->reverse_attr.core->nb_of_wrappers == 1 )
+				// these two cells keep each other alive, both must be killed
+			{	delete that_cell->reverse_attr.core;
+				assert ( that->nb_of_wrappers == 0 );
+				return true;                          }                          }
+	return false;                                                             }
+
+//-----------------------------------------------------------------------------//
 
 bool Cell::Positive::is_positive ( ) const  // virtual from Cell::Core
 {	return true;  }
@@ -61,43 +86,29 @@ bool Mesh::return_true ( ) // static
 bool Mesh::return_false ( ) // static
 {	return false;  }
 
-Cell::Positive * Cell::Positive::get_positive ( )  // virtual from Cell::Core
+Cell Cell::Positive::get_positive ( )  // virtual from Cell::Core
 {	return this;  }
 
-Cell::Positive * Cell::Negative::get_positive ( )  // virtual from Cell::Core
-{	assert ( this->reverse_p );
-	assert ( this->reverse_p->is_positive() );
-	return (Cell::Positive*) this->reverse_p;     }
+Cell Cell::Negative::get_positive ( )  // virtual from Cell::Core
+{	assert ( this->reverse_attr.exists() );
+	assert ( this->reverse_attr.is_positive() );
+	return this->reverse_attr;                   }
 
 
-Cell::Core * Cell::Positive::Vertex::build_reverse ( )
+Cell::Negative * Cell::Positive::Vertex::build_reverse ( )
 // virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this, tag::zero_wrappers );
-	return this->reverse_p;                                                                     }
+{	this->reverse_p = new Cell::Negative::Vertex ( tag::reverse_of, this, tag::one_dummy_wrapper );
+	return this->reverse_p;                                                                          }
 
-Cell::Core * Cell::Positive::Segment::build_reverse ( )
+Cell::Negative * Cell::Positive::Segment::build_reverse ( )
 // virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this, tag::zero_wrappers );
-	return this->reverse_p;                                                                      }
+{	this->reverse_p = new Cell::Negative::Segment ( tag::reverse_of, this, tag::one_dummy_wrapper );
+	return this->reverse_p;                                                                          }
 
-Cell::Core * Cell::Positive::HighDim::build_reverse ( )
+Cell::Negative * Cell::Positive::HighDim::build_reverse ( )
 // virtual from Cell::Core
-{	this->reverse_p = new Cell::Negative::HighDim ( tag::reverse_of, this, tag::zero_wrappers );
-	return this->reverse_p;                                                                      }
-
-Cell::Core * Cell::Positive::reverse ( const tag::BuildIfNotExists & )
-// virtual from Cell::Core
-{	if ( this->reverse_p == nullptr )  this->reverse_p = this->build_reverse();
-	// Cell::Positive::***::build_reverse calls a constructor with tag::zero_wrappers
-	assert ( this->reverse_p );
-	assert ( not this->reverse_p->is_positive() );
-	return this->reverse_p;                                                      }
-
-Cell::Core * Cell::Negative::reverse ( const tag::BuildIfNotExists & )
-// virtual from Cell::Core
-{	assert ( this->reverse_p );
-	assert ( this->reverse_p->is_positive() );
-	return this->reverse_p;                      }
+{	this->reverse_p = new Cell::Negative::HighDim ( tag::reverse_of, this, tag::one_dummy_wrapper );
+	return this->reverse_p;                                                                          }
 
 //-----------------------------------------------------------------------------//
 
