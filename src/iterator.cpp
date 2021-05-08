@@ -1,23 +1,23 @@
 
-// iterator.cpp 2019.10.30
+// maniFEM iterator.cpp 2019.10.30
 
-//    This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//    This file is part of maniFEM, a C++ library for meshes on manifolds and finite elements.
 
-//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
-//    https://github.com/cristian-barbarosie/manifem
-
-//    ManiFEM is free software: you can redistribute it and/or modify it
-//    under the terms of the GNU Lesser General Public License as published
-//    by the Free Software Foundation, either version 3 of the License
-//    or (at your option) any later version.
+//    ManiFEM is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 
 //    ManiFEM is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//    See the GNU Lesser General Public License for more details.
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 #include "iterator.h"
 
@@ -178,8 +178,7 @@ void CellIterator::Over::SegsOfNegChain::Reverse::reset ( )
 {	this->current_cell = this->mesh->first_segment();  }
 
 void CellIterator::Over::VerOfPosChain::reset ( )
-{	this->current_cell = this->mesh->first_vertex()->reverse_p;
-	assert ( this->current_cell );                              }
+{	this->current_cell = this->mesh->first_vertex();  }
 
 void CellIterator::Over::VerOfPosChain::Reverse::reset ( )
 {	this->current_cell = this->mesh->last_vertex();  }

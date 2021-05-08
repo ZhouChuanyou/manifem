@@ -1,6 +1,5 @@
 
 // example presented in paragraph 1.1 of the manual
-// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
 // builds a twisted rectangle in 3D
 
 #include "maniFEM.h"
@@ -28,13 +27,13 @@ int main () {
 	// we access the coordinates of a point using the () operator :
 	cout << "coordinates of NW : " << x(NW) << " " << y(NW) << " " << z(NW) << endl;
 	
-	// now build the four sides of the rectangle :
-	Mesh south ( tag::segment, SW.reverse(), SE, tag::divided_in, 10 );
-	Mesh east  ( tag::segment, SE.reverse(), NE, tag::divided_in, 10 );
-	Mesh north ( tag::segment, NE.reverse(), NW, tag::divided_in, 10 );
-	Mesh west  ( tag::segment, NW.reverse(), SW, tag::divided_in, 10 );
+	// Now build the four sides of the rectangle :
+	Mesh south ( tag::segment, SW, SE, tag::divided_in, 10 );
+	Mesh east  ( tag::segment, SE, NE, tag::divided_in, 10 );
+	Mesh north ( tag::segment, NE, NW, tag::divided_in, 10 );
+	Mesh west  ( tag::segment, NW, SW, tag::divided_in, 10 );
 
-	// and now the rectangle :
+	// And now the rectangle :
 	Mesh rect_mesh ( tag::pretty, tag::rectangle, south, east, north, west );
 	 
 	// We may want to visualize the resulting mesh.
@@ -43,7 +42,7 @@ int main () {
 	// rect_mesh.draw_ps ("rectangle.eps");
 	
 	// Let's define a symbolic function to integrate
-	Function f = x*x+1/(5+y), g = x*y;
+	// auto & f = x*x+1/(5+y), & g = x*y;
 
 	// and compute its integral on the rectangle, using Gauss quadrature with 9 points :
 	// auto & integ = Integrator::gauss ("Q9");

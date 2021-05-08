@@ -1,23 +1,23 @@
 
-// global.cpp 2021.04.06
+// maniFEM global.cpp 2020.01.11
 
-//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//    This file is part of maniFEM, a C++ library for meshes on manifolds and finite elements.
 
-//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
-//   https://github.com/cristian-barbarosie/manifem
+//    ManiFEM is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 
-//   ManiFEM is free software: you can redistribute it and/or modify it
-//   under the terms of the GNU Lesser General Public License as published
-//   by the Free Software Foundation, either version 3 of the License
-//   or (at your option) any later version.
+//    ManiFEM is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
 
-//   ManiFEM is distributed in the hope that it will be useful,
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//   See the GNU Lesser General Public License for more details.
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
-//   You should have received a copy of the GNU Lesser General Public License
-//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 #include <fstream>
 #include "maniFEM.h"
@@ -25,18 +25,29 @@
 using namespace maniFEM;
 
 
+// In Mesh ( tag::segment... ), the first two arguments are positive points.
+// This is not consistent with Cell ( tag::segment... ), where the user
+// must provide a negative point (the base) then a positive point (the tip).
+// It is also inconsistent with other constructors like Mesh ( tag::rectangle... )
+// where we provide faces with orientation compatible with the orientation
+// of the future mesh.
+// However, we think it is easier for the user to build chains of segments like
+//   Cell A ( tag::vertex ); Cell B ( tag::vertex );
+//   Mesh AB ( tag::segment, A, B, tag::divided_in, 10 );
+// rather than
+//   Cell A ( tag::vertex ); Cell B ( tag::vertex );
+//   Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 10 );
+
 void Mesh::pretty_constructor
 ( const tag::Segment &, const Cell & A, const Cell & B, const tag::DividedIn &, size_t n )
 	
-// see paragraph 11.2 in the manual
+// see paragraph 9.2 in the manual
 	
 {	// we use the current manifold
 	Manifold space = Manifold::working;
 	assert ( space.exists() );
 	
-	assert ( not A.is_positive() );
-	Cell posA = A.reverse();
-	assert ( posA.is_positive() );
+	assert ( A.is_positive() );
 	assert ( B.is_positive() );
 	assert ( A.dim() == 0 );
 	assert ( B.dim() == 0 );
@@ -45,19 +56,19 @@ void Mesh::pretty_constructor
 	for ( size_t i=1; i < n; ++i )
 	{	Cell P ( tag::vertex );
 		double frac = double(i)/double(n);
-		space.interpolate ( P, 1.-frac, posA, frac, B );
-		Cell seg ( tag::segment, prev_point, P );
+		space.interpolate ( P, 1.-frac, A, frac, B );
+		Cell seg ( tag::segment, prev_point.reverse(), P );
 		seg.add_to (*this);
-		prev_point = P.reverse();                          }
-	Cell seg ( tag::segment, prev_point, B );
-	seg.add_to (*this);                                        }
+		prev_point = P;                                         }
+	Cell seg ( tag::segment, prev_point.reverse(), B );
+	seg.add_to (*this);                                          }
 
 // code below does the same as code above
 // above is pretty, slightly slower - below is ugly, slightly faster
 
 
 Mesh::OneDim::Positive::Positive
-( const tag::Segment &, Cell::Negative::Vertex * A, Cell::Positive::Vertex * B,
+( const tag::Segment &, Cell::Positive::Vertex * A, Cell::Positive::Vertex * B,
   const tag::DividedIn &, size_t n                                              )
 
 :	Positive()
@@ -66,24 +77,24 @@ Mesh::OneDim::Positive::Positive
 	Manifold::Core * space = Manifold::working.core;
 	assert ( space );
 	
-	assert ( not A->is_positive() );
-	assert ( A->reverse_p );
-	Cell::Positive::Vertex * posA = ( Cell::Positive::Vertex * ) A->reverse_p;
-	assert ( posA->is_positive() );
+	assert ( A->is_positive() );
 	assert ( B->is_positive() );
 	assert ( A->get_dim() == 0 );
 	assert ( B->get_dim() == 0 );
 	
-	Cell::Negative::Vertex * prev_point = A;
+	Cell::Positive::Vertex * prev_point = A;
 	for ( size_t i=1; i < n; ++i )
 	{	Cell::Positive::Vertex * P = new Cell::Positive::Vertex;
 		double frac = double(i)/double(n);
-		space->interpolate ( P, 1.-frac, posA, frac, B );
-		Cell::Positive::Segment * seg = new Cell::Positive::Segment ( prev_point, P );
+		space->interpolate ( P, 1.-frac, A, frac, B );
+		Cell::Positive::Segment * seg = new Cell::Positive::Segment
+			( ( Cell::Negative::Vertex * ) prev_point->reverse ( tag::build_if_not_exists ), P );
 		seg->add_to (this);
-		prev_point = ( Cell::Negative::Vertex * ) P->build_reverse();                  }
-	Cell::Positive::Segment * seg = new Cell::Positive::Segment ( prev_point, B );
-	seg->add_to (this);                                                                 }
+		prev_point = P;                                                                          }
+	Cell::Positive::Segment * seg = new Cell::Positive::Segment
+	  ( ( Cell::Negative::Vertex * ) prev_point->reverse ( tag::build_if_not_exists ), B );
+	seg->add_to (this);
+}
 
 //----------------------------------------------------------------------------------//
 
@@ -91,7 +102,7 @@ Mesh::OneDim::Positive::Positive
 void Mesh::pretty_constructor
 ( const tag::Triangle &, const Mesh & AB, const Mesh & BC, const Mesh & CA )
 
-// see paragraph 11.4 in the manual
+// see paragraph 9.4 in the manual
 	
 {	// we use the current manifold
 	Manifold space = Manifold::working;
@@ -102,9 +113,9 @@ void Mesh::pretty_constructor
 	assert ( N == BC.number_of ( tag::cells_of_dim, 1 ) );
 	assert ( N == CA.number_of ( tag::cells_of_dim, 1 ) );
 
-	Cell A = AB.first_vertex().reverse();
-	Cell B = BC.first_vertex().reverse();
-	Cell C = CA.first_vertex().reverse();
+	Cell A = AB.first_vertex();
+	Cell B = BC.first_vertex();
+	Cell C = CA.first_vertex();
 	assert ( A == CA.last_vertex() );
 	assert ( B == AB.last_vertex() );
 	assert ( C == BC.last_vertex() );
@@ -178,7 +189,7 @@ void Mesh::pretty_constructor
 			ceiling.push_back ( horizontal_seg.reverse() );                              	  }
 		seg_on_BC = BC.cell_in_front_of(P_BC);
 		ground = ceiling;                                                                    }
-		// improve by moving ceiling to ground, leaving ceiling empty !
+		// move ceiling to ground, leaving ceiling empty
 
 	// last triangle
 	Cell TA = CA.cell_behind(Q_CA);
@@ -190,7 +201,8 @@ void Mesh::pretty_constructor
 } // end of Mesh::pretty_constructor ( tag::triangle,... )
 
 	
-// code below does the same as code above - inline !
+// code below does the same as code above
+// above is pretty, slightly slower - below is ugly, slightly faster
 
 
 Mesh::Positive::Positive
@@ -211,7 +223,7 @@ void Mesh::pretty_constructor ( const tag::Quadrangle &, const Mesh & south,
 // 'wt' defaults to 'tag::not_with_triangles',
 // which means 'cut_rectangles_in_half' defaults to 'false'
 
-// see paragraph 11.3 in the manual
+// see paragraph 9.3 in the manual
 	
 {	bool cut_rectangles_in_half = ( wt == tag::with_triangles );
 
@@ -220,13 +232,13 @@ void Mesh::pretty_constructor ( const tag::Quadrangle &, const Mesh & south,
 	assert ( space.exists() );
 
 	// recover corners from the sides
-	Cell SW = south.first_vertex().reverse();
+	Cell SW = south.first_vertex();
 	assert ( SW == west.last_vertex() );
-	Cell SE = east.first_vertex().reverse();
+	Cell SE = east.first_vertex();
 	assert ( SE == south.last_vertex() );
-	Cell NE = north.first_vertex().reverse();
+	Cell NE = north.first_vertex();
 	assert ( NE == east.last_vertex() );
-	Cell NW = west.first_vertex().reverse();
+	Cell NW = west.first_vertex();
 	assert ( NW == north.last_vertex() );
 	size_t N_horiz = south.number_of ( tag::segments );
 	assert ( N_horiz == north.number_of ( tag::segments ) );
@@ -370,13 +382,13 @@ void Mesh::Positive::build_rectangle ( const Mesh & south, const Mesh & east,
 	assert ( space );
 	
 	// recover corners from the sides
-	Cell::Positive::Vertex * SW = (Cell::Positive::Vertex*) south.first_vertex().core->reverse_p;
+	Cell::Positive::Vertex * SW = (Cell::Positive::Vertex*) south.first_vertex().core;
 	assert ( SW == west.last_vertex().core );
-	Cell::Positive::Vertex * SE = (Cell::Positive::Vertex*) east.first_vertex().core->reverse_p;
+	Cell::Positive::Vertex * SE = (Cell::Positive::Vertex*) east.first_vertex().core;
 	assert ( SE == south.last_vertex().core );
-	Cell::Positive::Vertex * NE = (Cell::Positive::Vertex*) north.first_vertex().core->reverse_p;
+	Cell::Positive::Vertex * NE = (Cell::Positive::Vertex*) north.first_vertex().core;
 	assert ( NE == east.last_vertex().core );
-	Cell::Positive::Vertex * NW = (Cell::Positive::Vertex*) west.first_vertex().core->reverse_p;
+	Cell::Positive::Vertex * NW = (Cell::Positive::Vertex*) west.first_vertex().core;
 	assert ( NW == north.last_vertex().core );
 	size_t N_horiz = south.number_of ( tag::segments );
 	assert ( N_horiz == north.number_of ( tag::segments ) );

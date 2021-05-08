@@ -1,7 +1,6 @@
 
 // example presented in paragraph 3.19 of the manual
-// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
-// a sphere with a cylinder-shaped tunnel
+// a singular point
 
 #include "maniFEM.h"
 #include "math.h"
@@ -15,34 +14,63 @@ int main ()
 {	Manifold RR3 ( tag::Euclid, tag::of_dim, 3 );
 	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
 	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
+	double seg_size = 0.1;
+	// std::cout << "segment size : ";
+	// std::cin >> seg_size;
 
-	const double rs = 1.;    // radius of the sphere
-	const double rc = 0.45;  // radius of the cylinder
-	const double seg_size = 0.1;
+	Manifold cyl_manif = RR3.implicit ( y*y + (z-0.5)*(z-0.5) == 0.25 );
+
+	Cell V ( tag::vertex );  x(V) = 0.;  y(V) = seg_size;  z(V) = 1.;
+	cyl_manif.project(V);
+	Cell W ( tag::vertex );  x(W) = 0.;  y(W) = -seg_size;  z(W) = 1.;
+	cyl_manif.project(W);
 	
-	Manifold cylinder = RR3.implicit ( y*y + (z-0.5)*(z-0.5) == rc*rc );
-	Manifold intersection = cylinder.implicit ( x*x + y*y + z*z == rs*rs );
-	Cell start1 ( tag::vertex );  x(start1) = 1.;  y(start1) = 0.;  z(start1) = 0.5 - rc;
-	intersection.project ( start1 );
-	Mesh circle_1 ( tag::progressive, tag::start_at, start1, tag::towards, { 0., 1., 0. },
-	                tag::desired_length, seg_size                                          );
+	Manifold intersection = cyl_manif.implicit ( x*x + y*y + z*z == 1. );
+	Cell O ( tag::vertex );  x(O) = 0.;  y(O) = 0.;  z(O) = 1.;
+	Cell A ( tag::vertex );  x(A) = 0.7*seg_size;  y(A) = 0.7*seg_size;  z(A) = 1.;
+	intersection.project(A);
+	Cell B ( tag::vertex );  x(B) = -0.7*seg_size;  y(B) = 0.7*seg_size;  z(B) = 1.;
+	intersection.project(B);
+	Cell C ( tag::vertex );  x(C) = -0.7*seg_size;  y(C) = -0.7*seg_size;  z(C) = 1.;
+	intersection.project(C);
+	Cell D ( tag::vertex );  x(D) = 0.7*seg_size;  y(D) = -0.7*seg_size;  z(D) = 1.;
+	intersection.project(D);
 
-	Cell start2 ( tag::vertex );  x(start2) = -1.;  y(start2) = 0.;  z(start2) = 0.5 - rc;
-	intersection.project ( start2 );
-	Mesh circle_2 ( tag::progressive, tag::start_at, start2, tag::towards, { 0., 1., 0. },
-                  tag::desired_length, seg_size                                          );
+	Cell OA ( tag::segment, O.reverse(), A );
+	Cell OB ( tag::segment, O.reverse(), B );
+	Cell OV ( tag::segment, O.reverse(), V );
+	Cell AV ( tag::segment, A.reverse(), V );
+	Cell VB ( tag::segment, V.reverse(), B );
+	Cell OAV ( tag::triangle, OA, AV, OV.reverse() );
+	Cell OVB ( tag::triangle, OV, VB, OB.reverse() );
+	Cell OC ( tag::segment, O.reverse(), C );
+	Cell OD ( tag::segment, O.reverse(), D );
+	Cell OW ( tag::segment, O.reverse(), W );
+	Cell CW ( tag::segment, C.reverse(), W );
+	Cell WD ( tag::segment, W.reverse(), D );
+	Cell OCW ( tag::triangle, OC, CW, OW.reverse() );
+	Cell OWD ( tag::triangle, OW, WD, OD.reverse() );
+	
+	std::vector < double > tau { 1., 1., 0. };
+	Mesh circle_1 ( tag::progressive, tag::start_at, A, tag::towards, tau,
+	                tag::stop_at, D, tag::desired_length, seg_size         );
+	tau = { -1., 1., 0. };
+	Mesh circle_2 ( tag::progressive, tag::start_at, B, tag::towards, tau,
+	                tag::stop_at, C, tag::desired_length, seg_size         );
 
-	Mesh two_circles ( tag::join, circle_1.reverse(), circle_2 );
-	cylinder.set_as_working_manifold();
-	Mesh cyl ( tag::progressive, tag::boundary, two_circles, tag::start_at, start1,
-						 tag::towards, { -1., 0., 0. }, tag::desired_length, seg_size         );
+	Mesh circles ( tag::join, circle_1, circle_2.reverse() );
+	AV.reverse().add_to ( circles );  VB.reverse().add_to ( circles );
+	CW.reverse().add_to ( circles );  WD.reverse().add_to ( circles );
 
-	Mesh two_circles_rev ( tag::join, circle_1, circle_2.reverse() );
-	RR3.implicit ( x*x + y*y + z*z == rs*rs );
-	Mesh sph ( tag::progressive, tag::boundary, two_circles_rev, tag::start_at, start1,
-             tag::towards, { 0., 0., -1. }, tag::desired_length, seg_size             );
+	cyl_manif.set_as_working_manifold();
+	tau = { 0., 1., 0. };
+	Mesh cone( tag::progressive, tag::boundary, circles,
+	           tag::start_at, V, tag::towards, tau,
+	           tag::desired_length, seg_size );
 
-	Mesh all ( tag::join, cyl, sph );
-	all.export_msh ("sphere-tunnel.msh");
-	cout << "produced file sphere-tunnel.msh" << endl;
+	OAV.add_to ( cone );  OVB.add_to ( cone );
+	OCW.add_to ( cone );  OWD.add_to ( cone );
+
+	cone.export_msh ("napkin.msh");
+	cout << "produced file napkin.msh" << endl;
 }

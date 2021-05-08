@@ -1,34 +1,24 @@
 
 // example presented in paragraph 3.3 of the manual
-// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
-// builds a circle with an eccentric hole
+// builds a circle in 3D (implicit manifold with two equations) progressively
 
 #include "maniFEM.h"
+#include "math.h"
+
 using namespace maniFEM;
+using namespace std;
 
+int main ()
 
-int main ( )
+{	Manifold RR3 ( tag::Euclid, tag::of_dim, 3 );
+	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
 
-{	Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
-	Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
-	Function x = xy[0],  y = xy[1];
+	RR3.implicit ( x*x + y*y == 1., x*y == 4.*z );
+	Mesh circle ( tag::progressive, tag::desired_length, 0.1, tag::random_orientation );
 
-	double d = 0.065;
+	circle.draw_ps_3d ("circle-3d.eps");
+	circle.export_msh ("circle-3d.msh");
 
-	Manifold circle = RR2.implicit ( x*x + y*y == 1. );
-	Mesh outer ( tag::progressive, tag::entire_manifold, circle, tag::desired_length, d );
-
-	double y0 = 0.36;
-	Manifold ellipse = RR2.implicit ( x*x + (y-y0)*(y-y0) + 0.3*x*y == 0.25 );
-	Mesh inner ( tag::progressive, tag::entire_manifold, ellipse, tag::desired_length, d );
-
-	Mesh circles ( tag::join, outer, inner.reverse() );
-
-	RR2.set_as_working_manifold();
-	Mesh disk ( tag::progressive, tag::boundary, circles, tag::desired_length, d );
-
-	disk.export_msh ("disk.msh");
-	disk.draw_ps ("disk.eps");
-
-	std::cout << "produced files disk.msh and disk.eps" << std::endl;
+	cout << "produced files circle-3d.eps and circle-3d.msh" << endl;
 }

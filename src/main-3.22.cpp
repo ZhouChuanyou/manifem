@@ -1,35 +1,33 @@
 
 // example presented in paragraph 3.22 of the manual
-// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
-// a disk with an eccentric hole, non-uniform meshing
+// the code shown in the manual does not work (yet)
+// we fake the desired result by building a mesh on a paraboloid
 
 #include "maniFEM.h"
+#include "math.h"
+
 using namespace maniFEM;
+using namespace std;
 
+int main ()
 
-int main ( )
+{	Manifold RR3 ( tag::Euclid, tag::of_dim, 3 );
+	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+	Function  x = xyz[0],  y = xyz[1],  z = xyz[2];
 
-{	Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
-	Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
-	Function x = xy[0],  y = xy[1];
+	Manifold parab_manif = RR3.implicit ( z == std::sqrt(0.75) * power ( x*x + y*y, 1.4 ) );
 
-	Function d = 0.03 + 0.04 * ( ( x + 0.3 ) * ( x + 0.3 ) + ( y - 0.9 ) * ( y - 0.9 ) );
-	// Function d = 0.03 * smooth_max ( x - 3.*y + 3.5, 1., tag::threshold, 0.01 );
+	parab_manif.implicit ( x*x + y*y == 1. );
+	Cell A ( tag::vertex );  x(A) = 1.;  y(A) = 0.;  z(A) = std::sqrt(0.75);
+	Mesh circle ( tag::progressive, tag::start_at, A, tag::desired_length, 0.2 );
 
-	Manifold circle = RR2.implicit ( x*x + y*y == 1. );
-	Mesh outer ( tag::progressive, tag::entire_manifold, circle, tag::desired_length, d );
+	parab_manif.set_as_working_manifold();
+	std::vector < double > tau { 0., 0., -1. };
+	Mesh parab ( tag::progressive, tag::boundary, circle,
+							 tag::start_at, A, tag::towards, tau,
+	             tag::desired_length, 0.17                 );
 
-	double y0 = 0.37;
-	Manifold ellipse = RR2.implicit ( x*x + (y-y0)*(y-y0) + 0.3*x*y == 0.25 );
-	Mesh inner ( tag::progressive, tag::entire_manifold, ellipse, tag::desired_length, d );
-
-	Mesh circles ( tag::join, outer, inner.reverse() );
-
-	RR2.set_as_working_manifold();
-	Mesh disk ( tag::progressive, tag::boundary, circles, tag::desired_length, d );
-
-	disk.export_msh ("disk.msh");
-	disk.draw_ps ("disk.eps");
-
-	std::cout << "produced files disk.msh and disk.eps" << std::endl;
+	RR3.set_coordinates ( x && y );
+	parab.export_msh ("parab.msh");
+	cout << "produced file parab.msh" << endl;
 }

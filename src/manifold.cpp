@@ -1,23 +1,23 @@
 
-// manifold.cpp 2021.04.10
+// maniFEM manifold.cpp 2020.01.21
 
-//   Copyright 2019, 2020, 2021 Cristian Barbarosie cristian.barbarosie@gmail.com
-//   https://github.com/cristian-barbarosie/manifem
+//    This file is part of maniFEM, a C++ library for meshes on manifolds and finite elements.
 
-//   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
+//    ManiFEM is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 
-//   ManiFEM is free software: you can redistribute it and/or modify it
-//   under the terms of the GNU Lesser General Public License as published
-//   by the Free Software Foundation, either version 3 of the License
-//   or (at your option) any later version.
+//    ManiFEM is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
 
-//   ManiFEM is distributed in the hope that it will be useful,
-//   but WITHOUT ANY WARRANTY; without even the implied warranty of
-//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//   See the GNU Lesser General Public License for more details.
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
 
-//   You should have received a copy of the GNU Lesser General Public License
-//   along with maniFEM.  If not, see <https://www.gnu.org/licenses/>.
+//    Copyright 2019, 2020 Cristian Barbarosie cristian.barbarosie@gmail.com
+//    https://github.com/cristian-barbarosie/manifem
 
 #include "manifold.h"
 
@@ -48,7 +48,8 @@ Function Manifold::Euclid::build_coord_func
 		field = field_block;
 	  func = new Function::CoupledWithField::Vector ( field_block );                }
 	this->coord_field = field;
-	this->coord_func = Function ( tag::whose_core_is, func );
+	this->coord_func = Function ( tag::whose_core_is,
+                                std::shared_ptr < Function::Core > ( func ) );
 	return this->coord_func;                                                            }
 
 
@@ -91,8 +92,7 @@ void Manifold::Parametric::set_coords ( const Function co )  // virtual from Man
 
 // metric in the manifold (an inner product on the tangent space)
 double Manifold::default_inner_prod  // static
-(	const Cell & P, const std::vector<double> & v,
-	const std::vector<double> & w, const Function & )
+( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );
@@ -103,13 +103,12 @@ double Manifold::default_inner_prod  // static
 
 // metric in the manifold (an inner product on the tangent space) not constant
 double Manifold::zoom_inner_prod  // static
-(	const Cell & P, const std::vector<double> & v,
-	const std::vector<double> & w, const Function & metric )
+( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & metric )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );
 	assert ( metric.nb_of_components() == 1 );
-	// std::cout << "zoom (" << metric(P) <<") ";
+	std::cout << "zoom (" << metric(P) <<") ";
 	double res = 0.;
 	for ( size_t i = 0; i < v.size(); i++ )  res += v[i]*w[i];
 	return res * metric(P);                                     }
@@ -117,8 +116,7 @@ double Manifold::zoom_inner_prod  // static
 
 // metric in the manifold (an inner product on the tangent space) not constant, anisotropic
 double Manifold::matrix_inner_prod  // static
-(	const Cell & P, const std::vector<double> & v,
-	const std::vector<double> & w, const Function & metric )
+( const Cell & P, const std::vector<double> & v, const std::vector<double> & w, const Function & metric )
 
 {	size_t dim = v.size();
 	assert ( dim == w.size() );
@@ -151,22 +149,22 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 // we could inline these, as interpolate_euclid, to gain speed	
 	
 {	Function coord = this->get_coord_func();
-	Function::Scalar * coord_scalar = dynamic_cast < Function::Scalar * > ( coord.core );
+	std::shared_ptr < Function::Scalar > coord_scalar =
+		std::dynamic_pointer_cast < Function::Scalar > ( coord.core );
 	if ( coord_scalar )
 	{	assert ( coord.nb_of_components() == 1 );
 	  coord_scalar->set_value_on_cell
 			( P, s * coord_scalar->get_value_on_cell(A) +
 			     t * coord_scalar->get_value_on_cell(B)   );
 		return;                                            } 
-	Function::Vector * coord_vector = dynamic_cast < Function::Vector * > ( coord.core );
-	assert ( coord_vector );
+	Function::Vector * coord_vector = Function::core_to_vector ( coord.core.get() );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Function::core_to_scalar
+			( coord_vector->component(i).core.get() );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
-			     t * coord_i->get_value_on_cell(B) );             }                               }
+			     t * coord_i->get_value_on_cell(B) );                                   }  }
 
 
 // P = sA + sB + uC + vD,  s+t+u+v == 1
@@ -193,7 +191,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 // we could inline these, as interpolate_euclid, to gain speed	
 	
 {	Function coord = this->get_coord_func();
-	Function::Scalar * coord_scalar = dynamic_cast < Function::Scalar * > ( coord.core );
+	std::shared_ptr < Function::Scalar > coord_scalar =
+		std::dynamic_pointer_cast < Function::Scalar > ( coord.core );
 	if ( coord_scalar )
 	{	assert ( coord.nb_of_components() == 1 );
 	  coord_scalar->set_value_on_cell
@@ -202,17 +201,16 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 			     u * coord_scalar->get_value_on_cell(C) +
 			     v * coord_scalar->get_value_on_cell(D)   );
 		return;                                                        } 
-	Function::Vector * coord_vector = dynamic_cast < Function::Vector * > ( coord.core );
-	assert ( coord_vector );
+	Function::Vector * coord_vector = Function::core_to_vector ( coord.core.get() );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Function::core_to_scalar
+			( coord_vector->component(i).core.get() );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
 			     t * coord_i->get_value_on_cell(B) +
 			     u * coord_i->get_value_on_cell(C) +
-			     v * coord_i->get_value_on_cell(D)   );           }                             }
+			     v * coord_i->get_value_on_cell(D)   );                                 }   }
 
 
 // P = sA + sB + uC + vD + wE + zF,  s+t+u+v+w+z == 1
@@ -242,7 +240,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 // we could inline these, as interpolate_euclid, to gain speed	
 	
 {	Function coord = this->get_coord_func();
-	Function::Scalar * coord_scalar = dynamic_cast < Function::Scalar * > ( coord.core );
+	std::shared_ptr < Function::Scalar > coord_scalar =
+		std::dynamic_pointer_cast < Function::Scalar > ( coord.core );
 	if ( coord_scalar )
 	{	assert ( coord.nb_of_components() == 1 );
 	  coord_scalar->set_value_on_cell
@@ -253,19 +252,19 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 			     w * coord_scalar->get_value_on_cell(E) +
 			     z * coord_scalar->get_value_on_cell(F)   );
 		return;                                             } 
-	Function::Vector * coord_vector = dynamic_cast < Function::Vector * > ( coord.core );
+	Function::Vector * coord_vector = Function::core_to_vector ( coord.core.get() );
 	assert ( coord_vector );
 	size_t n = coord.nb_of_components();
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Function::core_to_scalar
+			( coord_vector->component(i).core.get() );
 		coord_i->set_value_on_cell
 			( P, s * coord_i->get_value_on_cell(A) +
 			     t * coord_i->get_value_on_cell(B) +
 				   u * coord_i->get_value_on_cell(C) +
 			     v * coord_i->get_value_on_cell(D) +
 			     w * coord_i->get_value_on_cell(E) +
-			     z * coord_i->get_value_on_cell(F)   );            }                              }
+			     z * coord_i->get_value_on_cell(F)   );                                  }   }
 
 
 // P = sA + sB,  s+t == 1
@@ -292,7 +291,8 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 // we could inline these, as interpolate_euclid, to gain speed	
 	
 {	Function coord = this->get_coord_func();
-	Function::Scalar * coord_scalar = dynamic_cast < Function::Scalar * > ( coord.core );
+	std::shared_ptr < Function::Scalar > coord_scalar =
+		std::dynamic_pointer_cast < Function::Scalar > ( coord.core );
 	if ( coord_scalar )
 	{	assert ( coord.nb_of_components() == 1 );
 		double v = 0.;
@@ -301,16 +301,15 @@ void Manifold::Euclid::interpolate ( Cell::Positive::Vertex * P,
 			v += coefs[j] * coord_scalar->get_value_on_cell ( points[j] );
 		coord_scalar->set_value_on_cell ( P, v );
 		return;                                            } 
-	Function::Vector * coord_vector = dynamic_cast < Function::Vector * > ( coord.core );
-	assert ( coord_vector );
+	Function::Vector * coord_vector = Function::core_to_vector ( coord.core.get() );
 	size_t n = coord.nb_of_components(), m = points.size();  // m== coefs.size()
 	for ( size_t i = 0; i < n; i++ )
-	{	Function::Scalar * coord_i = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( coord_vector->component(i).core );
+	{	Function::Scalar * coord_i = Function::core_to_scalar
+			( coord_vector->component(i).core.get() );
 		double v = 0.;
 		for ( size_t j = 0; j < m; j++ )
 			v += coefs[j] * coord_i->get_value_on_cell ( points[j] );
-		coord_i->set_value_on_cell ( P, v );                         }                       }
+		coord_i->set_value_on_cell ( P, v );                         }                     }
 
 
 // P = sA + sB,  s+t == 1     virtual from Manifold::Core
@@ -461,12 +460,14 @@ void Manifold::Implicit::TwoEquations::project ( Cell::Positive::Vertex * P_c ) 
 
 void Manifold::Parametric::project ( Cell::Positive::Vertex * P_c ) const
 
-{	std::map< Function::Core *, Function::Core * >::const_iterator it;
+{	std::map<std::shared_ptr<Function::Core >,std::shared_ptr<Function::Core>>::const_iterator it;
 	for ( it = this->equations.begin(); it != this->equations.end(); it++ )
-	{	Function::Scalar * coord_scalar = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( it->first );
-		Function::Scalar * expr_scalar = Mesh::assert_cast
-			< Function::Core*, Function::Scalar* > ( it->second );
-		coord_scalar->set_value_on_cell ( P_c, expr_scalar->get_value_on_cell(P_c) );  }  }
+	{	std::shared_ptr < Function::Scalar > coord_scalar =
+			std::dynamic_pointer_cast < Function::Scalar > ( it->first );
+		assert ( coord_scalar );
+		std::shared_ptr < Function::Scalar > expr_scalar =
+			std::dynamic_pointer_cast < Function::Scalar > ( it->second );
+		assert ( expr_scalar );
+		coord_scalar->set_value_on_cell ( P_c, expr_scalar->get_value_on_cell(P_c) );  }                 }
 
 

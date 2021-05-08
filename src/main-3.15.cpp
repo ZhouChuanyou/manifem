@@ -1,37 +1,39 @@
 
-// example presented in paragraph 3.15 of the manual
-// http://manifem.rd.ciencias.ulisboa.pt/manual-manifem.pdf
-// a "bumpy" hemisphere built progressively
+// example presented in paragraph 2.9 of the manual
+// a diamond-shape domain in RR2 (alternating between manifolds)
 
 #include "maniFEM.h"
-#include "math.h"
 
 using namespace maniFEM;
 using namespace std;
 
+int main () {
 
-int main ()
+	Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
+	Function xy = RR2.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
+	Function x = xy[0],  y = xy[1];
 
-{	Manifold RR3 ( tag::Euclid, tag::of_dim, 3 );
-	Function xyz = RR3.build_coordinate_system ( tag::Lagrange, tag::of_degree, 1 );
-	Function x = xyz[0],  y = xyz[1],  z = xyz[2];
+	Cell N ( tag::vertex );  x(N) =  0.;  y(N) =  1.;
+	Cell W ( tag::vertex );  x(W) = -1.;  y(W) =  0.;
+	Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;
+	Cell E ( tag::vertex );  x(E) =  1.;  y(E) =  0.;
 
-	Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
+	RR2.implicit ( x*y + x - y == -1. );
+	Mesh NW ( tag::segment, N, W, tag::divided_in, 10 );
+	RR2.implicit ( x*y - x - y ==  1. );
+	Mesh WS ( tag::segment, W, S, tag::divided_in, 10 );
+	RR2.implicit ( x*y - x + y == -1. );
+	Mesh SE ( tag::segment, S, E, tag::divided_in, 10 );
+	RR2.implicit ( x*y + x + y ==  1. );
+	Mesh EN ( tag::segment, E, N, tag::divided_in, 10 );
 
-	// build the base (a closed curve)
-	nut.implicit ( x*x + 3.*z == 0. );
+	Mesh bdry ( tag::join, NW, WS, SE, EN );
+		
+	RR2.set_as_working_manifold();
+	Mesh diamond ( tag::progressive, tag::boundary, bdry, tag::desired_length, 0.1 );
 
-	Cell S ( tag::vertex );  x(S) =  0.;  y(S) = -1.;  z(S) =  0.;
-	std::vector < double > tau { 1., 0., 0. };
-	Mesh circle ( tag::progressive, tag::start_at, S, tag::towards, tau,
-                tag::desired_length, 0.1                               );
-
-	nut.set_as_working_manifold();
-	std::vector < double > N { 0., 0., -1. };
-	Mesh bumpy ( tag::progressive, tag::boundary, circle,
-               tag::start_at, S, tag::towards, N,
-               tag::desired_length, 0.1                 );
-	bumpy.export_msh ("bumpy.msh");
+	diamond.draw_ps ("diamond.eps");
+	diamond.export_msh ("diamond.msh");
 	
-	cout << "produced file bumpy.msh" << endl;
+	cout << "produced files diamond.eps and diamond.msh" << endl;
 }
