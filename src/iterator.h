@@ -1,5 +1,5 @@
 
-// iterator.h 2021.04.25
+// iterator.h 2021.05.09
 
 //   This file is part of maniFEM, a C++ library for meshes and finite elements on manifolds.
 
@@ -94,7 +94,7 @@ inline void CellIterator::reset ( Cell & cll )
 {  this->core->reset( cll.core );  }
 	
 inline Cell CellIterator::operator* ( )
-{	return Cell ( tag::whose_core_is, this->core->deref() );  }
+{	return Cell ( tag::whose_core_is, this->core->deref(), tag::previously_existing );  }
 
 inline CellIterator & CellIterator::operator++ ( )  {  return this->advance();  }
 
@@ -257,11 +257,11 @@ class CellIterator::Over::CellsOfFuzzyMesh : public CellIterator::Core
 
 {	public :
 
-	std::list<Cell::Core*> * list_p;
-  std::list<Cell::Core*>::iterator iter;
+	std::list<Cell> & list;
+  std::list<Cell>::iterator iter;
 
 	inline CellsOfFuzzyMesh ( Mesh::Fuzzy * msh, const tag::CellsOfDim &, const size_t d )
-	:	CellIterator::Core (), list_p { & ( msh->cells[d] ) }
+	:	CellIterator::Core (), list { msh->cells[d] }
 	{	}  // no need to initialize 'iter', 'reset' will do that
 	
 	void reset ( );  // virtual from CellIterator::Core
@@ -1085,6 +1085,26 @@ inline CellIterator Mesh::iterator
 
 inline CellIterator Mesh::iterator
 ( const tag::OverCellsOfMaxDim &, const tag::ReverseOrder &, const tag::AsTheyAre & ) const
+{	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are, tag::reverse_order );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfMaxDim &, const tag::Oriented & ) const
+{	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfMaxDim &, const tag::Oriented &, const tag::RequireOrder & ) const
+{	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are, tag::require_order );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfMaxDim &, const tag::RequireOrder &, const tag::Oriented & ) const
+{	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are, tag::require_order );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfMaxDim &, const tag::Oriented &, const tag::ReverseOrder & ) const
+{	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are, tag::reverse_order );  }
+
+inline CellIterator Mesh::iterator
+( const tag::OverCellsOfMaxDim &, const tag::ReverseOrder &, const tag::Oriented & ) const
 {	return this->iterator ( tag::over_cells_of_max_dim, tag::as_they_are, tag::reverse_order );  }
 
 inline CellIterator Mesh::iterator
