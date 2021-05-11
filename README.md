@@ -15,7 +15,7 @@ The user shold have some understanding of programming and of C++.
 However, maniFEM can be used at a basic level by people with no deep knowledge of C++.
 
 In its current version, 21.04, maniFEM works well for mesh generation. 
-Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
+Quotient manifolds (section 7 in the manual) and anisotropic Riemann metrics (paragraph 3.24 in the manual) are not yet implemented. 
 Variational formulations (section 5 in the manual) are not yet implemented. 
 Finite elements (section 6 in the manual) are implemented in a rather rudimentary manner for now. 
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
