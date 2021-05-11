@@ -16,8 +16,8 @@ However, maniFEM can be used at a basic level by people with no deep knowledge o
 
 In its current version, 21.04, maniFEM works well for mesh generation. 
 Quotient manifolds and anisotropic Riemann metrics are not yet implemented. 
-Variational formulations (section 6 in the manual) are not yet implemented. 
-Finite elements (section 7 in the manual) are implemented in a rather rudimentary manner for now. 
+Variational formulations (section 5 in the manual) are not yet implemented. 
+Finite elements (section 6 in the manual) are implemented in a rather rudimentary manner for now. 
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 
 A component of maniFEM, [MetricTree](https://github.com/cristian-barbarosie/MetricTree), can be used independently.
