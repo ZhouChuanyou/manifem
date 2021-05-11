@@ -31,7 +31,7 @@ To use maniFEM, you should dowload a [release](https://github.com/cristian-barba
 and copy all files under `src` to some directory in your computer.
 To check which version of maniFEM is installed in your computer, see at the beginning of the file `maniFEM.h`.
 You can then run the examples in the manual : just `make run-1.1` for the example in paragraph 1.1, 
-`make run-2.2` for the example in paragraph 2.2, and so on.
+`make run-2.5` for the example in paragraph 2.5, and so on.
 You will need a recent C++ compiler (we use `g++`) and the `make` utility. 
 Under linux it should be easy to install them. 
 It is not that easy to install and use them under Windows, but it is certainly possible, for instance by using 
