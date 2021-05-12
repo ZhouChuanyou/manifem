@@ -67,8 +67,8 @@ The only difference between this mesh an the one presented in paragraph \numb se
 is a slight distortion in the lower half of the domain,
 due to the non-uniform distribution of the vertices along {\codett HD}.
 
-See paragraph \numb section 9.\numb parag 2 for more details about tags.
-See also paragraph \numb section 9.\numb parag 7.
+See paragraph \numb section 10.\numb parag 2 for more details about tags.
+See also paragraph \numb section 10.\numb parag 8.
 
 
 \vfil\eject
@@ -118,7 +118,7 @@ The mesh in paragraph \numb section 1.\numb parag 4 could have been built like t
 used to build domains of the desired shape.
 
 Until now, we have only met the trivial Euclidian manifold, defined as {\codett
-Manifold ( tag::Euclid, tag::of\_dim, n )}.
+Manifold\break ( tag::Euclid, tag::of\_dim, n )}.
 One can define a submanifold in terms of an implicit equation, that is, as a level set,
 using the method {\codett implicit} of the Euclidian manifold.
 The code below introduces a one-dimensional submanifold of $ \RR^2 $ (a hiperbola).
@@ -162,12 +162,7 @@ in the {\codett RR2} space and then projects them onto the {\codett hiperbola}
 without the user's assistance.
 
 The projection is done by applying a few steps of Newton's method for under-determined
-(systems of) equations.%
-\footnote *{\parbox{\ftntfont\baselineskip=3pt
-See e.g.\ Appendix B in C.~Barbarosie, A.M.~Toader, S.~Lopes, A gradient-type algorithm for constrained
-optimization with application to microstructure optimization, Discrete and Continuous Dynamical
-Systems series B, 25, p.\ 1729-1755, 2020}}
-Thus, it only works as expected for a point not too far from the manifold.
+(systems of) equations, as explained in paragraph \numb section 9.\numb parag 1.
 
 Paragraph \numb section 3.\numb parag 5 shows another way of meshing a curve,
 producing equidistant vertices.
@@ -200,13 +195,12 @@ We can define several arcs of curve and {\codett join} them, thus obtaining a cl
 Again, the vertices are not perfectly uniformly distributed along the circle
 because they are obtained as projections (on the circle) of points along straight segments
 {\codett NW}, {\codett WS} and so forth.
+Paragraph \numb section 3.\numb parag 2 shows another way of meshing a closed curve,
+producing equidistant vertices.
 
 Note that applying the {\codett Mesh} constructor with {\codett tag::join} to four segments
 is very different from applying the {\codett Mesh} constructor with {\codett tag::quadrangle}
 to the same four segments; see paragraph \numb section 2.\numb parag 8.
-
-Paragraph \numb section 3.\numb parag 2 shows another way of meshing a closed curve,
-producing equidistant vertices.
 
 
 \paragraph{\numb section 2.\numb parag 5. A hemisphere defined by four curved triangles}
@@ -235,7 +229,10 @@ Let's look at a surface in $ \RR^3 $ :
    Mesh upN ( tag::segment, up.reverse(), N, tag::divided_in, n );
    Mesh upW ( tag::segment, up.reverse(), W, tag::divided_in, n );
    Mesh upS ( tag::segment, up.reverse(), S, tag::divided_in, n );
+\endverbatim
+\vfil\eject
 
+\verbatim
    // build four triangles
    Mesh ENup ( tag::triangle, EN, upN.reverse(), upE );
    Mesh NWup ( tag::triangle, NW, upW.reverse(), upN );
@@ -256,18 +253,13 @@ Again, when we define individual points {\codett E}, {\codett N}, {\codett W}, {
 (or {\codett project} them explicitly as shown in paragraph \numb section 2.\numb parag 6).
 In contrast, the {\codett Mesh} constructors with {\codett tag::segment}, {\codett tag::quadrangle}
 and {\codett tag::triangle} build points in the surrounding space ($ \RR^2 $ or $ \RR^3 $) and
-then project them onto the current manifold without the user's assistance.
-The projection is done by applying a few steps of Newton's method for under-determined
-(systems of) equations.%
-\footnote *{\parbox{\ftntfont\baselineskip=3pt
-See e.g.\ Appendix B in C.~Barbarosie, A.M.~Toader, S.~Lopes, A gradient-type algorithm for constrained
-optimization with application to microstructure optimization, Discrete and Continuous Dynamical
-Systems series B, 25, p.\ 1729-1755, 2020}}
+then project them onto the current manifold without the user's assistance (paragraph
+\numb section 9.\numb parag 1 describe this projection operatio).
 As a side effect, within each triangle ({\codett ENup}, {\codett NWup} and so forth),
 the distribution of the vertices is not perfectly uniform.
 
 Note that, when we build the segments {\codett WS}, {\codett upS} and so on,
-we know that those segments will be (polygonal approximatins of) arcs of circle on the sphere.
+we know that those segments will be (polygonal approximations of) arcs of circle on the sphere.
 This is so due to the particular geometry of our manifold (we know that the projection of
 a straight line segment on the sphere is an arc of circle of radius equal to the radius of
 the sphere); the shape of such segments is less clear in other examples
@@ -283,6 +275,7 @@ If the surface is more ``bumpy'',
 we must use smaller patches in order to get a mesh of good quality.
 
 Below we use twelve rectangles to get a bumpy hemisphere.
+\vfil\eject
 
 \verbatim
    Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
@@ -312,7 +305,7 @@ Below we use twelve rectangles to get a bumpy hemisphere.
 \psfrag{mSEup}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett mSEup}\special{ps: grestore}}
 \psfrag{up}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett up}\special{ps: grestore}}
 \psfrag{mWSup}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett mSWup}\special{ps: grestore}}
-\centerline{\includegraphics[width=10cm]{hemisphere-2.eps}} }
+\centerline{\includegraphics[width=105mm]{hemisphere-2.eps}} }
 
 \verbatim
    // now build segments :
@@ -329,7 +322,10 @@ Below we use twelve rectangles to get a bumpy hemisphere.
    Mesh rect_up_SW ( tag::quadrangle,
       mWup_mSWup, mSup_mSWup.reverse(), up_mSup.reverse(), up_mWup );
    // ... and so forth ...
+\endverbatim
+\vfil\eject
 
+\verbatim
    // and finally join the rectangles :
    Mesh hemisphere ( tag::join,
       { rect_E_NE, rect_E_SE, rect_S_SE, rect_S_SW, rect_W_SW, rect_W_NW,
@@ -452,7 +448,7 @@ Paragraph \numb section 3.\numb parag 17 shows another way of meshing the same d
 
 \paragraph{\numb section 2.\numb parag 10. An organic shape}
 
-This paragraph describes a surface meant to mimik the shape of a physalis fruit.
+This paragraph describes a surface meant to mimic the shape of a physalis fruit.
 
 $$ \includegraphics[width=85mm]{dry-physalis.eps} $$
 \vskip 2mm
@@ -471,7 +467,7 @@ $$ \includegraphics[width=80mm]{fisalis-manif.eps} $$
 
 \vfil\eject
 Instead of meshing the {\codett apple} surface, we just build eight curves immersed in it
-(each curve joins {\codett A} to {\codett D} and is made of three segments) :
+(each curve joins {\codett A} to {\codett D} and is made of three shorter curves) :
 
 \verbatim
    Cell A ( tag::vertex );  x(A) =  0.;  y(A) =  0.;  z(A) = std::sqrt ( 2.*pi/3. );
@@ -519,7 +515,7 @@ get a sharper tip.
 The {\codett apple} manifold is no longer relevant.
 
 \verbatim
-   CellIterator it = fisalis.iter_over ( tag::vertices );
+   CellIterator it = fisalis.iterator ( tag::over_vertices );
    for ( it.reset(); it.in_range(); it++ )
    {  Cell P = *it;
       x(P) *= 0.8;  y(P) *= 0.8;
@@ -539,7 +535,7 @@ Thus, the eight rims defined in the beginning are kept unchanged.
    std::list<Mesh>::iterator it1;
    for ( it1 = lm.begin(); it1 != lm.end(); it1++ )
    {  Mesh sect = *it1;
-      CellIterator it2 = sect.iter_over ( tag::cells_of_dim, 1 );
+      CellIterator it2 = sect.iterator ( tag::over_cells_of_dim, 1 );
       for ( int i = 1; i < 20; i++ )
       for ( it2.reset(); it2.in_range(); it2++ )
       {  Cell seg = *it2;
@@ -580,7 +576,7 @@ We can define a one-dimensional submanifold of $ \RR^3 $ by two implicit equatio
 \psfrag{S}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett S}\special{ps: grestore}}
 \psfrag{E}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett E}\special{ps: grestore}}
 \psfrag{W}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett W}\special{ps: grestore}}
-\centerline{\includegraphics[width=85mm]{circle-3d.eps}} }
+\centerline{\includegraphics[width=80mm]{circle-3d.eps}} }
 
 Paragraph \numb section 3.\numb parag 4 shows another way of meshing the same loop.
 
@@ -637,7 +633,7 @@ For the rest of the surface, we switch back to the two-dimensional manifold {\co
    // ... and so forth ...
 \endverbatim
 
-\centerline{\includegraphics[width=9cm]{bumpy.eps}}
+\centerline{\includegraphics[width=95mm]{bumpy.eps}}
 
 If we wanted a flat base, we could have defined
 
@@ -745,7 +741,7 @@ build a closed curve :
 % This is quite different from building a segment {\codett Mesh}, when we provide two positive
 % vertices as arguments, along with the number of divisions.
 
-Paragraph \numb section 5.\numb parag 4 shows a more elegant way to close a curve in itself.
+Paragraph \numb section 7.\numb parag 4 shows a more elegant way to close a curve in itself.
 
 On the other hand, if we only want a visual illusion of a closed circle, we may use the code below.
 
@@ -785,6 +781,10 @@ Here is an example of a parametrized surface :
    Cell B ( tag::vertex );  alpha(B) = 0.;       beta(B) = 1.9*pi;
    Cell C ( tag::vertex );  alpha(C) = 1.95*pi;  beta(C) = 1.9*pi;
    Cell D ( tag::vertex );  alpha(D) = 1.95*pi;  beta(D) = 0.;
+\endverbatim
+\vfil\eject
+
+\verbatim
    // four almost-closed circles :
    Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 19 );
    Mesh BC ( tag::segment, B.reverse(), C, tag::divided_in, 39 );
@@ -809,7 +809,7 @@ Here is an example of a parametrized surface :
 
 Closing the torus in the cumbersome manner shown in paragraph \numb section 2.\numb parag 14
 is possible but not practical.
-Paragraph \numb section 5.\numb parag 6 shows a more elegant solution.
+Paragraph \numb section 7.\numb parag 6 shows a more elegant solution.
 
 If we only want a visual illusion of a closed surface, we may use the code below
 
@@ -826,6 +826,7 @@ If we only want a visual illusion of a closed surface, we may use the code below
    Mesh ABCD ( tag::rectangle, AB, BC, CD, DA );
    // ABCD gives the illusion of a closed torus
 \endverbatim
+\vfil\eject
 
 
 \paragraph{\numb section 2.\numb parag 16. Starting with a high-dimensional manifold}
@@ -853,10 +854,10 @@ There is a disadvantage however, regarding performance; see paragraph \dots
 
    // define four corners
    const double pi = 3.1415926536;
-   Cell A ( tag::vertex );  alpha(A) = 0.;       beta(A) = 0.;       torus.project(A);
-   Cell B ( tag::vertex );  alpha(B) = 0.;       beta(B) = 1.9*pi;   torus.project(B);
-   Cell C ( tag::vertex );  alpha(C) = 1.95*pi;  beta(C) = 1.9*pi;   torus.project(C);
-   Cell D ( tag::vertex );  alpha(D) = 1.95*pi;  beta(D) = 0.;       torus.project(D);
+   Cell A ( tag::vertex );  alpha(A) = 0.;       beta(A) = 0.;      torus.project(A);
+   Cell B ( tag::vertex );  alpha(B) = 0.;       beta(B) = 1.9*pi;  torus.project(B);
+   Cell C ( tag::vertex );  alpha(C) = 1.95*pi;  beta(C) = 1.9*pi;  torus.project(C);
+   Cell D ( tag::vertex );  alpha(D) = 1.95*pi;  beta(D) = 0.;      torus.project(D);
    // four almost-closed circles :
    Mesh AB ( tag::segment, A.reverse(), B, tag::divided_in, 19 );
    Mesh BC ( tag::segment, B.reverse(), C, tag::divided_in, 39 );

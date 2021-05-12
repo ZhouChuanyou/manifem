@@ -60,7 +60,7 @@ Of course the length of the segments inside the mesh will vary slightly.
 We must take care to give as boundary a curve with segments of length approximatively equal
 to the desired length (paragraph \numb section 3.\numb parag 16 discusses this requirement).
 
-Paragraph \numb section 9.\numb parag 2 gives more details about {\codett tag}s.
+Paragraph \numb section 10.\numb parag 2 gives more details about {\codett tag}s.
 
 
 \paragraph{\numb section 3.\numb parag 2. Meshing a circle}
@@ -125,6 +125,9 @@ Inner boundaries must have the reverse orientation :
    \endverbatim
 
 \centerline{\includegraphics[width=90mm]{disk-with-hole.eps}}
+
+Paragraph \numb section 1.\numb parag 2 explains the relation between the orientation of
+a mesh and the orientation of its boundary.
 
 Paragraphs \numb section 3.\numb parag 10 and \numb section 3.\numb parag 13 explain how
 {\maniFEM} chooses the orientation of closed curves.
@@ -364,8 +367,9 @@ the program would have tried to mesh the exterior of the disk, never stopping.
 
 Compact manifolds of co-dimension one (closed curves in $ \RR^2 $,
 compact surfaces in $ \RR^3 $) are an exception among implicit manifolds.
-There is a ``privileged'' orientation of such a manifold, which is compatible with the
-intrinsic orientation of the surrounding space.
+Recall that in this manual we use the term ``manifold'' to mean a manifold without boundary.
+There is a ``privileged'' orientation of a compact manifold of co-dimension one,
+which is compatible with the intrinsic orientation of the surrounding space.
 We call this orientation {\codett inherent}; paragraph \numb section 3.\numb parag 13
 discusses this topic.
 
@@ -559,7 +563,7 @@ if the second one is correctly oriented, {\codett msh1} will be returned.
 
 Thus, in the code below we will still obtain unpredictably either the upper or the lower
 hemisphere, but only due to the random choice in the orientation of {\codett circle}.
-The construction of {\codett bumpy} is determined by the orientation of {\codett circle}.
+The construction of {\codett bumpy} is uniquely determined by the orientation of {\codett circle}.
 
 \verbatim
    Manifold nut = RR3.implicit ( x*x + y*y + z*z + 1.5*x*y*z == 1. );
@@ -574,7 +578,8 @@ The construction of {\codett bumpy} is determined by the orientation of {\codett
 In the code below we will obtain the upper hemisphere.
 
 \verbatim
-   Cell S ( tag::vertex );    x(S) =  0.;  y(S) = -1.;  z(S) =  0.;
+   Cell S ( tag::vertex );
+   x(S) =  0.;  y(S) = -1.;  z(S) =  0.;
    Mesh circle ( tag::progressive, tag::start_at, S, tag::towards, { 1., 0., 0. },
                  tag::desired_length, 0.1                                          );
    nut.set_as_working_manifold();
@@ -693,11 +698,13 @@ Here is how to mesh the diamond-shaped domain in paragraph \numb section 2.\numb
    // we define the arcs NW, WS, SE and EN either as segments, like in
    RR2.implicit ( x*y + x - y == -1. );
    Mesh NW ( tag::segment, N.reverse(), W, tag::divided_in, 12 );
+   
    // or with tag::progressive like in
    RR2.implicit ( x*y - x - y ==  1. );
    Mesh WS ( tag::progressive, tag::start_at, W, tag::stop_at, S,
              tag::desired_length, 0.1 );
    // ... //
+             
    Mesh bdry ( tag::join, NW, WS, SE, EN );
    RR2.set_as_working_manifold();
    Mesh diamond ( tag::progressive, tag::boundary, bdry, tag::desired_length, 0.1 );
@@ -763,7 +770,7 @@ thus, some previous knowledge about the geometry of the surface is needed.
 \endverbatim
 
 \medskip
-\centerline{\includegraphics[width=70mm]{sphere-cyl.eps}}
+\centerline{\includegraphics[width=80mm]{sphere-cyl.eps}}
 \medskip
 
 Note how the orientation is important.
@@ -800,7 +807,7 @@ With a few changes to the code in paragraph \numb section 3.\numb parag 18,
 we can cut two holes in the sphere and create a tunnel using the cylinder's wall.
 \medskip
 
-\centerline{\includegraphics[width=80mm]{sphere-tunnel-from-png.eps}}
+\centerline{\includegraphics[width=78mm]{sphere-tunnel-from-png.eps}}
 
 \verbatim
    Manifold cylinder = RR3.implicit ( y*y + (z-0.5)*(z-0.5) == rc*rc );
@@ -849,7 +856,7 @@ If we want to mesh (a part of) a surface with singular points, we must give to {
 knowledge about these singularities.
 A typical example is the vertex of a cone.
 
-\centerline{\includegraphics[width=70mm]{cone.eps}}
+\centerline{\includegraphics[width=75mm]{cone.eps}}
 
 \verbatim
    Manifold cone_manif = RR3.implicit ( x*x + y*x == z*z );

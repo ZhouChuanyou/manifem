@@ -1,8 +1,8 @@
 
 % manual maniFEM
 
-\def\manifemversion{21.02}
-\def\manualversion{21.02}
+\def\manifemversion{21.04}
+\def\manualversion{21.05}
 
 \magnification\magstep1
 \nopagenumbers
@@ -68,13 +68,14 @@
 }
 
 \font\titlefont=cmr10 at 20pt
-\font\sectfont=cmr10 at 14pt
+\font\autrm=cmcsc10 at 18pt
+\font\sectfont=cmr10 at 16pt
 \font\parfont=cmr10 at 12pt
 \font\codett=cmtt10 at 9pt
 \font\ftntfont=cmr10 at 8pt
 \font\ftnttt=cmtt10 at 7pt
 \def\section#1{\vfil\eject\centerline{\sectfont #1}\bigskip\bigskip}
-\def\paragraph#1{\bigskip\line{\parfont #1\hfil}\medskip}
+\def\paragraph#1{\bigskip\line{\underbar{\parfont #1}\hfil}\medskip}
 \def\leaderfill{\leaders\hrule\hfill}
 \def\code#1{\smallskip\line{\leaders\hrule\hfill\leaders\hrule\hfill\lower 1.5pt\hbox{\sevenrm\ \ \ Code #1 \ \ }\leaders\hrule\hfill}}
 \def\endcode{\vskip-12pt\line{\leaders\hrule\hfill}\medskip}
@@ -124,6 +125,8 @@
 
 
 \centerline{\includegraphics[width=12cm]{manifem-grey-capital.eps}}
+\vskip 10mm
+\centerline{\autrm user \ manual}
 \vskip 30mm
 
 author of this manual : {\bf Cristian Barbarosie}
@@ -131,7 +134,7 @@ author of this manual : {\bf Cristian Barbarosie}
 version of this manual : {\bf \manualversion}
 
 describes {\maniFEM} version {\bf \manifemversion}
-\vskip 20mm
+\vskip 15mm
 
 This document describes \maniFEM, a {\tt C++} library for solving partial differential equations
 through the finite element method.
@@ -156,17 +159,16 @@ However, {\maniFEM} can be used at a basic level by people with no deep knowledg
 {\tt C++}.
 
 In its current version, \manifemversion, {\maniFEM} works quite well for mesh generation.
-Quotient manifolds (section \numb section 5) and anisotropic meshing (paragraph
+Quotient manifolds (section \numb section 7) and anisotropic meshing (paragraph
 \numb section 3.\numb parag 24) are not yet implemented.
-Variational formulations (section \numb section 6) are not yet implemented.
-Finite elements (section \numb section 7) work in a rather rudimentary manner for now.
+Variational formulations (section \numb section 5) are not yet implemented.
+Finite elements (section \numb section 6) work in a rather rudimentary manner for now.
 To check which version of {\maniFEM} is installed in your computer,
 see at the beginning of the file {\codett maniFEM.h}.
 
 A component of \maniFEM, {\codett MetricTree}, can be used independently.
 It is a generalization of quad-trees for metric spaces.
-See paragraph \numb section 9.\numb parag 15.
-\vfil\eject
+See paragraph \numb section 10.\numb parag 16.
 
 {\ManiFEM} is being developed by Cristian Barbarosie,%
 \footnote *{\codett cristian.barbarosie@gmail.com}
@@ -181,22 +183,22 @@ project UID/MAT/04561/2020}}
 under the GNU Lesser General Public Licence.
 
 The home page of {\maniFEM} is
-{\codett https://webpages.ciencias.ulisboa.pt/\~{}cabarbarosie/ /manifem/}
+{\codett http://manifem.rd.ciencias.ulisboa.pt}
 (where this manual can be found).
 
-To use \maniFEM, visit {\codett https://github.com/cristian-barbarosie/manifem}
-and copy all files under {\codett src/} to some directory in your computer.
-You can then run the examples in this manual : just {\codett make
-run-\numb section 1.\numb parag 1}
+To use \maniFEM, visit {\codett https://github.com/cristian-barbarosie/manifem},
+download a release and copy all files under {\codett src/} to some directory in your computer.
+You can then run the examples in this manual :
+just {\codett make run-\numb section 1.\numb parag 1}
 for the example in paragraph \numb section 1.\numb parag 1,
-{\codett make run-\numb section 1.\numb parag 3} for the example
-in paragraph \numb section 1.\numb parag 3, and so on.
+{\codett make run-\numb section 2.\numb parag 5} for the example
+in paragraph \numb section 2.\numb parag 5, and so on.
 You will need a recent {\tt C++} compiler (we use {\tt g++}) and the {\tt make} utility.
 Under linux it should be easy to install them.
 It is not that easy to install and use them under Windows, but it is certainly possible,
 for instance \hbox{by using {\codett cygwin}}, available at {\codett https://www.cygwin.com/}.
 For some examples, the {\codett Eigen} library is necessary; just copy its source tree
-from {\codett http://eigen.tuxfamily.org/index.php? title=Main\_Page}
+from {\codett http://eigen.tuxfamily.org/index.php?title=Main\_Page}
 to $\;$some $\;$place $\;$in $\;$your $\;$computer $\;$and $\;$be $\;$sure $\;$that
 $\;$path $\;$is $\;$mentioned in your {\codett Makefile}
 under the {\codett -I} flag of your compiler.
@@ -210,28 +212,32 @@ Section \numb section 2 shows meshes built by joining simple shapes, like patche
 some of them on manifolds.
 Section \numb section 3 shows how to build meshes starting from their boundary alone,
 some of them on manifolds.
-Section \numb section 5 describes meshes on quotient manifolds (code not working).
-Section \numb section 6 (on functions and variational formulations) and
-section \numb section 7 (on finite elements) are still very incipient.
+Section \numb section 5 (on functions and variational formulations) and
+section \numb section 6 (on finite elements) are still very incipient.
+Section \numb section 7 describes meshes on quotient manifolds (code not working).
 These sections should be accessible to readers who have some knowledge of {\tt C++}
 but are not necessarily experts in {\tt C++} programming.
 Section \numb section 8 gives some insight on the implementation of cells and meshes in
 {\maniFEM} (it should be useful for users who want finer control on the mesh,
 e.g.~for implementing their own remeshing algorithms).
-Sections \numb section 9 and \numb section 10 give technical details, mainly for those
+Sections \numb section 10 and \numb section 11 give technical details, mainly for those
 interested in developing and extending \maniFEM.
-\vfil\eject\leavevmode\vglue 5cm
 
-% ISBN 978-972-8394-30-1
-\includegraphics[width=35mm]{ISBN-code-3.eps}
-\hskip 10mm\raise 17mm\hbox{\vtop{\hsize 90mm\noindent
-Universidade de Lisboa
-\hfil\break Faculdade de Ci\^encias
-\hfil\break Departamento de Matem\'atica
-\hfil\break %\phantom{$\displaystyle\int$}
-\hfil\break first edition, February 2021}}
+% \vfil\eject\vglue 5cm
 
-\vfill
+%  first edition  February 2021  ISBN 978-972-8394-30-1
+
+% \includegraphics[width=35mm]{ISBN-code-3.eps}
+% \hskip 10mm\raise 17mm\hbox{\vtop{\hsize 90mm\noindent
+% Universidade de Lisboa
+% \hfil\break Faculdade de Ci\^encias
+% \hfil\break Departamento de Matem\'atica
+% \hfil\break %\phantom{$\displaystyle\int$}
+% \hfil\break first edition, February 2021}}
+
+% \vfil
+\vskip 10mm
+
 \noindent
 Copyright 2020, 2021 Cristian Barbarosie {\codett cristian.barbarosie@gmail.com}
 \bigskip
@@ -242,8 +248,9 @@ Copyright 2020, 2021 Cristian Barbarosie {\codett cristian.barbarosie@gmail.com}
 This manual is licensed under the
 \hfil\break Creative Commons Attribution 4.0 International License :
 \hfil\break{\tt https://creativecommons.org/licenses/by/4.0/}}}
-\eject
 
+\vfil\eject
+\eject
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -360,35 +367,35 @@ This manual is licensed under the
 \numb section 4. \special{ps: gsave 0.6 setgray}Meshing of three-dimensional domains\special{ps: grestore}
 
 \medskip\noindent
-\numb section 5. \special{ps: gsave 0.6 setgray}Quotient manifolds\special{ps: grestore}
+\numb section 5. Fields, functions and variational formulations
 
-\numb section 5.\numb parag 1. \special{ps: gsave 0.6 setgray}A one-dimensional circle\special{ps: grestore}
+\numb section 5.\numb parag 1. Fields and functions
 
-\numb section 5.\numb parag 2. \special{ps: gsave 0.6 setgray}A flat torus\special{ps: grestore}
-
-\numb section 5.\numb parag 3. \special{ps: gsave 0.6 setgray}A skew flat torus\special{ps: grestore}
-
-\numb section 5.\numb parag 4. \special{ps: gsave 0.6 setgray}A curved circle\special{ps: grestore}
-
-\numb section 5.\numb parag 5. \special{ps: gsave 0.6 setgray}A cylinder\special{ps: grestore}
-
-\numb section 5.\numb parag 6. \special{ps: gsave 0.6 setgray}A curved torus\special{ps: grestore}
+\numb section 5.\numb parag 2. \special{ps: gsave 0.6 setgray}Fields and functions\special{ps: grestore} [outdated]
 
 
 \medskip\noindent
-\numb section 6. Fields, functions and variational formulations
+\numb section 6. Finite elements and integrators
 
-\numb section 6.\numb parag 1. Fields and functions
+\numb section 6.\numb parag 1. Finite elements
 
-\numb section 6.\numb parag 2. \special{ps: gsave 0.6 setgray}Fields and functions\special{ps: grestore} [outdated]
+\numb section 6.\numb parag 2. A rudimentary example
 
 
 \medskip\noindent
-\numb section 7. Finite elements and integrators
+\numb section 7. \special{ps: gsave 0.6 setgray}Periodicity, quotient manifolds\special{ps: grestore}
 
-\numb section 7.\numb parag 1. Finite elements
+\numb section 7.\numb parag 1. \special{ps: gsave 0.6 setgray}A one-dimensional circle\special{ps: grestore}
 
-\numb section 7.\numb parag 2. A rudimentary example
+\numb section 7.\numb parag 2. \special{ps: gsave 0.6 setgray}A flat torus\special{ps: grestore}
+
+\numb section 7.\numb parag 3. \special{ps: gsave 0.6 setgray}A skew flat torus\special{ps: grestore}
+
+\numb section 7.\numb parag 4. \special{ps: gsave 0.6 setgray}A curved circle\special{ps: grestore}
+
+\numb section 7.\numb parag 5. \special{ps: gsave 0.6 setgray}A cylinder\special{ps: grestore}
+
+\numb section 7.\numb parag 6. \special{ps: gsave 0.6 setgray}A curved torus\special{ps: grestore}
 
 
 \medskip\noindent
@@ -414,68 +421,78 @@ This manual is licensed under the
 
 
 \medskip\noindent
-\numb section 9. Technical details
+\numb section 9. More on manifolds
 
-\numb section 9.\numb parag 1. Namespaces and class names
-
-\numb section 9.\numb parag 2. Tags
-
-\numb section 9.\numb parag 3. Wrappers and cores
-
-\numb section 9.\numb parag 5. Maximum topological dimension
-
-\numb section 9.\numb parag 6. Declaring cell cores
-
-\numb section 9.\numb parag 7. Disposing of meshes
-
-\numb section 9.\numb parag 8.
-\special{ps: gsave 0.6 setgray}About {\tt init\_cell}\special{ps: grestore}
-
-\numb section 9.\numb parag 10. Programming style
-
-\numb section 9.\numb parag 11. Frequent errors at compile time
-
-\numb section 9.\numb parag 12. Frequent errors at run time
-
-\numb section 9.\numb parag 14. Chains of segments
-
-\numb section 9.\numb parag 15. The cloud
-
-\numb section 9.\numb parag 16. The cloud in progressive mesh generation
+\numb section 9.\numb parag 1. Projecting points on an implicit manifold
 
 
 \medskip\noindent
-\numb section 10. Internal details
+\numb section 10. Technical details
 
-\numb section 10.\numb parag 2. Building a chain of segments
+\numb section 10.\numb parag 1. Namespaces and class names
 
-\numb section 10.\numb parag 3. Building a rectangular mesh
+\numb section 10.\numb parag 2. Tags
 
-\numb section 10.\numb parag 4. Building a triangular mesh
+\numb section 10.\numb parag 3. Wrappers and cores
 
-\numb section 10.\numb parag 5. Progressive mesh generation
+\numb section 10.\numb parag 4. The lifecycle of objects
 
-\numb section 10.\numb parag 6. The normals
+\numb section 10.\numb parag 5. \special{ps: gsave 0.6 setgray}Different kinds of meshes\special{ps: grestore}
 
-\numb section 10.\numb parag 7. Filling triangles
+\numb section 10.\numb parag 6. Maximum topological dimension
 
-\numb section 10.\numb parag 8. Touching the interface
+\numb section 10.\numb parag 7. Declaring cell cores
+
+\numb section 10.\numb parag 8. Disposing of meshes
+
+\numb section 10.\numb parag 9.
+\special{ps: gsave 0.6 setgray}About {\tt init\_cell}\special{ps: grestore}
+
+\numb section 10.\numb parag 11. Programming style
+
+\numb section 10.\numb parag 12. Frequent errors at compile time
+
+\numb section 10.\numb parag 13. Frequent errors at run time
+
+\numb section 10.\numb parag 15. Chains of segments
+
+\numb section 10.\numb parag 16. The cloud
+
+\numb section 10.\numb parag 17. The cloud in progressive mesh generation
+
+
+\medskip\noindent
+\numb section 11. Internal details
+
+\numb section 11.\numb parag 2. Building a chain of segments
+
+\numb section 11.\numb parag 3. Building a rectangular mesh
+
+\numb section 11.\numb parag 4. Building a triangular mesh
+
+\numb section 11.\numb parag 5. Progressive mesh generation
+
+\numb section 11.\numb parag 6. The normals
+
+\numb section 11.\numb parag 7. Filling triangles
+
+\numb section 11.\numb parag 8. Touching the interface
 
 \medskip\noindent
 Index
 
 
-\input manual-cap-01
-\input manual-cap-02
-\input manual-cap-03
-\input manual-cap-04
-\input manual-cap-05
-\input manual-cap-06
-\input manual-cap-07
-\input manual-cap-08
-\input manual-cap-09
-\input manual-cap-10
-
+ \input manual-cap-01
+% \input manual-cap-02
+% \input manual-cap-03
+% \input manual-cap-04
+% \input manual-cap-05
+% \input manual-cap-06
+% \input manual-cap-07
+% \input manual-cap-08
+% \input manual-cap-09
+% \input manual-cap-10
+% \input manual-cap-11
 
 
 
@@ -487,27 +504,29 @@ cell : \numb section 1.\numb parag 2, \numb section 8.\numb parag 1
 
 cloud : see {\codett MetricTree}
 
-dimension of a cell or mesh : \numb section 1.\numb parag 2, \numb section 9.\numb parag 3,
-\numb section 9.\numb parag 5
+compilation process : \numb section 10.\numb parag 13
 
-discarding a mesh : \numb section 9.\numb parag 7
+dimension of a cell or mesh : \numb section 1.\numb parag 2, \numb section 10.\numb parag 3,
+\numb section 10.\numb parag 6
 
-docking (of a finite element on a cell) : \numb section 7.\numb parag 1
+discarding a mesh : \numb section 10.\numb parag 8
 
-errors : \numb section 9.\numb parag 11, \numb section 9.\numb parag 12
+docking (of a finite element on a cell) : \numb section 6.\numb parag 1
 
-{\codett Field} : \numb section 6.\numb parag 1
+errors : \numb section 10.\numb parag 12, \numb section 10.\numb parag 13
 
-finite element : section \numb section 7
+{\codett Field} : \numb section 5.\numb parag 1
 
-{\codett Function} : \numb section 1.\numb parag 6, \numb section 6.\numb parag 1
+finite element : section \numb section 6
+
+{\codett Function} : \numb section 1.\numb parag 6, \numb section 5.\numb parag 1
 
 interpolation of coordinates : \numb section 2.\numb parag 3 -- \numb section 2.\numb parag 9,
-\numb section 10.\numb parag 2 -- \numb section 10.\numb parag 4
+\numb section 11.\numb parag 2 -- \numb section 11.\numb parag 4
 
 iterators over cells : \numb section 8.\numb parag 5, \numb section 8.\numb parag 7
 
-{\codett init\_cell} : \numb section 9.\numb parag 8
+{\codett init\_cell} : \numb section 10.\numb parag 9
 
 {\codett join}ing meshes : \numb section 1.\numb parag 3, \numb section 1.\numb parag 4,
 \numb section 1.\numb parag 5, \numb section 2.\numb parag 1, \numb section 2.\numb parag 2,
@@ -516,7 +535,7 @@ iterators over cells : \numb section 8.\numb parag 5, \numb section 8.\numb para
 
 level set : see manifold, defined by an implicit equation
 
-m-tree : \numb section 9.\numb parag 15
+m-tree : \numb section 10.\numb parag 16
 
 manifold, Euclidian : all over the place\hfil\break
 \hglue 15mm (any code using {\maniFEM} must begin by declaring a Euclidian manifold)
@@ -526,33 +545,33 @@ manifold, defined by an implicit equation : \numb section 2.\numb parag 4 --
 
 manifold, parametric : \numb section 2.\numb parag 13, \numb section 2.\numb parag 14
 
-manifold, quotient : section \numb section 5
+manifold, quotient : section \numb section 7
 
 mesh : all over the place, esp.\ \numb section 1.\numb parag 2, \numb section 1.\numb parag 3,
 \numb section 8.\numb parag 1, \numb section 8.\numb parag 3, \numb section 8.\numb parag 7
 -- \numb section 8.\numb parag 10
 
-{\codett MetricTree} : \numb section 9.\numb parag 15, \numb section 9.\numb parag 16
+{\codett MetricTree} : \numb section 10.\numb parag 16, \numb section 10.\numb parag 17
 
 negative {\codett Cell} or {\codett Mesh} : see orientation of {\codett Cell}s and
 {\codett Mesh}es
 
-oct-tree : \numb section 9.\numb parag 15
+oct-tree : \numb section 10.\numb parag 16
 
 orientation of {\codett Cell}s and {\codett Mesh}es : \numb section 1.\numb parag 2,
 \numb section 1.\numb parag 3, \numb section 8.\numb parag 1, \numb section 8.\numb parag 7,
-\numb section 9.\numb parag 6
+\numb section 10.\numb parag 7
 
 orientation of a {\codett Manifold} : \numb section 3.\numb parag 10
 
 parametric manifold : see manifold, parametric
 
-progressive mesh generation : section \numb section 3, \numb section 9.\numb parag 16,
-\numb section 10.\numb parag 5 -- \numb section 10.\numb parag 8
+progressive mesh generation : section \numb section 3, \numb section 10.\numb parag 17,
+\numb section 11.\numb parag 5 -- \numb section 11.\numb parag 8
 
 projection, onto a manifold : \numb section 2.\numb parag 3 -- \numb section 2.\numb parag 9
 
-quad-tree : \numb section 9.\numb parag 15
+quad-tree : \numb section 10.\numb parag 16
 
 quotient manifold : see manifold, quotient
 
@@ -561,31 +580,19 @@ reverse cell or mesh : see orientation of cells and meshes
 segment {\codett Cell}s : \numb section 1.\numb parag 2
 
 segment {\codett Mesh}es : \numb section 1.\numb parag 1 -- \numb section 1.\numb parag 3,
-\numb section 9.\numb parag 14
+\numb section 10.\numb parag 15
 
 {\codett set\_as\_working\_manifold} : \numb section 2.\numb parag 8 --
 \numb section 2.\numb parag 10, \numb section 2.\numb parag 12, \numb section 3.\numb parag 1,
 \numb section 3.\numb parag 2, \numb section 3.\numb parag 3, \numb section 3.\numb parag 9,
 \numb section 3.\numb parag 14 -- \numb section 3.\numb parag 24
 
-{\codett tag}s : \numb section 9.\numb parag 2
+{\codett tag}s : \numb section 10.\numb parag 2
 
-wrapper : \numb section 8.\numb parag 1, \numb section 8.\numb parag 10, \numb section 9.\numb parag 3
+wrapper : \numb section 8.\numb parag 1, \numb section 8.\numb parag 10, \numb section 10.\numb parag 3
 
 
 \bye
-
-\input manual-cap-01
-\input manual-cap-02
-\input manual-cap-03
-\input manual-cap-04
-\input manual-cap-05
-\input manual-cap-06
-\input manual-cap-07
-\input manual-cap-08
-\input manual-cap-09
-\input manual-cap-10
-
 
 
 

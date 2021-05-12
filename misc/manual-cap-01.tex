@@ -15,7 +15,7 @@ Paragraph \numb section 1.\numb parag 3 shows a purely two-dimensional example.
 \psfrag{NW}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett NW}\special{ps: grestore}}
 \psfrag{SE}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett SE}\special{ps: grestore}}
 \psfrag{NE}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett NE}\special{ps: grestore}}
-\centerline{\includegraphics[width=10cm]{3d-rectangle.eps}} }
+\centerline{\includegraphics[width=90mm]{3d-rectangle.eps}} }
 
 %\code{\numb section 1.\numb code 1}
 \verbatim
@@ -62,22 +62,31 @@ int main ()
    // and compute its integral on the rectangle,
    // using Gauss quadrature with 9 points
 
+   FiniteElement fe
+      ( tag::with_master, tag::quadrangle, tag::Lagrange, tag::of_degree, 1 );
+   fe.set_integrator ( tag::Gauss, tag::quad_9 );
+
    // code below does not work yet
 
-   // Integrator integ ( tag::Gauss, tag::Q9 );
-   // cout << "integral = " << f.integrate ( rect_mesh, integ ) << endl;
+   // cout << "integral of " << f.repr() << " = "
+   //      << fe.integrate ( f, tag::over, rect_mesh ) << endl;
+   // cout << "integral of " << g.repr() << " = "
+   //      << fe.integrate ( g, tag::over, rect_mesh ) << endl;
 
 }  // end of main
 \endverbatim
 %\endcode
 
-After running this program (through {\codett make run-\numb section 1.\numb parag 1}), a file
-{\codett rectangle.msh} should appear in the working directory.
+To run this example, you will need a recent {\tt C++} compiler and the {\tt make} utility.
+Visit {\codett https://github.com/cristian-barbarosie/manifem}
+and copy all files under {\codett src/} to some directory in your computer.
+Launch the program through the command {\codett make run-\numb section 1.\numb parag 1};
+a file {\codett rectangle.msh} should appear in the working directory.
 You may view the mesh using the software {\tt gmsh}.
 
 Expressions like {\codett tag::of\_dim} and {\codett tag::vertex} are
 objects belonging to the {\codett namespace tag}; we use them as arguments to many functions.
-See paragraph \numb section 9.\numb parag 2 for some details.
+See paragraph \numb section 10.\numb parag 2 for some details.
 
 When declaring a segment {\codett Mesh}, we must {\codett reverse} the first vertex
 (paragraph~\numb section 1.\numb parag 2 discusses the {\codett reverse} method).
@@ -85,7 +94,8 @@ Paragraph~\numb section 1.\numb parag 3 explains why we build
 the rectangle based on its four sides rather than on its four vertices.
 
 Note that in this example we do not have exact control on the shape of the surface being meshed.
-It is defined rather vaguely by interpolating the coordinates of the four corners.
+The coordinates of the inner vertices are defined rather vaguely by interpolating the
+coordinates of the four corners.
 See sections \numb section 2 and \numb section 3
 for ways to precisely define a submanifold in $ \RR^3 $ and mesh (a bounded domain of) it.
 
@@ -96,13 +106,19 @@ In \maniFEM, all basic constituents of meshes are called ``cells''.
 Points are zero-dimensional cells, segments are one-dimensional cells, triangles are
 two-dimensional cells, and so on.
 
-A mesh is roughly a collection of cells of the same dimension. 
-Internally, {\maniFEM} keeps lists of cells of lower dimension, too. 
+Roughly speaking, a mesh is a collection of cells of the same dimension. 
+For efficiency reasons, meshes keep lists of cells of lower dimension, too. 
 For instance, the mesh built in paragraph \numb section 1.\numb parag 1 is 
 roughly a list of two-dimensional cells (quadrilaterals), but lists of segments and points
 are also kept.
-This represents quite some amount of redundant information, but this is what makes the
-classes fast, especially for remeshing.
+This represents quite some amount of redundant information, but it is useful e.g.\ for
+quickly sweeping over all vertices of a mesh.%
+\footnote *{\parbox{\ftntfont\baselineskip=3pt
+Actually, the implementation details are more complicated.
+There are different kinds of meshes, some of them keep more information (lists of cells)
+and are faster; others are slower but lighter in terms of memory occupied.
+See e.g. paragraphs \numb section 8.\numb parag 5, \numb section 8.\numb parag 6 and
+\numb section 10.\numb parag 5.}}
 
 A cell of dimension higher than zero is defined by its boundary, 
 which in turn is a mesh of lower dimension. 
@@ -114,7 +130,7 @@ Cells and meshes are oriented.
 An orientation of a mesh is just an orientation for each of its component cells
 (of course these orientations must be mutually compatible).
 Although this is not how the orientation is implemented internally
-(see paragraph \numb section 9.\numb parag 6),
+(see paragraph \numb section 10.\numb parag 7),
 an oriented point can be conceived simply as a point with a sign attached (1 or -1). 
 The orientation of a cell of dimension higher than zero is given by an orientation
 of its boundary, which is a lower-dimensional mesh.
@@ -133,6 +149,46 @@ An oriented tetrahedron can be identified with four triangles, each one with its
 orientation.
 In such a tetrahedron, each segment must be seen as positive by one of the triangles and
 as negative by another one.
+
+\medskip
+{ \psfrag{A}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett A}\special{ps: grestore}}
+\psfrag{B}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett B}\special{ps: grestore}}
+\centerline{\includegraphics[width=90mm]{oriented-cells.eps}} }
+
+We can think of an oriented segment as an arrow pointing from its negative extremity (base)
+towards its positive extremity (tip).
+We can think of an oriented polygon as having an arrow attached to each of it sides,
+or we can imagine a small oriented circle inside the polygon.
+
+\medskip
+\centerline{\includegraphics[width=110mm]{hemisphere-7.eps}}
+
+A one-dimensional oriented mesh can be thought of as a chain of arrows,
+each one pointing to the next segment's base (like in the drawing above right).
+A two-dimensional oriented triangular mesh can be thought of as a web of triangles,
+each triangle having a small oriented circle inside (like in the drawing above left).
+The orientations of neighbour cells must be compatible : each segment must be seen
+in opposite orientations from the point of view of its two neighbour triangles.
+
+The above description of the orientation of a two-dimensional mesh does not depend
+on the surrounding space.
+A mesh can be immersed in some Euclidian space $ \RR^d $ or not.
+In the case of a two-dimensional mesh immersed in $ \RR^3 $, the right hand rule establishes
+a correspondence between the oriented circle described above and an arrow normal to the
+surface being meshed.
+Note, however, that the right hand rule is a convention based on the assuption that
+the surrounding space $ \RR^3 $ has a certain orientation.
+
+\medskip
+\centerline{\includegraphics[width=75mm]{oriented-annulus-1.eps}\includegraphics[width=75mm]{oriented-annulus-2.eps}}
+
+Note also that an orientation of a mesh defines an orientation of its boundary.
+In the above drawing we can see two opposite orientations of a mesh, together with
+the corresponding orientation of its boundary.
+This convention is used by Stokes' theorem.
+
+Paragraphs \numb section 1.\numb parag 3 and \numb section 3.\numb parag 18 show examples where
+the orientation of the boundary is important for joining meshes.
 
 Cells have a {\codett reverse} method returning the reversed cell.
 Segment {\codett Cell}s have methods {\codett base} and {\codett tip} returning their extremities.
@@ -154,11 +210,11 @@ For instance :
 \endverbatim
 
 Paragraph \numb section 8.\numb parag 7 gives more details about the orientation of cells.
-See also paragraph \numb section 9.\numb parag 3.
+See also paragraph \numb section 10.\numb parag 3.
 
 Cells are topological entities; they carry no geometric information.
 In particular, points do not have coordinates.
-Coordinates are stored externally, see paragraph~\numb section 7.\numb parag 1.
+Coordinates are stored externally, see paragraph~\numb section 6.\numb parag 1.
 
 {\codett Mesh}es have a {\codett reverse} method, too.
 It is used mainly when we want to {\codett join} meshes having a common piece of boundary;
@@ -258,7 +314,7 @@ like in paragraphs \numb section 1.\numb parag 1 and \numb section 2.\numb parag
 Tags {\codett rectangle}, {\codett quadrilateral} and {\codett quadrangle} can be used
 interchangeably.
 
-See also paragraph \numb section 9.\numb parag 7.
+See also paragraph \numb section 10.\numb parag 8.
 
 
 \paragraph{\numb section 1.\numb parag 4. Triangular meshes}
@@ -290,7 +346,6 @@ We can also build meshes on triangular domains and {\codett join} them as we wis
 \psfrag{D}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett D}\special{ps: grestore}}
 \psfrag{E}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett E}\special{ps: grestore}}
 \centerline{\includegraphics[width=9cm]{three-tri.eps}} }
-\vfil\eject
 
 
 \paragraph{\numb section 1.\numb parag 5. Mixing triangles and rectangles}
@@ -303,7 +358,7 @@ It is possible to have triangles and quadrilaterals mixed in the same mesh :
 \psfrag{D}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett D}\special{ps: grestore}}
 \psfrag{E}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett E}\special{ps: grestore}}
 \psfrag{F}{\special{ps: gsave 0 0 0.8 setrgbcolor}{\codett F}\special{ps: grestore}}
-\centerline{\includegraphics[width=9cm]{two-tri-one-rect.eps}} }
+\centerline{\includegraphics[width=95mm]{two-tri-one-rect.eps}} }
 
 \verbatim
    Mesh ABD ( tag::triangle, AB, BD, AD.reverse() );

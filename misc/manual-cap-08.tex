@@ -5,9 +5,10 @@ This section gives details about cells and meshes.
 
 \paragraph{\numb section 8.\numb parag 1. Building cells and meshes}
 
-As we have already seen in examples in previous sections, cells and meshes are created
-by declaring them as {\codett Cell} or {\codett Mesh} objects and by providing specific
-options to their constructor, by means of {\codett tag}s. For instance :
+As we have already seen in examples in sections \numb section2 and \numb section 3,
+cells and meshes are created by declaring them as {\codett Cell} or {\codett Mesh} objects
+and by providing specific options to their constructor, by means of {\codett tag}s.
+For instance :
 
 \verbatim
    Cell SW ( tag::vertex ); // and the same for vertices SE, NE, NW
@@ -16,15 +17,15 @@ options to their constructor, by means of {\codett tag}s. For instance :
    Mesh rectangle ( tag::rectangle, south, east, north, west );
 \endverbatim
 
-Paragraph \numb section 9.\numb parag 2 gives more details about {\codett tag}s.
+Paragraph \numb section 10.\numb parag 2 gives more details about {\codett tag}s.
 
 Internally, {\maniFEM} implements cells and meshes as persistent objects, built
 using the {\codett new} operator and thus having no syntactic scope.
 Objects belonging to classes {\codett Cell} and {\codett Mesh} are just a wrapper
 around a persistent core (cell or mesh).
-When they go out of scope, the wrappers are destroyed but the core remains alive.
-If a cell or mesh is no longer needed, the user must explicitly dispose of it,
-as explained in paragraph \numb section 9.\numb parag 3.
+When they go out of scope, the wrappers are destroyed; the core may remain alive or not,
+depending on its relationships with other cells and meshes.
+This is explained in paragraph \numb section 10.\numb parag 12.
 
 Cells and meshes are unique objects, it makes no sense to copy them.
 A statement like {\codett Cell copy\_of\_A = A} will make a copy of the wrapper
@@ -48,7 +49,7 @@ It checks if the reverse object has already been built; if yes, it returns that 
 otherwise, it builds the reverse cell on-the-fly and returns it.
 Paragraph \numb section 8.\numb parag 7 gives a more detailed explanation about
 orientation of cells and meshes.
-% See also paragraph \numb section 9.\numb parag 6.
+% See also paragraph \numb section 10.\numb parag 7.
 
 {\codett Mesh}es have also a {\codett reverse} method.
 Note that reverse meshes exist always (negative meshes are temporary objects built
@@ -72,7 +73,7 @@ For creating many meshes within a cycle, we can view a {\codett Cell} object as 
 (customized) pointer to a persistent core cell, and the same for {\codett Mesh}es.
 They are cheap to store and to copy.
 We call these customized pointers ``wrappers''; their behaviour is described in some detail in
-paragraph \numb section 9.\numb parag 3.
+paragraph \numb section 10.\numb parag 3.
 
 \verbatim
    Manifold RR2 ( tag::Euclid, tag::of_dim, 2 );
@@ -130,7 +131,7 @@ parag 6.
 We might have set curved boundaries by using a submanifold of $ \RR^2 $, like in paragraph
 \numb section 2.\numb parag 8.
 
-See also paragraph \numb section 9.\numb parag 7.
+See also paragraph \numb section 10.\numb parag 8.
 
 
 \paragraph{\numb section 8.\numb parag 3. Lists of cells inside a mesh}
@@ -186,6 +187,10 @@ meshes, which follow the natural order of the vertices or segments.
 
 \paragraph{\numb section 8.\numb parag 5. Iterators over cells}
 
+{\bf This paragraph describes a syntax of iterators relative to a branch of
+{\maniFEM} not yet included in the {\codett master} branch.
+It should be regarded as an early announcement of the new syntax.}
+
 This paragraph assumes that the reader is familiar to the notion of iterator in {\tt C++}.
 If this is not the case, you should read an introductory book on the {\tt C++}
 Standard Template Library (STL) before proceeding.
@@ -209,12 +214,12 @@ so we provide specific iterators.
 The code above is equivalent to
 
 \verbatim
-   CellIterator it = msh.iter_over ( tag::cells_of_dim, 2 );
+   CellIterator it = msh.iterator ( tag::over_cells_of_dim, 2 );
    for ( it.reset(); it.in_range(); it++ )
    {  Cell cll = *it;  do_something_to (cll);  }
 \endverbatim
 
-Paragraph \numb section 9.\numb parag 2 gives some details about tags.
+Paragraph \numb section 10.\numb parag 2 gives some details about tags.
 
 In the above code you may note that these iterators obey to syntactic conventions
 slightly different from the ones in the Standard Template Library.
@@ -236,21 +241,21 @@ parag 10).
 If we want to iterate over all vertices of the mesh, we can use
 
 \verbatim
-   CellIterator it = msh.iter_over ( tag::cells_of_dim, 0 );
+   CellIterator it = msh.iterator ( tag::over_cells_of_dim, 0 );
    for ( it.reset(); it.in_range(); it++ )
    {  Cell P = *it;  do_something_to (P);  }
    // or, equivalently :
-   CellIterator it = msh.iter_over ( tag::vertices );
+   // CellIterator it = msh.iterator ( tag::over_vertices );
 \endverbatim
 
 If we want to iterate over all segments of the mesh, we can use
 
 \verbatim
-   CellIterator it = msh.iter_over ( tag::cells_of_dim, 1 );
+   CellIterator it = msh.iterator ( tag::over_cells_of_dim, 1 );
    for ( it.reset(); it.in_range(); it++ )
    {  Cell seg = *it;  do_something_to (seg);  }
    // or, equivalently :
-   CellIterator it = msh.iter_over ( tag::segments );
+   // CellIterator it = msh.iterator ( tag::over_segments );
 \endverbatim
 
 Note that an iterator running through cells of maximum dimension, that is, of dimension equal
@@ -262,7 +267,7 @@ We can force an iterator over cells of maximum dimension to produce only positiv
 by adding a {\codett tag::force\_positive} as in
 
 \verbatim
-   CellIterator it = msh.iter_over ( tag::cells_of_dim, 2, tag::force_positive );
+   CellIterator it = msh.iterator ( tag::over_cells_of_dim, 2, tag::force_positive );
 \endverbatim
 
 Note that it is not safe to modify a mesh while iterating over its cells.
@@ -275,8 +280,7 @@ instead of using {\codett msh.core->cells[d].size()} ({\codett d} being the desi
 dimension of the cells) we may use the method {\codett number\_of} :
 
 \verbatim
-   short int d = 2;
-   size_t n = msh.number_of ( tag::cells_of_dim, d );
+   size_t n = msh.number_of ( tag::cells_of_dim, 2 );
 \endverbatim
 
 \noindent Expression {\codett msh.number\_of ( tag::vertices )} is equivalent to
@@ -289,42 +293,41 @@ meshes.
 
 \paragraph{\numb section 8.\numb parag 6. Iterators over chains of segments}
 
-One-dimensional meshes have a specific structure (technical details provided in
-paragraph \numb section 9.\numb parag 14) so we provide specialized iterators.
-Unlike the iterators described in paragraph \numb section 8.\numb parag 5,
-which sweep the mesh in a rather unpredictible order,
-the iterators below follow the natural order of the cells (either vertices or segments)
-given by the topology of the mesh.
+{\bf This paragraph describes a syntax of iterators relative to a branch of
+{\maniFEM} not yet included in the {\codett master} branch.
+It should be regarded as an early announcement of the new syntax.}
 
-The syntax is the same as for higher-dimensional meshes :
+One-dimensional meshes are peculiar, especially if they are connected.
+They can be traversed by simply following the natural order of the segments.
+Recall that meshes in {\maniFEM} are oriented, so there is a direct order which can be followed.
+Connected one-dimensional meshes may be closed chains of segments or open ones.
+In the latter case there is a natural starting point.
+
+Meshes in {\maniFEM} come in several different flavors which differ mainly in their internal
+implementation, see paragraph \numb section 10.\numb parag 5.
+One of these flavors, called {\codett Mesh::Connected::OneDim}, provides specialized iterators
+over vertices and segments which obey to the natural order of the chain of segments and,
+for an open chain, begin at the natural starting point.
+
+The syntax is the same as the one described in pragraph \numb section 8.\numb parag 5
 
 \verbatim
    Mesh chain ( tag::segment, A.reverse(), B, tag::divided_in, n );
    // A and B are (positive) vertices, n is an integer
    
-   CellIterator it1 = chain.iter_over ( tag::cells_of_dim, 1 );
+   CellIterator it1 = chain.iterator ( tag::over_cells_of_dim, 1 );
    for ( it1.reset(); it1.in_range(); it1++ )
    {  Cell seg = *it1;  do_something_to (seg);  }
    
-   CellIterator it0 = chain.iter_over ( tag::cells_of_dim, 0 );
+   CellIterator it0 = chain.iterator ( tag::over_cells_of_dim, 0 );
    for ( it0.reset(); it0.in_range(); it0++ )
    {  Cell P = *it0;  do_something_to (P);  }
 
    // or, equivalently,
-   CellIterator it0 = chain.iter_over ( tag::vertices );
-   CellIterator it1 = chain.iter_over ( tag::segments );
+   // CellIterator it0 = chain.iterator ( tag::over_vertices );
+   // CellIterator it1 = chain.iterator ( tag::over_segments );
+   // CellIterator it1 = chain.iterator ( tag::over_cells_of_max_dim );
 \endverbatim
-
-Unlike iterators over cells of meshes of dimension 2 or higher, presented in paragraph
-\numb section 8.\numb parag 5, iterators over one-dimensional meshes require the mesh
-to be connected.
-
-A connected one dimensional mesh can be either an open chain of segments or a closed one
-(a loop).
-For an open chain, {\codett it0} will begin at the first vertex and end at the last vertex,
-{\codett it1} will begin at the first segment and end at the last segment.
-For a loop, they will begin at some arbitrary vertex or segment in the chain and produce
-all the vertices or segments following the natural order given by the topology of the mesh.
 
 If we want to start at a specific location, we can make a {\codett reset} call with
 one argument.
@@ -345,14 +348,12 @@ There are also reversed versions of these iterators (they go backwards), obtaine
 the {\codett tag::reverse} :
 
 \verbatim
-   CellIterator it1r = chain.iter_over ( tag::segments, tag::reverse );
-   CellIterator it0r = chain.iter_over ( tag::vertices, tag::reverse );
+   CellIterator it1r = chain.iterator ( tag::over_segments, tag::reverse );
+   CellIterator it0r = chain.iterator ( tag::over_vertices, tag::reverse );
 \endverbatim
 
-Method {\codett number\_of} works just as for higher-dimensional iterators (see paragraph
-\numb section 8.\numb parag 5).
-
-One-dimensional meshes have also methods {\codett first\_vertex}, {\codett last\_vertex},
+Connected one-dimensional meshes have also methods {\codett first\_vertex},
+{\codett last\_vertex},\break
 {\codett first\_segment} and {\codett last\_segment} which return the cell described by their
 names.
 They should only be used for an open chain (not for a loop).
@@ -360,17 +361,25 @@ Note that both {\codett Mesh::first\_vertex} and {\codett Mesh::last\_vertex} re
 positive vertices, unlike the {\codett Cell::base} method (described in paragraph
 \numb section 1.\numb parag 2) which returns a negative vertex. [this should change]
 
-Recall that it is not safe to modify a mesh while iterating over its cells.
-After modifying a mesh, you may re-use a previously declared iterator by {\codett reset}ting it.
-However, if you modify a one-dimensional mesh and change its topology
-(cut a loop, thus making it an open chain, or contrarywise, close a chain,
-thus making it a loop), then you cannot re-use
-a previously declared iterator on that mesh (you must declare a new iterator).
-A change in the code is planned; when we {\codett reset} an iterator, it will adapt itself
-to the new shape of the mesh.
-
 As explained in paragraph \numb section 8.\numb parag 10, dereferencing a {\codett CellIterator}
 does not produce a new cell, just provides access to a previously built cell.
+
+Sometimes it may be not obvious for the user whether a certain {\codett Mesh} is internally a
+{\codett Mesh::Connected::OneDim} (see paragraph \numb section 10.\numb parag 5).
+An iterator declared as {\codett it = chain.iterator ( tag::over\_vertices )}
+will obey to the natural order of the vertices if {\codett chain} is a\break
+{\codett Mesh::Connected::OneDim}; otherwise it will bring up vertices in a rather unpredictable
+order.
+If we want to make sure the vertices will come up in a linear order, we can add a
+{\codett tag::require\_order} :
+
+\verbatim
+   CellIterator it1 = chain.iterator ( tag::over_segments, tag::require_order );
+   CellIterator it0 = chain.iterator ( tag::over_vertices, tag::require_order );
+\endverbatim
+
+If {\codett chain} does not support linear ordering, the above statements will produce
+(in {\codett DEBUG} mode) a run-time error rather than returning unordered iterators.
 
 
 \paragraph{\numb section 8.\numb parag 7. Orientation of cells inside a mesh}
@@ -417,9 +426,9 @@ That's why iterators over cells of lower dimension always produce positive cells
 We also understand that there is no difference between these two iterators :
 
 \verbatim
-   CellIterator it1 = tri_msh.iter_over ( tag::cells_of_dim, 2 );
+   CellIterator it1 = tri_msh.iterator ( tag::over_cells_of_dim, 2 );
    CellIterator it2 =
-      tri_msh.iter_over ( tag::cells_of_dim, 2, tag::force_positive );
+      tri_msh.iterator ( tag::over_cells_of_dim, 2, tag::force_positive );
 \endverbatim
 
 \noindent because all triangles composing {\codett tri\_mesh} should be positive
@@ -438,24 +447,24 @@ The two iterators below will probably have different behaviours,
 depending on which segments happen to be positive :
 
 \verbatim
-   CellIterator it3 = ABC.boundary().iter_over ( tag::segments );
+   CellIterator it3 = ABC.boundary().iterator ( tag::over_segments );
    CellIterator it4 =
-      ABC.boundary().iter_over ( tag::segments, tag::force_positive );
+      ABC.boundary().iterator ( tag::over_segments, tag::force_positive );
 \endverbatim
 
 There is no difference between the two iterators below (both produce positive
 points).
 
 \verbatim
-   CellIterator it5 = ABC.boundary().iter_over ( tag::vertices, tag::reverse );
-   CellIterator it6 = ABC.boundary().reverse().iter_over( tag::vertices );
+   CellIterator it5 = ABC.boundary().iterator ( tag::over_vertices, tag::reverse );
+   CellIterator it6 = ABC.boundary().reverse().iterator ( tag::over_vertices );
 \endverbatim
 
 However, the two iterators below are quite different.
 
 \verbatim
-   CellIterator it7 = ABC.boundary().iter_over ( tag::segments, tag::reverse );
-   CellIterator it8 = ABC.boundary().reverse().iter_over ( tag::segments );
+   CellIterator it7 = ABC.boundary().iterator ( tag::over_segments, tag::reverse );
+   CellIterator it8 = ABC.boundary().reverse().iterator ( tag::over_segments );
 \endverbatim
 
 Iterator {\codett it7} will produce segments {\codett AB}, {\codett CA}, {\codett BC}
@@ -491,7 +500,7 @@ Consider the mesh {\codett hex\_msh} shown above, made of three hexagons.
 Pick one of them, at random :
 
 \verbatim
-   CellIterator it1 = hex_msh.iter_over ( tag::cells_of_dim, 2 );
+   CellIterator it1 = hex_msh.iterator ( tag::over_cells_of_dim, 2 );
    it1.reset();
    Cell hex_1 = *it1;
 \endverbatim
@@ -499,7 +508,7 @@ Pick one of them, at random :
 Now choose a random segment on the boundary of {\codett hex\_1} :
 
 \verbatim
-   CellIterator it2 = hex_1.boundary().iter_over ( tag::segments );
+   CellIterator it2 = hex_1.boundary().iterator ( tag::over_segments );
    it2.reset();
    Cell AB = *it2;
 \endverbatim
@@ -570,7 +579,7 @@ In {\codett DEBUG} mode, you will get an {\codett assertion error}.
 In {\codett NDEBUG} mode, the behaviour is undefined
 (often, a {\codett segmentation fault} will arise).
 The {\codett DEBUG} mode is explained at the beginning of paragraph \numb section
-9.\numb parag 12.
+10.\numb parag 13.
 
 You may check the existence of the neighbour cell by using a
 {\codett tag::may\_not\_exist} and then the cell's method {\codett exists} :
@@ -589,7 +598,7 @@ an existing cell or build a new one.
 
 \paragraph{\numb section 8.\numb parag 10. Declaring cells and meshes}
 
-As explained in paragraph \numb section 9.\numb parag 3, the {\codett Cell} class
+As explained in paragraph \numb section 10.\numb parag 3, the {\codett Cell} class
 is just a thin wrapper around a {\codett Cell::Core}, and similarly for {\codett Mesh}es.
 
 Statements below build a new wrapper for an existing cell or mesh.
@@ -608,7 +617,7 @@ Otherwise, an {\codett assertion error} will occur in {\codett DEBUG} mode;
 in {\codett NDEBUG} mode, the behaviour is undefined (often, a {\codett segmentation fault}
 will arise).
 The {\codett DEBUG} mode is explained at the beginning of paragraph \numb section
-9.\numb parag 12.
+10.\numb parag 13.
 
 \verbatim
    Cell A_rev = A.reverse ( tag::surely_exists );  //  A is a Cell
@@ -681,4 +690,6 @@ Statements below return a wrapper for a brand new cell or mesh :
    // ... and many other shapes ...
 \endverbatim
 
-Paragraph \numb section 9.\numb parag 6 explains similar operations on {\codett Cell::Core}s.
+Paragraph \numb section 10.\numb parag 7 explains similar operations on {\codett Cell::Core}s.
+
+
